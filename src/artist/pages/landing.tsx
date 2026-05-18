@@ -1,0 +1,551 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+    Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
+    ArrowRight, ChevronRight, Star, Users, Zap, Shield, TrendingUp,
+    Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
+    Play, RefreshCw, GitCompare, BookOpen
+} from "lucide-react";
+
+// ─── TYPES ───────────────────────────────────────────────────────────────────
+interface Artist {
+    id: number;
+    name: string;
+    type: string;
+    location: string;
+    rating: number;
+    reviews: number;
+    price: string;
+    image: string;
+    verified: boolean;
+}
+
+interface Category {
+    id: number;
+    label: string;
+    icon: React.ReactNode;
+}
+
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const NAV_LINKS = ["Explore", "Categories", "Artists", "Events", "How it works", "Join as Artist"];
+
+const POPULAR_ARTISTS: Artist[] = [
+    { id: 1, name: "DJ Ravin", type: "EDM / Club DJ", location: "Colombo", rating: 4.9, reviews: 128, price: "Rs. 35,000+", image: "https://images.unsplash.com/photo-1571935441008-e42d7f4a8f65?w=400&q=80", verified: true },
+    { id: 2, name: "Nadeemal Perera", type: "Live Band", location: "Kandy", rating: 4.8, reviews: 96, price: "Rs. 60,000+", image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&q=80", verified: true },
+    { id: 3, name: "Dilki Uresha", type: "Wedding Singer", location: "Galle", rating: 4.9, reviews: 176, price: "Rs. 45,000+", image: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80", verified: true },
+    { id: 4, name: "Infinity Dance Crew", type: "Dance Group", location: "Colombo", rating: 4.8, reviews: 112, price: "Rs. 30,000+", image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80", verified: true },
+    { id: 5, name: "Supreme Sounds", type: "Sound & Lighting", location: "Negombo", rating: 4.9, reviews: 143, price: "Rs. 75,000+", image: "https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&q=80", verified: true },
+];
+
+const SEARCH_CATEGORIES = ["DJs", "Live Bands", "Dancers", "Sound Systems", "MCs", "Photographers", "More"];
+
+const BROWSE_CATEGORIES: Category[] = [
+    { id: 1, label: "DJs", icon: <Radio size={28} /> },
+    { id: 2, label: "Singers", icon: <Mic2 size={28} /> },
+    { id: 3, label: "Live Bands", icon: <Music2 size={28} /> },
+    { id: 4, label: "Dancers", icon: <PersonStanding size={28} /> },
+    { id: 5, label: "Sound Systems", icon: <Zap size={28} /> },
+    { id: 6, label: "Event Hosts", icon: <Globe size={28} /> },
+    { id: 7, label: "Cultural Shows", icon: <Star size={28} /> },
+    { id: 8, label: "Lighting", icon: <Lightbulb size={28} /> },
+];
+
+const PARTNER_LOGOS = ["TAJ", "Shangri-La", "Cinnamon", "Hilton", "MOVENPICK", "Liga Escapes", "atogals"];
+
+// ─── COMPONENT ───────────────────────────────────────────────────────────────
+export default function HomePage() {
+    const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState("");
+    const [location, setLocation] = useState("");
+    const [eventDate, setEventDate] = useState("");
+    const [budget, setBudget] = useState("");
+    const [likedArtists, setLikedArtists] = useState<Set<number>>(new Set());
+
+    const toggleLike = (id: number) => {
+        setLikedArtists(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    };
+
+    return (
+        <div className="min-h-screen bg-white" style={{ fontFamily: "'Nunito', 'Plus Jakarta Sans', sans-serif" }}>
+            <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
+        .pink { color: #E8194B; }
+        .bg-pink { background-color: #E8194B; }
+        .border-pink { border-color: #E8194B; }
+        .btn-pink { background: #E8194B; color: #fff; transition: background 0.18s; }
+        .btn-pink:hover { background: #c8133b; }
+        .btn-dark { background: #111; color: #fff; transition: background 0.18s; }
+        .btn-dark:hover { background: #222; }
+        .artist-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .artist-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.13); }
+        .cat-card { transition: border-color 0.18s, background 0.18s; border: 1.5px solid #f0f0f0; }
+        .cat-card:hover { border-color: #E8194B; background: #fff5f7; }
+        .cat-card:hover .cat-icon { color: #E8194B; }
+        .search-input { outline: none; }
+        .search-input:focus { outline: none; }
+        .hero-image-card { border-radius: 16px; overflow: hidden; }
+        .nav-link { color: #444; font-weight: 500; font-size: 15px; transition: color 0.15s; }
+        .nav-link:hover { color: #E8194B; }
+        .search-bar-wrap { background: #1a1a1a; border-radius: 20px; }
+        .divider-v { width: 1px; background: rgba(255,255,255,0.12); height: 36px; margin: auto 0; }
+        .tag-pill { background: #f5f5f5; border-radius: 100px; padding: 6px 16px; font-size: 13px; font-weight: 600; color: #222; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: background 0.15s, color 0.15s; border: 1.5px solid #eee; }
+        .tag-pill:hover { background: #fff0f3; color: #E8194B; border-color: #E8194B; }
+        .step-connector { flex: 1; height: 2px; background: repeating-linear-gradient(90deg, #E8194B 0, #E8194B 8px, transparent 8px, transparent 16px); margin: 0 8px; }
+        .dark-section { background: #111; }
+        .cta-card { background: #1a1a1a; border-radius: 20px; }
+        .checklist-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #ddd; margin-bottom: 8px; }
+        .verified-dot { position: absolute; bottom: 6px; left: 6px; background: #E8194B; border-radius: 100px; padding: 2px 6px; display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: #fff; }
+        .rating-row { display: flex; align-items: center; gap: 4px; }
+        .logo-strip { border-top: 1px solid #f0f0f0; }
+        .section-title { font-size: clamp(22px, 3vw, 28px); font-weight: 800; color: #111; }
+        .pink-text { color: #E8194B; }
+        .card-see-all { color: #E8194B; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 2px; cursor: pointer; }
+        .card-see-all:hover { text-decoration: underline; }
+        .floating-badge { background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); padding: 12px 18px; display: flex; align-items: center; gap: 10px; }
+        .hero-bg-dots { background-image: radial-gradient(circle, #E8194B22 1.5px, transparent 1.5px); background-size: 24px 24px; }
+      `}</style>
+
+            {/* ══════════════════════════════════════════════════
+          NAVBAR
+      ══════════════════════════════════════════════════ */}
+            <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
+                {/* Logo */}
+                <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 btn-pink rounded-xl flex items-center justify-center font-black text-white text-lg select-none">M</div>
+                </div>
+
+                {/* Nav Links */}
+                <div className="hidden md:flex items-center gap-7">
+                    {NAV_LINKS.map(link => (
+                        <button key={link} className="nav-link">{link}</button>
+                    ))}
+                </div>
+
+                {/* Auth */}
+                <div className="flex items-center gap-3">
+                    <Link
+                        to="/loginCustomer"
+                        className="nav-link font-semibold text-sm px-3 py-1.5"
+                    >
+                        Log in
+                    </Link>
+
+                    <Link
+                        to="/signupCustomer"
+                        className="btn-pink text-sm font-bold px-5 py-2.5 rounded-xl"
+                    >
+                        Sign up
+                    </Link>
+                </div>
+            </nav>
+
+            {/* ══════════════════════════════════════════════════
+          HERO SECTION
+      ══════════════════════════════════════════════════ */}
+            <section className="relative w-full overflow-hidden bg-white pt-10 pb-0 px-6 md:px-12 lg:px-20">
+                {/* Pink dot background - top right */}
+                <div className="hero-bg-dots absolute top-0 right-0 w-72 h-72 opacity-60 pointer-events-none" />
+
+                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                    {/* Left: Copy */}
+                    <div className="z-10">
+                        <p className="text-gray-500 text-base font-600 mb-1">Find & Book</p>
+                        <h1 className="font-black leading-tight text-gray-900" style={{ fontSize: "clamp(38px, 5vw, 62px)", lineHeight: 1.1 }}>
+                            Sri Lanka's<br />
+                            <span style={{ color: "#E8194B" }}>Best Artists</span>
+                        </h1>
+                        <p className="text-gray-500 mt-4 text-base leading-relaxed max-w-sm">
+                            DJs, musicians, dancers, MCs, sound systems<br className="hidden sm:block" />
+                            and event professionals – all in one platform.
+                        </p>
+
+                        <div className="flex flex-wrap gap-3 mt-8">
+                            <Link
+                                to="/loginCustomer"
+                                className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
+                            >
+                                Explore Artists <ArrowRight size={16} />
+                            </Link>
+
+                            <Link
+                                to="/login"
+                                className="btn-dark flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
+                            >
+                                Join as Artist
+                            </Link>
+                        </div>
+
+                        {/* Social proof */}
+                        <div className="flex items-center gap-3 mt-7">
+                            <div className="flex -space-x-2">
+                                {[
+                                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
+                                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
+                                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=80",
+                                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
+                                    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
+                                ].map((src, i) => (
+                                    <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
+                                ))}
+                            </div>
+                            <p className="text-sm text-gray-500 font-500">1,200+ artists already joined</p>
+                        </div>
+                    </div>
+
+                    {/* Right: Collage */}
+                    <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end">
+                        {/* Main large image */}
+                        <div className="absolute right-0 top-0 w-[58%] h-[75%] hero-image-card z-10" style={{ borderRadius: "20px", overflow: "hidden" }}>
+                            <img src="https://images.unsplash.com/photo-1571935441008-e42d7f4a8f65?w=600&q=80" className="w-full h-full object-cover" alt="DJ" />
+                        </div>
+
+                        {/* Top right image */}
+                        <div className="absolute right-[30%] top-[2%] w-[36%] h-[46%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>
+                            <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80" className="w-full h-full object-cover" alt="Singer" />
+                        </div>
+
+                        {/* Middle right image */}
+                        <div className="absolute right-[28%] top-[48%] w-[34%] h-[42%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>
+                            <img src="https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80" className="w-full h-full object-cover" alt="Dancer" />
+                        </div>
+
+                        {/* Bottom right image */}
+                        <div className="absolute right-0 bottom-0 w-[40%] h-[35%] hero-image-card z-10" style={{ borderRadius: "16px", overflow: "hidden" }}>
+                            <img src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&q=80" className="w-full h-full object-cover" alt="Band" />
+                        </div>
+
+                        {/* Floating badge – Rating */}
+                        <div className="floating-badge absolute left-2 top-[10%] z-30 min-w-[130px]">
+                            <Star size={18} fill="#facc15" className="text-yellow-400 flex-shrink-0" />
+                            <div>
+                                <p className="font-black text-gray-900 text-base leading-none">4.9</p>
+                                <p className="text-gray-400 text-xs mt-0.5">Average Rating</p>
+                            </div>
+                        </div>
+
+                        {/* Floating badge – Artists */}
+                        <div className="floating-badge absolute left-2 top-[42%] z-30 min-w-[140px]">
+                            <div className="w-8 h-8 btn-pink rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Users size={16} className="text-white" />
+                            </div>
+                            <div>
+                                <p className="font-black text-gray-900 text-base leading-none">1,200+</p>
+                                <p className="text-gray-400 text-xs mt-0.5">Professional Artists</p>
+                            </div>
+                        </div>
+
+                        {/* Floating badge – Events */}
+                        <div className="floating-badge absolute left-2 bottom-[12%] z-30 min-w-[140px]">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#f0f0f0" }}>
+                                <TrendingUp size={16} className="text-gray-700" />
+                            </div>
+                            <div>
+                                <p className="font-black text-gray-900 text-base leading-none">3,400+</p>
+                                <p className="text-gray-400 text-xs mt-0.5">Events Booked</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ══════════════════════════════════════════════════
+          SEARCH BAR
+      ══════════════════════════════════════════════════ */}
+            <section className="w-full px-6 md:px-12 lg:px-20 mt-10">
+                <div className="max-w-7xl mx-auto">
+                    <div className="search-bar-wrap p-5">
+                        {/* Inputs row */}
+                        <div className="flex flex-col md:flex-row items-stretch gap-0 bg-white rounded-xl overflow-hidden">
+                            {/* What */}
+                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
+                                <Search size={18} className="text-gray-400 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-gray-400 font-600">What are you looking for?</p>
+                                    <input
+                                        type="text"
+                                        placeholder="DJs, Singers, Bands..."
+                                        value={searchQuery}
+                                        onChange={e => setSearchQuery(e.target.value)}
+                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Location */}
+                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
+                                <MapPin size={18} className="text-gray-400 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-gray-400 font-600">Location</p>
+                                    <input
+                                        type="text"
+                                        placeholder="All Sri Lanka ˅"
+                                        value={location}
+                                        onChange={e => setLocation(e.target.value)}
+                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Date */}
+                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
+                                <Calendar size={18} className="text-gray-400 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-gray-400 font-600">Event Date</p>
+                                    <input
+                                        type="text"
+                                        placeholder="Pick a date ˅"
+                                        value={eventDate}
+                                        onChange={e => setEventDate(e.target.value)}
+                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Budget */}
+                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5">
+                                <DollarSign size={18} className="text-gray-400 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-gray-400 font-600">Budget</p>
+                                    <input
+                                        type="text"
+                                        placeholder="Any Budget ˅"
+                                        value={budget}
+                                        onChange={e => setBudget(e.target.value)}
+                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Button */}
+                            <button className="btn-pink font-bold text-sm px-8 py-4 flex-shrink-0 md:rounded-r-xl">
+                                Search
+                            </button>
+                        </div>
+
+                        {/* Category tags */}
+                        <div className="flex flex-wrap gap-2 mt-4 px-1">
+                            {SEARCH_CATEGORIES.map(cat => (
+                                <button key={cat} className="tag-pill">
+                                    <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ══════════════════════════════════════════════════
+          POPULAR ARTISTS
+      ══════════════════════════════════════════════════ */}
+            <section className="w-full px-6 md:px-12 lg:px-20 mt-14">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="section-title">Popular Artists</h2>
+                        <button className="card-see-all">See all <ChevronRight size={16} /></button>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {POPULAR_ARTISTS.map(artist => (
+                            <div key={artist.id} className="artist-card cursor-pointer">
+                                {/* Image */}
+                                <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "3/4" }}>
+                                    <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
+                                    {/* Gradient overlay */}
+                                    <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
+
+                                    {/* Heart */}
+                                    <button
+                                        onClick={() => toggleLike(artist.id)}
+                                        className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all hover:scale-110"
+                                    >
+                                        <Heart
+                                            size={15}
+                                            className={likedArtists.has(artist.id) ? "text-red-500" : "text-gray-500"}
+                                            fill={likedArtists.has(artist.id) ? "#ef4444" : "none"}
+                                        />
+                                    </button>
+
+                                    {/* Verified */}
+                                    {artist.verified && (
+                                        <div className="verified-dot">
+                                            <CheckCircle size={10} fill="white" strokeWidth={0} />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Info */}
+                                <div className="mt-2.5 px-0.5">
+                                    <h3 className="font-800 text-gray-900 text-[15px] leading-tight truncate">{artist.name}</h3>
+                                    <p className="text-gray-400 text-xs mt-0.5">{artist.type}</p>
+                                    <div className="flex items-center gap-1 mt-1">
+                                        <MapPin size={11} className="text-gray-400" />
+                                        <span className="text-gray-400 text-xs">{artist.location}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between mt-2">
+                                        <div className="rating-row">
+                                            <Star size={12} fill="#facc15" className="text-yellow-400" />
+                                            <span className="text-xs font-700 text-gray-800">{artist.rating}</span>
+                                            <span className="text-xs text-gray-400">({artist.reviews})</span>
+                                        </div>
+                                        <span className="text-xs font-800 pink-text">{artist.price}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ══════════════════════════════════════════════════
+          BROWSE CATEGORIES
+      ══════════════════════════════════════════════════ */}
+            <section className="w-full px-6 md:px-12 lg:px-20 mt-16">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="section-title">Browse Categories</h2>
+                        <button className="card-see-all">See all <ChevronRight size={16} /></button>
+                    </div>
+
+                    <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-3">
+                        {BROWSE_CATEGORIES.map(cat => (
+                            <button key={cat.id} className="cat-card rounded-2xl p-4 flex flex-col items-center gap-3 bg-gray-50 cursor-pointer">
+                                <span className="cat-icon text-gray-500 transition-colors">{cat.icon}</span>
+                                <span className="text-xs font-700 text-gray-700 text-center leading-tight">{cat.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ══════════════════════════════════════════════════
+          HOW IT WORKS
+      ══════════════════════════════════════════════════ */}
+            <section className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
+                <div className="max-w-5xl mx-auto">
+                    <h2 className="text-center section-title mb-14">How It Works</h2>
+
+                    <div className="flex flex-col md:flex-row items-center gap-0">
+                        {/* Step 1 */}
+                        <div className="flex flex-col items-center text-center flex-1 px-4">
+                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: "rgba(232,25,75,0.10)", border: "2px solid rgba(232,25,75,0.2)" }}>
+                                <RefreshCw size={26} style={{ color: "#E8194B" }} />
+                            </div>
+                            <h3 className="font-800 text-gray-900 text-[17px] mb-2">Search</h3>
+                            <p className="text-gray-500 text-sm leading-relaxed">Find the perfect artists for your event.</p>
+                        </div>
+
+                        {/* Connector */}
+                        <div className="step-connector hidden md:block" />
+
+                        {/* Step 2 */}
+                        <div className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0">
+                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: "rgba(232,25,75,0.10)", border: "2px solid rgba(232,25,75,0.2)" }}>
+                                <GitCompare size={26} style={{ color: "#E8194B" }} />
+                            </div>
+                            <h3 className="font-800 text-gray-900 text-[17px] mb-2">Compare</h3>
+                            <p className="text-gray-500 text-sm leading-relaxed">View profiles, reviews and prices.</p>
+                        </div>
+
+                        {/* Connector */}
+                        <div className="step-connector hidden md:block" />
+
+                        {/* Step 3 */}
+                        <div className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0">
+                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: "rgba(232,25,75,0.10)", border: "2px solid rgba(232,25,75,0.2)" }}>
+                                <BookOpen size={26} style={{ color: "#E8194B" }} />
+                            </div>
+                            <h3 className="font-800 text-gray-900 text-[17px] mb-2">Book</h3>
+                            <p className="text-gray-500 text-sm leading-relaxed">Contact and book your favourite artist.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ══════════════════════════════════════════════════
+          CTA SECTION (dark)
+      ══════════════════════════════════════════════════ */}
+            <section className="dark-section w-full px-6 md:px-12 lg:px-20 py-14 mt-0">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+
+                    {/* Left: Artists CTA */}
+                    <div>
+                        <p className="pink-text text-xs font-700 uppercase tracking-widest mb-2">For Artists</p>
+                        <h2 className="text-white font-black text-2xl md:text-3xl leading-tight mb-3">
+                            Turn Your Talent<br />Into a Business
+                        </h2>
+                        <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                            Join thousands of artists and grow your brand, reach more clients and get booked.
+                        </p>
+
+                        <button
+                            onClick={() => navigate("/login")}
+                            className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm">
+                            Join as Artist <ArrowRight size={15} />
+                        </button>
+                    </div>
+
+                    {/* Center: Hero image + checklist card */}
+                    <div className="relative flex justify-center">
+                        <div className="relative rounded-2xl overflow-hidden" style={{ height: "260px", width: "100%" }}>
+                            <img
+                                src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80"
+                                className="w-full h-full object-cover object-top"
+                                alt="Artist"
+                                style={{ filter: "brightness(0.75)" }}
+                            />
+                        </div>
+                        {/* Checklist floating card */}
+                        <div className="cta-card absolute bottom-4 right-4 p-4 min-w-[180px]">
+                            <p className="text-white font-800 text-sm mb-3">Get More Bookings</p>
+                            {["Verified Profile", "Direct Leads", "Secure Payments", "Grow Your Fanbase"].map(item => (
+                                <div key={item} className="checklist-item">
+                                    <CheckCircle size={15} style={{ color: "#E8194B", flexShrink: 0 }} />
+                                    <span>{item}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Right: Customers CTA */}
+                    <div>
+                        <p className="pink-text text-xs font-700 uppercase tracking-widest mb-2">For Customers</p>
+                        <h2 className="text-white font-black text-2xl md:text-3xl leading-tight mb-3">
+                            Make Every Event<br />Unforgettable
+                        </h2>
+                        <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                            Book the best local talent for weddings, parties, corporate events and more.
+                        </p>
+                        <button
+                            onClick={() => navigate("/loginCustomer")}
+                            className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm">
+                            Find Artists <ArrowRight size={15} />
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            {/* ══════════════════════════════════════════════════
+          PARTNER LOGOS
+      ══════════════════════════════════════════════════ */}
+            <section className="logo-strip w-full px-6 md:px-12 lg:px-20 py-8 bg-white">
+                <div className="max-w-7xl mx-auto">
+                    <p className="text-center text-gray-400 text-sm mb-6 font-500">
+                        Trusted by event planners and companies across Sri Lanka
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+                        {PARTNER_LOGOS.map(logo => (
+                            <span key={logo} className="text-gray-400 font-800 text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
+                {logo}
+              </span>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        </div>
+    );
+}
