@@ -21,6 +21,13 @@ export default function LoginPage() {
         setLoading(true)
         try {
             const { data } = await api.post('/login', { email, password })
+            
+            if (data.user.role !== 'artist') {
+                setError('Access denied. This login is for artists only.')
+                setLoading(false)
+                return
+            }
+
             setAuth(data.user, data.access_token)
             window.scrollTo(0, 0)
             navigate('/account')

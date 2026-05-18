@@ -25,6 +25,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('access_token'));
 
   const setAuth = (u: User, t: string) => {
+    if (u.role !== 'artist') {
+      console.error('Access denied. This login is for artists only.');
+      return;
+    }
     setUser(u);
     setToken(t);
     localStorage.setItem('user', JSON.stringify(u));

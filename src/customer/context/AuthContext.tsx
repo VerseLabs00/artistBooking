@@ -21,6 +21,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const data = await authService.login(email, password)
+    
+    // Check if the user has the 'client' role
+    if (data.user.role !== 'client') {
+      throw new Error('Access denied. This login is for customers only.')
+    }
+
     localStorage.setItem('auth_token', data.access_token)
     localStorage.setItem('auth_user', JSON.stringify(data.user))
     setToken(data.access_token)
