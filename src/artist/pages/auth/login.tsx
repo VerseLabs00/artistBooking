@@ -17,13 +17,19 @@ export default function LoginPage() {
 
     const handleLogin = async () => {
         setError('')
-        if (!email || !password) { setError('Please enter your email and password.'); return }
+
+        if (!email || !password) {
+            setError('Please enter both email and password.')
+            return
+        }
+
         setLoading(true)
+
         try {
             const { data } = await api.post('/login', { email, password })
-            
+
             if (data.user.role !== 'artist') {
-                setError('Access denied. This login is for artists only.')
+                setError('You are not authorized to access the artist dashboard.')
                 setLoading(false)
                 return
             }
@@ -31,8 +37,12 @@ export default function LoginPage() {
             setAuth(data.user, data.access_token)
             window.scrollTo(0, 0)
             navigate('/account')
+
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Login failed. Please try again.')
+            setError(
+                err.response?.data?.message ||
+                'Invalid email or password. Please try again.'
+            )
         } finally {
             setLoading(false)
         }
