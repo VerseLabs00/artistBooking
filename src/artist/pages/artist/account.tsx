@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
     Heart, MoreHorizontal, Play, Music, MapPin, Users, Star,
     Instagram, Facebook, Twitter, Mail,
-    LogOut, CalendarCheck
 } from "lucide-react";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
@@ -14,6 +13,9 @@ interface Profile {
     location?: string;
     category?: string;
     short_bio?: string;
+    bio_1?: string;
+    bio_2?: string;
+    paragraph?: string;
     starting_price?: number;
     max_price?: number;
     avatar_url?: string;
@@ -21,12 +23,14 @@ interface Profile {
     youtube_link?: string;
     facebook_link?: string;
     instagram_link?: string;
+    spotify_link?: string;
     tags?: string[];
 }
 
 interface Media {
     id: number;
     url: string;
+    title?: string;
     media_type: string;
     purpose: string;
     is_external_link: boolean;
@@ -228,10 +232,11 @@ export default function ArtistProfile() {
                                 )}
 
                                 {/* BIO */}
-                                <p className="text-[13px] text-gray-500 leading-6 mt-6 text-left">
-                                    {profile?.short_bio ||
-                                        "Professional performer creating unforgettable experiences for luxury events and private functions."}
-                                </p>
+                                {profile?.short_bio && (
+                                    <p className="text-[13px] text-gray-500 leading-6 mt-6 text-left">
+                                        {profile.short_bio}
+                                    </p>
+                                )}
 
                                 {/* PRICE */}
                                 {profile?.starting_price && (
@@ -256,7 +261,7 @@ export default function ArtistProfile() {
                                     <button
                                         onClick={() => navigate("/bookingRequests")}
                                         className="flex-1 bg-[#FF2B6B] hover:bg-[#ff1b60] transition text-white py-3 rounded-full font-semibold text-sm shadow-md">
-                                        Booking({rating?.total || 2})
+                                        Booking ({rating?.total ?? 0})
                                     </button>
 
                                     <button
@@ -339,9 +344,6 @@ export default function ArtistProfile() {
                                     </span>
                                     )}
 
-                                    <span className="flex items-center gap-1">
-                                    <Users size={13} /> 13+
-                                </span>
                                 </div>
                             </div>
 
@@ -358,18 +360,13 @@ export default function ArtistProfile() {
 
                         {/* DESCRIPTION */}
                         <div className="mt-7 space-y-5 text-[14px] text-gray-500 leading-7">
-                            <p>
-                                {profile?.short_bio ||
-                                    `${displayName} is known for creating energetic performances and unforgettable experiences for events and private shows.`}
-                            </p>
-
-                            <p>
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                            </p>
-
-                            <p>
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                            </p>
+                            {profile?.short_bio && <p>{profile.short_bio}</p>}
+                            {profile?.bio_1 && <p>{profile.bio_1}</p>}
+                            {profile?.bio_2 && <p>{profile.bio_2}</p>}
+                            {profile?.paragraph && <p>{profile.paragraph}</p>}
+                            {!profile?.short_bio && !profile?.bio_1 && !profile?.bio_2 && !profile?.paragraph && (
+                                <p className="text-gray-400 italic">No biography added yet.</p>
+                            )}
                         </div>
 
                         {/* GALLERY */}
@@ -415,10 +412,10 @@ export default function ArtistProfile() {
 
                                                 <div>
                                                     <p className="text-[14px] font-medium text-gray-700">
-                                                        Live in Concert Colombo
+                                                        {item.title || "Untitled"}
                                                     </p>
-                                                    <p className="text-[12px] text-gray-400">
-                                                        Lorem ipsum dolor sit amet
+                                                    <p className="text-[12px] text-gray-400 truncate max-w-[220px]">
+                                                        {item.url}
                                                     </p>
                                                 </div>
                                             </div>
