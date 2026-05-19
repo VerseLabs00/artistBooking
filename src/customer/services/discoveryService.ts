@@ -63,6 +63,7 @@ export const getArtists = (params?: {
   category?: string
   search?: string
   per_page?: number
+  page?: number
 }): Promise<{ data: ArtistCard[]; meta: PaginatedMeta }> =>
   api.get('/discovery/artists', { params }).then(r => r.data)
 

@@ -31,6 +31,21 @@ function formatArtistPrice(starting: number | null, max: number | null): string 
     return "Contact for price";
 }
 
+async function fetchAllArtists(): Promise<Artist[]> {
+    const artists: Artist[] = [];
+    let page = 1;
+    let lastPage = 1;
+
+    do {
+        const { data, meta } = await getArtists({ per_page: 50, page });
+        artists.push(...data.map(mapDiscoveryArtist));
+        lastPage = meta?.last_page ?? 1;
+        page++;
+    } while (page <= lastPage);
+
+    return artists;
+}
+
 function mapDiscoveryArtist(a: DiscoveryArtist): Artist {
     const extra = a as DiscoveryArtist & {
         average_rating?: number;
@@ -84,12 +99,22 @@ export default function HomePage() {
     const [eventDate, setEventDate] = useState("");
     const [budget, setBudget] = useState("");
     const [popularArtists, setPopularArtists] = useState<Artist[]>([]);
+    const [browseArtists, setBrowseArtists] = useState<Artist[]>([]);
+    const [browseArtistsLoading, setBrowseArtistsLoading] = useState(true);
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
 
     useEffect(() => {
         getArtists({ per_page: 5 })
             .then(({ data }) => setPopularArtists(data.map(mapDiscoveryArtist)))
             .catch(() => setPopularArtists([]));
+    }, []);
+
+    useEffect(() => {
+        setBrowseArtistsLoading(true);
+        fetchAllArtists()
+            .then(setBrowseArtists)
+            .catch(() => setBrowseArtists([]))
+            .finally(() => setBrowseArtistsLoading(false));
     }, []);
 
     const toggleLike = (id: string | number) => {
@@ -99,6 +124,46 @@ export default function HomePage() {
             return next;
         });
     };
+
+    const renderArtistCard = (artist: Artist) => (
+        <div key={artist.id} className="artist-card cursor-pointer">
+            <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "3/4" }}>
+                <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
+                <button
+                    onClick={() => toggleLike(artist.id)}
+                    className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all hover:scale-110"
+                >
+                    <Heart
+                        size={15}
+                        className={likedArtists.has(artist.id) ? "text-red-500" : "text-gray-500"}
+                        fill={likedArtists.has(artist.id) ? "#ef4444" : "none"}
+                    />
+                </button>
+                {artist.verified && (
+                    <div className="verified-dot">
+                        <CheckCircle size={10} fill="white" strokeWidth={0} />
+                    </div>
+                )}
+            </div>
+            <div className="mt-2.5 px-0.5">
+                <h3 className="font-800 text-gray-900 text-[15px] leading-tight truncate">{artist.name}</h3>
+                <p className="text-gray-400 text-xs mt-0.5">{artist.type}</p>
+                <div className="flex items-center gap-1 mt-1">
+                    <MapPin size={11} className="text-gray-400" />
+                    <span className="text-gray-400 text-xs">{artist.location}</span>
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                    <div className="rating-row">
+                        <Star size={12} fill="#facc15" className="text-yellow-400" />
+                        <span className="text-xs font-700 text-gray-800">{artist.rating}</span>
+                        <span className="text-xs text-gray-400">({artist.reviews})</span>
+                    </div>
+                    <span className="text-xs font-800 pink-text">{artist.price}</span>
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-white" style={{ fontFamily: "'Nunito', 'Plus Jakarta Sans', sans-serif" }}>
@@ -381,53 +446,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {popularArtists.map(artist => (
-                            <div key={artist.id} className="artist-card cursor-pointer">
-                                {/* Image */}
-                                <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "3/4" }}>
-                                    <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
-                                    {/* Gradient overlay */}
-                                    <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
-
-                                    {/* Heart */}
-                                    <button
-                                        onClick={() => toggleLike(artist.id)}
-                                        className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all hover:scale-110"
-                                    >
-                                        <Heart
-                                            size={15}
-                                            className={likedArtists.has(artist.id) ? "text-red-500" : "text-gray-500"}
-                                            fill={likedArtists.has(artist.id) ? "#ef4444" : "none"}
-                                        />
-                                    </button>
-
-                                    {/* Verified */}
-                                    {artist.verified && (
-                                        <div className="verified-dot">
-                                            <CheckCircle size={10} fill="white" strokeWidth={0} />
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Info */}
-                                <div className="mt-2.5 px-0.5">
-                                    <h3 className="font-800 text-gray-900 text-[15px] leading-tight truncate">{artist.name}</h3>
-                                    <p className="text-gray-400 text-xs mt-0.5">{artist.type}</p>
-                                    <div className="flex items-center gap-1 mt-1">
-                                        <MapPin size={11} className="text-gray-400" />
-                                        <span className="text-gray-400 text-xs">{artist.location}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between mt-2">
-                                        <div className="rating-row">
-                                            <Star size={12} fill="#facc15" className="text-yellow-400" />
-                                            <span className="text-xs font-700 text-gray-800">{artist.rating}</span>
-                                            <span className="text-xs text-gray-400">({artist.reviews})</span>
-                                        </div>
-                                        <span className="text-xs font-800 pink-text">{artist.price}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                        {popularArtists.map(renderArtistCard)}
                     </div>
                 </div>
             </section>
@@ -450,8 +469,23 @@ export default function HomePage() {
                             </button>
                         ))}
                     </div>
+
+                    <div className="mt-10">
+                        <h3 className="text-lg font-800 text-gray-900 mb-5">All Artists</h3>
+                        {browseArtistsLoading ? (
+                            <p className="text-sm text-gray-400 py-6 text-center">Loading artists...</p>
+                        ) : browseArtists.length === 0 ? (
+                            <p className="text-sm text-gray-400 py-6 text-center">No artists found.</p>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                {browseArtists.map(renderArtistCard)}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </section>
+
+
 
             {/* ══════════════════════════════════════════════════
           HOW IT WORKS
