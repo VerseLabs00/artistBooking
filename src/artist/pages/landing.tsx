@@ -88,8 +88,6 @@ function getCategoryIcon(label: string): React.ReactNode {
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const NAV_LINKS = ["Explore", "Categories", "Artists", "Events", "How it works", "Join as Artist"];
 
-const SEARCH_CATEGORIES = ["DJs", "Live Bands", "Dancers", "Sound Systems", "MCs", "Photographers", "More"];
-
 const PARTNER_LOGOS = ["TAJ", "Shangri-La", "Cinnamon", "Hilton", "MOVENPICK", "Liga Escapes", "atogals"];
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
@@ -99,7 +97,10 @@ export default function HomePage() {
     const [location, setLocation] = useState("");
     const [eventDate, setEventDate] = useState("");
     const [budget, setBudget] = useState("");
+    const [defaultPopularArtists, setDefaultPopularArtists] = useState<Artist[]>([]);
     const [popularArtists, setPopularArtists] = useState<Artist[]>([]);
+    const [selectedSearchCategory, setSelectedSearchCategory] = useState<string | null>(null);
+    const [popularArtistsLoading, setPopularArtistsLoading] = useState(false);
     const [browseCategories, setBrowseCategories] = useState<string[]>([]);
     const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(true);
     const [allBrowseArtists, setAllBrowseArtists] = useState<Artist[]>([]);
@@ -110,8 +111,15 @@ export default function HomePage() {
 
     useEffect(() => {
         getArtists({ per_page: 5 })
-            .then(({ data }) => setPopularArtists(data.map(mapDiscoveryArtist)))
-            .catch(() => setPopularArtists([]));
+            .then(({ data }) => {
+                const artists = data.map(mapDiscoveryArtist);
+                setDefaultPopularArtists(artists);
+                setPopularArtists(artists);
+            })
+            .catch(() => {
+                setDefaultPopularArtists([]);
+                setPopularArtists([]);
+            });
     }, []);
 
     useEffect(() => {
@@ -135,6 +143,45 @@ export default function HomePage() {
             })
             .finally(() => setBrowseArtistsLoading(false));
     }, []);
+
+    const clearSearchCategoryFilter = () => {
+        setSelectedSearchCategory(null);
+        setPopularArtists(defaultPopularArtists);
+    };
+
+    const showAllPopularArtists = async () => {
+        setSelectedSearchCategory(null);
+        setPopularArtistsLoading(true);
+        try {
+            const artists = await fetchAllArtists();
+            setPopularArtists(artists);
+        } catch {
+            setPopularArtists(defaultPopularArtists);
+        } finally {
+            setPopularArtistsLoading(false);
+        }
+    };
+
+    const filterPopularArtistsByCategory = async (category: string) => {
+        setSelectedSearchCategory(category);
+        setPopularArtistsLoading(true);
+        try {
+            const artists = await fetchAllArtists(category);
+            setPopularArtists(artists);
+        } catch {
+            setPopularArtists([]);
+        } finally {
+            setPopularArtistsLoading(false);
+        }
+    };
+
+    const handleSearchCategoryClick = (category: string) => {
+        if (selectedSearchCategory === category) {
+            clearSearchCategoryFilter();
+            return;
+        }
+        filterPopularArtistsByCategory(category);
+    };
 
     const showAllBrowseArtists = () => {
         setSelectedBrowseCategory(null);
@@ -235,6 +282,7 @@ export default function HomePage() {
         .divider-v { width: 1px; background: rgba(255,255,255,0.12); height: 36px; margin: auto 0; }
         .tag-pill { background: #f5f5f5; border-radius: 100px; padding: 6px 16px; font-size: 13px; font-weight: 600; color: #222; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: background 0.15s, color 0.15s; border: 1.5px solid #eee; }
         .tag-pill:hover { background: #fff0f3; color: #E8194B; border-color: #E8194B; }
+        .tag-pill-active { background: #fff0f3; color: #E8194B; border-color: #E8194B; }
         .step-connector { flex: 1; height: 2px; background: repeating-linear-gradient(90deg, #E8194B 0, #E8194B 8px, transparent 8px, transparent 16px); margin: 0 8px; }
         .dark-section { background: #111; }
         .cta-card { background: #1a1a1a; border-radius: 20px; }
@@ -469,12 +517,21 @@ export default function HomePage() {
 
                         {/* Category tags */}
                         <div className="flex flex-wrap gap-2 mt-4 px-1">
-                            {SEARCH_CATEGORIES.map(cat => (
-                                <button key={cat} className="tag-pill">
-                                    <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
-                                    {cat}
-                                </button>
-                            ))}
+                            {browseCategoriesLoading ? (
+                                <span className="text-xs text-gray-500">Loading categories...</span>
+                            ) : (
+                                browseCategories.map(cat => (
+                                    <button
+                                        key={cat}
+                                        type="button"
+                                        onClick={() => handleSearchCategoryClick(cat)}
+                                        className={`tag-pill${selectedSearchCategory === cat ? " tag-pill-active" : ""}`}
+                                    >
+                                        <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
+                                        {cat}
+                                    </button>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
@@ -486,13 +543,27 @@ export default function HomePage() {
             <section className="w-full px-6 md:px-12 lg:px-20 mt-14">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="section-title">Popular Artists</h2>
-                        <button className="card-see-all">See all <ChevronRight size={16} /></button>
+                        <h2 className="section-title">
+                            {selectedSearchCategory ? `${selectedSearchCategory} Artists` : "Popular Artists"}
+                        </h2>
+                        <button type="button" className="card-see-all" onClick={showAllPopularArtists}>
+                            See all <ChevronRight size={16} />
+                        </button>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {popularArtists.map(renderArtistCard)}
-                    </div>
+                    {popularArtistsLoading ? (
+                        <p className="text-sm text-gray-400 py-6 text-center">Loading artists...</p>
+                    ) : popularArtists.length === 0 ? (
+                        <p className="text-sm text-gray-400 py-6 text-center">
+                            {selectedSearchCategory
+                                ? `No artists found in ${selectedSearchCategory}.`
+                                : "No artists found."}
+                        </p>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {popularArtists.map(renderArtistCard)}
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -503,6 +574,9 @@ export default function HomePage() {
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="section-title">Browse Categories</h2>
+                        <button type="button" className="card-see-all" onClick={showAllBrowseArtists}>
+                            See all <ChevronRight size={16} />
+                        </button>
                     </div>
 
                     {browseCategoriesLoading ? (
