@@ -59,12 +59,19 @@ export interface PaginatedMeta {
 export const getCategories = (): Promise<string[]> =>
   api.get('/discovery/categories').then(r => r.data.categories)
 
-export const getArtists = (params?: {
+export interface ArtistSearchParams {
   category?: string
   search?: string
+  location?: string
+  event_date?: string
+  max_budget?: number
   per_page?: number
   page?: number
-}): Promise<{ data: ArtistCard[]; meta: PaginatedMeta }> =>
+}
+
+export const getArtists = (
+  params?: ArtistSearchParams,
+): Promise<{ data: ArtistCard[]; meta: PaginatedMeta }> =>
   api.get('/discovery/artists', { params }).then(r => r.data)
 
 export const getNearYou = (

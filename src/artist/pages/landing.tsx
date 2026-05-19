@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getArtists, getCategories } from "../../customer/services/discoveryService";
-import type { ArtistCard as DiscoveryArtist } from "../../customer/services/discoveryService";
+import { getArtists, getCategories, getNearYou } from "../../customer/services/discoveryService";
+import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../../customer/services/discoveryService";
 import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
     ArrowRight, ChevronRight, Star, Users, Zap, Shield, TrendingUp,
@@ -20,6 +20,16 @@ interface Artist {
     price: string;
     image: string;
     verified: boolean;
+    startingPrice: number | null;
+    maxPrice: number | null;
+}
+
+interface ArtistSearchFilters {
+    search?: string;
+    category?: string;
+    location?: string;
+    eventDate?: string;
+    budget?: number;
 }
 
 const FALLBACK_ARTIST_IMAGE =
@@ -29,6 +39,79 @@ function formatArtistPrice(starting: number | null, max: number | null): string 
     if (starting != null) return `Rs. ${starting.toLocaleString("en-LK")}+`;
     if (max != null) return `Rs. ${max.toLocaleString("en-LK")}+`;
     return "Contact for price";
+}
+
+function parseBudget(value: string): number | null {
+    const parsed = parseFloat(value.replace(/[^\d.]/g, ""));
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function buildArtistSearchParams(filters: ArtistSearchFilters, page: number): ArtistSearchParams {
+    const params: ArtistSearchParams = { per_page: 50, page };
+    if (filters.search?.trim()) params.search = filters.search.trim();
+    if (filters.category) params.category = filters.category;
+    if (filters.location?.trim()) params.location = filters.location.trim();
+    if (filters.eventDate) params.event_date = filters.eventDate;
+    if (filters.budget != null) params.max_budget = filters.budget;
+    return params;
+}
+
+function applyClientSearchFilters(artists: Artist[], filters: ArtistSearchFilters): Artist[] {
+    let result = artists;
+    const query = filters.search?.trim().toLowerCase();
+
+    if (query) {
+        result = result.filter(
+            a =>
+                a.name.toLowerCase().includes(query) ||
+                a.type.toLowerCase().includes(query) ||
+                a.location.toLowerCase().includes(query),
+        );
+    }
+
+    const loc = filters.location?.trim().toLowerCase();
+    if (loc) {
+        result = result.filter(a => a.location.toLowerCase().includes(loc));
+    }
+
+    if (filters.budget != null) {
+        result = result.filter(
+            a => a.startingPrice == null || a.startingPrice <= filters.budget!,
+        );
+    }
+
+    return result;
+}
+
+async function fetchArtistsWithFilters(filters: ArtistSearchFilters = {}): Promise<Artist[]> {
+    const byId = new Map<string | number, Artist>();
+
+    const addArtists = (items: DiscoveryArtist[]) => {
+        for (const item of items) {
+            const mapped = mapDiscoveryArtist(item);
+            byId.set(mapped.id, mapped);
+        }
+    };
+
+    if (filters.location?.trim()) {
+        try {
+            const { data } = await getNearYou(filters.location.trim(), 50);
+            addArtists(data);
+        } catch {
+            /* fall back to main listing */
+        }
+    }
+
+    let page = 1;
+    let lastPage = 1;
+    do {
+        const { data, meta } = await getArtists(buildArtistSearchParams(filters, page));
+        addArtists(data);
+        lastPage = meta?.last_page ?? 1;
+        page++;
+    } while (page <= lastPage);
+
+    return applyClientSearchFilters(Array.from(byId.values()), filters);
 }
 
 async function fetchAllArtists(category?: string): Promise<Artist[]> {
@@ -68,6 +151,8 @@ function mapDiscoveryArtist(a: DiscoveryArtist): Artist {
         price: formatArtistPrice(a.starting_price, a.max_price),
         image: a.avatar_url || a.cover_url || FALLBACK_ARTIST_IMAGE,
         verified: extra.verification_status ? extra.verification_status === "approved" : true,
+        startingPrice: a.starting_price,
+        maxPrice: a.max_price,
     };
 }
 
@@ -100,6 +185,7 @@ export default function HomePage() {
     const [defaultPopularArtists, setDefaultPopularArtists] = useState<Artist[]>([]);
     const [popularArtists, setPopularArtists] = useState<Artist[]>([]);
     const [selectedSearchCategory, setSelectedSearchCategory] = useState<string | null>(null);
+    const [hasActiveSearch, setHasActiveSearch] = useState(false);
     const [popularArtistsLoading, setPopularArtistsLoading] = useState(false);
     const [browseCategories, setBrowseCategories] = useState<string[]>([]);
     const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(true);
@@ -144,13 +230,50 @@ export default function HomePage() {
             .finally(() => setBrowseArtistsLoading(false));
     }, []);
 
-    const clearSearchCategoryFilter = () => {
-        setSelectedSearchCategory(null);
-        setPopularArtists(defaultPopularArtists);
+    const runSearch = useCallback(async () => {
+        const filters: ArtistSearchFilters = {
+            search: searchQuery,
+            category: selectedSearchCategory ?? undefined,
+            location: location,
+            eventDate: eventDate || undefined,
+            budget: parseBudget(budget) ?? undefined,
+        };
+
+        const hasCriteria =
+            Boolean(filters.search?.trim()) ||
+            Boolean(filters.category) ||
+            Boolean(filters.location?.trim()) ||
+            Boolean(filters.eventDate) ||
+            filters.budget != null;
+
+        setHasActiveSearch(hasCriteria);
+        setPopularArtistsLoading(true);
+
+        try {
+            if (!hasCriteria) {
+                setPopularArtists(defaultPopularArtists);
+                return;
+            }
+            const artists = await fetchArtistsWithFilters(filters);
+            setPopularArtists(artists);
+        } catch {
+            setPopularArtists([]);
+        } finally {
+            setPopularArtistsLoading(false);
+        }
+    }, [searchQuery, selectedSearchCategory, location, eventDate, budget, defaultPopularArtists]);
+
+    const handleSearchCategoryClick = (category: string) => {
+        setSelectedSearchCategory(prev => (prev === category ? null : category));
     };
 
     const showAllPopularArtists = async () => {
+        setHasActiveSearch(false);
         setSelectedSearchCategory(null);
+        setSearchQuery("");
+        setLocation("");
+        setEventDate("");
+        setBudget("");
         setPopularArtistsLoading(true);
         try {
             const artists = await fetchAllArtists();
@@ -160,27 +283,6 @@ export default function HomePage() {
         } finally {
             setPopularArtistsLoading(false);
         }
-    };
-
-    const filterPopularArtistsByCategory = async (category: string) => {
-        setSelectedSearchCategory(category);
-        setPopularArtistsLoading(true);
-        try {
-            const artists = await fetchAllArtists(category);
-            setPopularArtists(artists);
-        } catch {
-            setPopularArtists([]);
-        } finally {
-            setPopularArtistsLoading(false);
-        }
-    };
-
-    const handleSearchCategoryClick = (category: string) => {
-        if (selectedSearchCategory === category) {
-            clearSearchCategoryFilter();
-            return;
-        }
-        filterPopularArtistsByCategory(category);
     };
 
     const showAllBrowseArtists = () => {
@@ -446,7 +548,13 @@ export default function HomePage() {
       ══════════════════════════════════════════════════ */}
             <section className="w-full px-6 md:px-12 lg:px-20 mt-10">
                 <div className="max-w-7xl mx-auto">
-                    <div className="search-bar-wrap p-5">
+                    <form
+                        className="search-bar-wrap p-5"
+                        onSubmit={e => {
+                            e.preventDefault();
+                            runSearch();
+                        }}
+                    >
                         {/* Inputs row */}
                         <div className="flex flex-col md:flex-row items-stretch gap-0 bg-white rounded-xl overflow-hidden">
                             {/* What */}
@@ -485,9 +593,9 @@ export default function HomePage() {
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs text-gray-400 font-600">Event Date</p>
                                     <input
-                                        type="text"
-                                        placeholder="Pick a date ˅"
+                                        type="date"
                                         value={eventDate}
+                                        min={new Date().toISOString().split("T")[0]}
                                         onChange={e => setEventDate(e.target.value)}
                                         className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
                                     />
@@ -510,7 +618,10 @@ export default function HomePage() {
                             </div>
 
                             {/* Button */}
-                            <button className="btn-pink font-bold text-sm px-8 py-4 flex-shrink-0 md:rounded-r-xl">
+                            <button
+                                type="submit"
+                                className="btn-pink font-bold text-sm px-8 py-4 flex-shrink-0 md:rounded-r-xl"
+                            >
                                 Search
                             </button>
                         </div>
@@ -533,7 +644,7 @@ export default function HomePage() {
                                 ))
                             )}
                         </div>
-                    </div>
+                    </form>
                 </div>
             </section>
 
@@ -544,7 +655,7 @@ export default function HomePage() {
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="section-title">
-                            {selectedSearchCategory ? `${selectedSearchCategory} Artists` : "Popular Artists"}
+                            {hasActiveSearch ? "Search Results" : "Popular Artists"}
                         </h2>
                         <button type="button" className="card-see-all" onClick={showAllPopularArtists}>
                             See all <ChevronRight size={16} />
@@ -555,8 +666,8 @@ export default function HomePage() {
                         <p className="text-sm text-gray-400 py-6 text-center">Loading artists...</p>
                     ) : popularArtists.length === 0 ? (
                         <p className="text-sm text-gray-400 py-6 text-center">
-                            {selectedSearchCategory
-                                ? `No artists found in ${selectedSearchCategory}.`
+                            {hasActiveSearch
+                                ? "No artists match your search. Try different filters."
                                 : "No artists found."}
                         </p>
                     ) : (
