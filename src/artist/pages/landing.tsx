@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { getArtists } from "../../customer/services/discoveryService";
+import type { ArtistCard as DiscoveryArtist } from "../../customer/services/discoveryService";
 import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
     ArrowRight, ChevronRight, Star, Users, Zap, Shield, TrendingUp,
@@ -9,7 +11,7 @@ import {
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Artist {
-    id: number;
+    id: string | number;
     name: string;
     type: string;
     location: string;
@@ -20,6 +22,36 @@ interface Artist {
     verified: boolean;
 }
 
+const FALLBACK_ARTIST_IMAGE =
+    "https://images.unsplash.com/photo-1571935441008-e42d7f4a8f65?w=400&q=80";
+
+function formatArtistPrice(starting: number | null, max: number | null): string {
+    if (starting != null) return `Rs. ${starting.toLocaleString("en-LK")}+`;
+    if (max != null) return `Rs. ${max.toLocaleString("en-LK")}+`;
+    return "Contact for price";
+}
+
+function mapDiscoveryArtist(a: DiscoveryArtist): Artist {
+    const extra = a as DiscoveryArtist & {
+        average_rating?: number;
+        reviews_count?: number;
+        verification_status?: string;
+        rating?: { average?: number | null; total?: number };
+    };
+
+    return {
+        id: a.id,
+        name: a.stage_name || "Artist",
+        type: a.category || "Performer",
+        location: a.location || "Sri Lanka",
+        rating: extra.average_rating ?? extra.rating?.average ?? 4.8,
+        reviews: extra.reviews_count ?? extra.rating?.total ?? 0,
+        price: formatArtistPrice(a.starting_price, a.max_price),
+        image: a.avatar_url || a.cover_url || FALLBACK_ARTIST_IMAGE,
+        verified: extra.verification_status ? extra.verification_status === "approved" : true,
+    };
+}
+
 interface Category {
     id: number;
     label: string;
@@ -28,14 +60,6 @@ interface Category {
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const NAV_LINKS = ["Explore", "Categories", "Artists", "Events", "How it works", "Join as Artist"];
-
-const POPULAR_ARTISTS: Artist[] = [
-    { id: 1, name: "DJ Ravin", type: "EDM / Club DJ", location: "Colombo", rating: 4.9, reviews: 128, price: "Rs. 35,000+", image: "https://images.unsplash.com/photo-1571935441008-e42d7f4a8f65?w=400&q=80", verified: true },
-    { id: 2, name: "Nadeemal Perera", type: "Live Band", location: "Kandy", rating: 4.8, reviews: 96, price: "Rs. 60,000+", image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&q=80", verified: true },
-    { id: 3, name: "Dilki Uresha", type: "Wedding Singer", location: "Galle", rating: 4.9, reviews: 176, price: "Rs. 45,000+", image: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80", verified: true },
-    { id: 4, name: "Infinity Dance Crew", type: "Dance Group", location: "Colombo", rating: 4.8, reviews: 112, price: "Rs. 30,000+", image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80", verified: true },
-    { id: 5, name: "Supreme Sounds", type: "Sound & Lighting", location: "Negombo", rating: 4.9, reviews: 143, price: "Rs. 75,000+", image: "https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&q=80", verified: true },
-];
 
 const SEARCH_CATEGORIES = ["DJs", "Live Bands", "Dancers", "Sound Systems", "MCs", "Photographers", "More"];
 
@@ -59,9 +83,16 @@ export default function HomePage() {
     const [location, setLocation] = useState("");
     const [eventDate, setEventDate] = useState("");
     const [budget, setBudget] = useState("");
-    const [likedArtists, setLikedArtists] = useState<Set<number>>(new Set());
+    const [popularArtists, setPopularArtists] = useState<Artist[]>([]);
+    const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
 
-    const toggleLike = (id: number) => {
+    useEffect(() => {
+        getArtists({ per_page: 5 })
+            .then(({ data }) => setPopularArtists(data.map(mapDiscoveryArtist)))
+            .catch(() => setPopularArtists([]));
+    }, []);
+
+    const toggleLike = (id: string | number) => {
         setLikedArtists(prev => {
             const next = new Set(prev);
             next.has(id) ? next.delete(id) : next.add(id);
@@ -350,7 +381,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {POPULAR_ARTISTS.map(artist => (
+                        {popularArtists.map(artist => (
                             <div key={artist.id} className="artist-card cursor-pointer">
                                 {/* Image */}
                                 <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "3/4" }}>
