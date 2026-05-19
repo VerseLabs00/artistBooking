@@ -127,9 +127,9 @@ export default function EditProfile() {
             await api.put("/profile", payload);
 
             if (activeTab === "Audio & Video") {
-                const validLinks = mediaEntries.filter(e => e.link.trim()).map(e => ({ link: e.link, title: e.title }));
+                const validLinks = mediaEntries.filter(e => e.link.trim()).map(e => ({ url: e.link, title: e.title }));
                 if (validLinks.length > 0) {
-                    await api.post("/profile/sync-links", { links: validLinks.map(e => e.link) });
+                    await api.post("/profile/sync-links", { links: validLinks });
                 }
             }
 
