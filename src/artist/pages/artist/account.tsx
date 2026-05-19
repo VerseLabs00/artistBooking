@@ -168,13 +168,6 @@ export default function ArtistProfile() {
                 {/* TOP RIGHT BUTTONS */}
                 <div className="absolute top-5 right-5 flex gap-3 z-20">
                     <button
-                        onClick={() => navigate("/bookingRequests")}
-                        className="bg-white rounded-full px-4 py-2 text-sm font-semibold shadow-md hover:scale-105 transition"
-                    >
-                        Booking
-                    </button>
-
-                    <button
                         onClick={handleLogout}
                         className="bg-black text-white rounded-full px-4 py-2 text-sm font-semibold shadow-md hover:scale-105 transition"
                     >
@@ -441,4 +434,4 @@ export default function ArtistProfile() {
             </div>
         </div>
     );
-};
+}
