@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getArtists } from "../../customer/services/discoveryService";
+import { getArtists, getCategories } from "../../customer/services/discoveryService";
 import type { ArtistCard as DiscoveryArtist } from "../../customer/services/discoveryService";
 import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
@@ -31,13 +31,17 @@ function formatArtistPrice(starting: number | null, max: number | null): string 
     return "Contact for price";
 }
 
-async function fetchAllArtists(): Promise<Artist[]> {
+async function fetchAllArtists(category?: string): Promise<Artist[]> {
     const artists: Artist[] = [];
     let page = 1;
     let lastPage = 1;
 
     do {
-        const { data, meta } = await getArtists({ per_page: 50, page });
+        const { data, meta } = await getArtists({
+            per_page: 50,
+            page,
+            ...(category ? { category } : {}),
+        });
         artists.push(...data.map(mapDiscoveryArtist));
         lastPage = meta?.last_page ?? 1;
         page++;
@@ -67,27 +71,24 @@ function mapDiscoveryArtist(a: DiscoveryArtist): Artist {
     };
 }
 
-interface Category {
-    id: number;
-    label: string;
-    icon: React.ReactNode;
+function getCategoryIcon(label: string): React.ReactNode {
+    const key = label.toLowerCase();
+    if (key.includes("dj")) return <Radio size={28} />;
+    if (key.includes("sing") || key.includes("vocal")) return <Mic2 size={28} />;
+    if (key.includes("band") || key.includes("music") || key.includes("producer")) return <Music2 size={28} />;
+    if (key.includes("danc")) return <PersonStanding size={28} />;
+    if (key.includes("sound")) return <Zap size={28} />;
+    if (key.includes("host") || key.includes("mc") || key.includes("emcee")) return <Globe size={28} />;
+    if (key.includes("light")) return <Lightbulb size={28} />;
+    if (key.includes("photo") || key.includes("camera")) return <Camera size={28} />;
+    if (key.includes("cultural") || key.includes("show") || key.includes("comed")) return <Star size={28} />;
+    return <Music2 size={28} />;
 }
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const NAV_LINKS = ["Explore", "Categories", "Artists", "Events", "How it works", "Join as Artist"];
 
 const SEARCH_CATEGORIES = ["DJs", "Live Bands", "Dancers", "Sound Systems", "MCs", "Photographers", "More"];
-
-const BROWSE_CATEGORIES: Category[] = [
-    { id: 1, label: "DJs", icon: <Radio size={28} /> },
-    { id: 2, label: "Singers", icon: <Mic2 size={28} /> },
-    { id: 3, label: "Live Bands", icon: <Music2 size={28} /> },
-    { id: 4, label: "Dancers", icon: <PersonStanding size={28} /> },
-    { id: 5, label: "Sound Systems", icon: <Zap size={28} /> },
-    { id: 6, label: "Event Hosts", icon: <Globe size={28} /> },
-    { id: 7, label: "Cultural Shows", icon: <Star size={28} /> },
-    { id: 8, label: "Lighting", icon: <Lightbulb size={28} /> },
-];
 
 const PARTNER_LOGOS = ["TAJ", "Shangri-La", "Cinnamon", "Hilton", "MOVENPICK", "Liga Escapes", "atogals"];
 
@@ -99,7 +100,11 @@ export default function HomePage() {
     const [eventDate, setEventDate] = useState("");
     const [budget, setBudget] = useState("");
     const [popularArtists, setPopularArtists] = useState<Artist[]>([]);
+    const [browseCategories, setBrowseCategories] = useState<string[]>([]);
+    const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(true);
+    const [allBrowseArtists, setAllBrowseArtists] = useState<Artist[]>([]);
     const [browseArtists, setBrowseArtists] = useState<Artist[]>([]);
+    const [selectedBrowseCategory, setSelectedBrowseCategory] = useState<string | null>(null);
     const [browseArtistsLoading, setBrowseArtistsLoading] = useState(true);
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
 
@@ -110,12 +115,52 @@ export default function HomePage() {
     }, []);
 
     useEffect(() => {
+        setBrowseCategoriesLoading(true);
+        getCategories()
+            .then(setBrowseCategories)
+            .catch(() => setBrowseCategories([]))
+            .finally(() => setBrowseCategoriesLoading(false));
+    }, []);
+
+    useEffect(() => {
         setBrowseArtistsLoading(true);
         fetchAllArtists()
-            .then(setBrowseArtists)
-            .catch(() => setBrowseArtists([]))
+            .then(artists => {
+                setAllBrowseArtists(artists);
+                setBrowseArtists(artists);
+            })
+            .catch(() => {
+                setAllBrowseArtists([]);
+                setBrowseArtists([]);
+            })
             .finally(() => setBrowseArtistsLoading(false));
     }, []);
+
+    const showAllBrowseArtists = () => {
+        setSelectedBrowseCategory(null);
+        setBrowseArtists(allBrowseArtists);
+    };
+
+    const filterBrowseArtistsByCategory = async (category: string) => {
+        setSelectedBrowseCategory(category);
+        setBrowseArtistsLoading(true);
+        try {
+            const artists = await fetchAllArtists(category);
+            setBrowseArtists(artists);
+        } catch {
+            setBrowseArtists([]);
+        } finally {
+            setBrowseArtistsLoading(false);
+        }
+    };
+
+    const handleBrowseCategoryClick = (category: string) => {
+        if (selectedBrowseCategory === category) {
+            showAllBrowseArtists();
+            return;
+        }
+        filterBrowseArtistsByCategory(category);
+    };
 
     const toggleLike = (id: string | number) => {
         setLikedArtists(prev => {
@@ -458,24 +503,58 @@ export default function HomePage() {
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="section-title">Browse Categories</h2>
-                        <button className="card-see-all">See all <ChevronRight size={16} /></button>
                     </div>
 
-                    <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-3">
-                        {BROWSE_CATEGORIES.map(cat => (
-                            <button key={cat.id} className="cat-card rounded-2xl p-4 flex flex-col items-center gap-3 bg-gray-50 cursor-pointer">
-                                <span className="cat-icon text-gray-500 transition-colors">{cat.icon}</span>
-                                <span className="text-xs font-700 text-gray-700 text-center leading-tight">{cat.label}</span>
-                            </button>
-                        ))}
-                    </div>
+                    {browseCategoriesLoading ? (
+                        <p className="text-sm text-gray-400 py-4 text-center">Loading categories...</p>
+                    ) : browseCategories.length === 0 ? (
+                        <p className="text-sm text-gray-400 py-4 text-center">No categories available.</p>
+                    ) : (
+                        <div
+                            className="grid gap-3"
+                            style={{ gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))" }}
+                        >
+                            {browseCategories.map(cat => (
+                                <button
+                                    key={cat}
+                                    type="button"
+                                    onClick={() => handleBrowseCategoryClick(cat)}
+                                    className={`cat-card rounded-2xl p-4 flex flex-col items-center gap-3 cursor-pointer transition-colors ${
+                                        selectedBrowseCategory === cat
+                                            ? "bg-[#fff5f7] border-[#E8194B]"
+                                            : "bg-gray-50"
+                                    }`}
+                                    style={
+                                        selectedBrowseCategory === cat
+                                            ? { border: "1.5px solid #E8194B" }
+                                            : { border: "1.5px solid #f0f0f0" }
+                                    }
+                                >
+                                    <span
+                                        className={`cat-icon transition-colors ${
+                                            selectedBrowseCategory === cat ? "text-[#E8194B]" : "text-gray-500"
+                                        }`}
+                                    >
+                                        {getCategoryIcon(cat)}
+                                    </span>
+                                    <span className="text-xs font-700 text-gray-700 text-center leading-tight">{cat}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     <div className="mt-10">
-                        <h3 className="text-lg font-800 text-gray-900 mb-5">All Artists</h3>
+                        <h3 className="text-lg font-800 text-gray-900 mb-5">
+                            {selectedBrowseCategory ? `${selectedBrowseCategory} Artists` : "All Artists"}
+                        </h3>
                         {browseArtistsLoading ? (
                             <p className="text-sm text-gray-400 py-6 text-center">Loading artists...</p>
                         ) : browseArtists.length === 0 ? (
-                            <p className="text-sm text-gray-400 py-6 text-center">No artists found.</p>
+                            <p className="text-sm text-gray-400 py-6 text-center">
+                                {selectedBrowseCategory
+                                    ? `No artists found in ${selectedBrowseCategory}.`
+                                    : "No artists found."}
+                            </p>
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {browseArtists.map(renderArtistCard)}
