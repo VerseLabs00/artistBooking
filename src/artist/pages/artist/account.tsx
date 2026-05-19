@@ -114,6 +114,13 @@ export default function ArtistProfile() {
         navigate("/login");
     };
 
+    const handleDeleteVideo = async (id: number) => {
+        try {
+            await api.delete(`/profile/gallery/${id}`);
+            setMedia(prev => prev.filter(m => m.id !== id));
+        } catch { /* ignore */ }
+    };
+
     const galleryImages = media.filter(
         m => m.media_type === "image" &&
             m.purpose !== "verification_front" &&
@@ -398,19 +405,17 @@ export default function ArtistProfile() {
 
                                 <div className="space-y-4">
                                     {videoLinks.map((item) => (
-                                        <a
-                                            key={item.id}
-                                            href={item.url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="flex items-center justify-between border-b pb-4 hover:opacity-80 transition"
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center">
+                                        <div key={item.id} className="flex items-center justify-between border-b pb-4">
+                                            <a
+                                                href={item.url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="flex items-center gap-4 hover:opacity-80 transition flex-1 min-w-0"
+                                            >
+                                                <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
                                                     <Play size={16} className="text-gray-600" />
                                                 </div>
-
-                                                <div>
+                                                <div className="min-w-0">
                                                     <p className="text-[14px] font-medium text-gray-700">
                                                         {item.title || "Untitled"}
                                                     </p>
@@ -418,10 +423,14 @@ export default function ArtistProfile() {
                                                         {item.url}
                                                     </p>
                                                 </div>
-                                            </div>
-
-                                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                                        </a>
+                                            </a>
+                                            <button
+                                                onClick={() => handleDeleteVideo(item.id)}
+                                                className="ml-4 shrink-0 text-[12px] text-red-500 hover:text-red-700 font-medium transition"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
                                     ))}
                                 </div>
                             </>
