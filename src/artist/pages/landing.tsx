@@ -274,46 +274,31 @@ export default function HomePage() {
     }, [searchQuery, selectedSearchCategory, location, eventDate, budget, defaultPopularArtists]);
 
     const handleSearchCategoryClick = async (category: string | null) => {
-        const newCategory = selectedSearchCategory === category ? null : category;
-        setSelectedSearchCategory(newCategory);
-        
-        // Immediate search update
-        const filters: ArtistSearchFilters = {
-            search: searchQuery,
-            category: newCategory ?? undefined,
-            location: location,
-            eventDate: eventDate || undefined,
-            budget: parseBudget(budget) ?? undefined,
-        };
+        if (category === null) {
+            // "All" logic - immediate reset to default/all artists
+            setSelectedSearchCategory(null);
+            setHasActiveSearch(false);
+            setPopularArtistsLoading(true);
 
-        const hasCriteria =
-            Boolean(filters.search?.trim()) ||
-            Boolean(filters.category) ||
-            Boolean(filters.location?.trim()) ||
-            Boolean(filters.eventDate) ||
-            filters.budget != null;
+            // Clear entered data
+            setSearchQuery("");
+            setLocation("");
+            setEventDate("");
+            setBudget("");
 
-        setHasActiveSearch(hasCriteria);
-        setPopularArtistsLoading(true);
-
-        // Clear entered data
-        setSearchQuery("");
-        setLocation("");
-        setEventDate("");
-        setBudget("");
-
-        try {
-            if (!hasCriteria) {
+            try {
                 setPopularArtists(defaultPopularArtists);
-                return;
+            } catch {
+                setPopularArtists([]);
+            } finally {
+                setPopularArtistsLoading(false);
             }
-            const artists = await fetchArtistsWithFilters(filters);
-            setPopularArtists(artists);
-        } catch {
-            setPopularArtists([]);
-        } finally {
-            setPopularArtistsLoading(false);
+            return;
         }
+
+        // For other categories, just toggle the selection state
+        // User must click "Search" button to see results
+        setSelectedSearchCategory(prev => prev === category ? null : category);
     };
 
     const showAllPopularArtists = async () => {
