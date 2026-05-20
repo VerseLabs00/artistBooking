@@ -175,7 +175,7 @@ function getCategoryIcon(label: string): React.ReactNode {
 }
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
-const NAV_LINKS = ["Explore", "Categories", "Artists", "Events", "How it works", "Join as Artist"];
+const NAV_LINKS = ["Explore", "Categories", "Artist", "Events", "How it works", "Join as Artist"];
 
 const PARTNER_LOGOS = ["TAJ", "Shangri-La", "Cinnamon", "Hilton", "MOVENPICK", "Liga Escapes", "atogals"];
 
@@ -517,12 +517,12 @@ export default function HomePage() {
 
                 {/* Nav Links */}
                 <div className="hidden md:flex items-center gap-7">
-                    <button onClick={() => scrollToSection('search-section')} className="nav-link">Explore</button>
-                    <button onClick={() => scrollToSection('artists-section')} className="nav-link">Artists</button>
                     <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
+                    <button onClick={() => scrollToSection('artists-section')} className="nav-link">Artist</button>
+                    <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
                     <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
                     <button onClick={() => scrollToSection('join-section')} className="nav-link">Join as Artist</button>
-                    <button className="nav-link">Event</button>
+                    <button className="nav-link">Events</button>
                 </div>
 
                 {/* Auth */}
@@ -565,7 +565,7 @@ export default function HomePage() {
 
                         <div className="flex flex-wrap gap-3 mt-8">
                             <button
-                                onClick={() => scrollToSection('search-section')}
+                                onClick={() => scrollToSection('artists-section')}
                                 className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
                             >
                                 Explore Artists <ArrowRight size={16} />
@@ -696,12 +696,34 @@ export default function HomePage() {
 
 
             {/* ══════════════════════════════════════════════════
-          SEARCH BAR
+          POPULAR ARTISTS
       ══════════════════════════════════════════════════ */}
-            <section id="search-section" className="w-full px-6 md:px-12 lg:px-20 mt-10">
-                <div className="max-w-7xl mx-auto">
+            <section id="artists-section" className="w-full px-6 md:px-12 lg:px-20 mt-14 overflow-hidden">
+                <div className="max-w-7xl mx-auto relative group">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="section-title">
+                            {hasActiveSearch ? "Search Results" : "Artist"}
+                        </h2>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => scrollPopular('left')}
+                                className="carousel-btn"
+                                aria-label="Previous"
+                            >
+                                <ChevronLeft size={20} />
+                            </button>
+                            <button
+                                onClick={() => scrollPopular('right')}
+                                className="carousel-btn"
+                                aria-label="Next"
+                            >
+                                <ChevronRight size={20} />
+                            </button>
+                        </div>
+                    </div>
+
                     <form
-                        className="search-bar-wrap p-5"
+                        className="search-bar-wrap p-5 mb-10"
                         onSubmit={e => {
                             e.preventDefault();
                             runSearch();
@@ -807,35 +829,6 @@ export default function HomePage() {
                             )}
                         </div>
                     </form>
-                </div>
-            </section>
-
-            {/* ══════════════════════════════════════════════════
-          POPULAR ARTISTS
-      ══════════════════════════════════════════════════ */}
-            <section id="artists-section" className="w-full px-6 md:px-12 lg:px-20 mt-14 overflow-hidden">
-                <div className="max-w-7xl mx-auto relative group">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="section-title">
-                            {hasActiveSearch ? "Search Results" : "Artists"}
-                        </h2>
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => scrollPopular('left')}
-                                className="carousel-btn"
-                                aria-label="Previous"
-                            >
-                                <ChevronLeft size={20} />
-                            </button>
-                            <button
-                                onClick={() => scrollPopular('right')}
-                                className="carousel-btn"
-                                aria-label="Next"
-                            >
-                                <ChevronRight size={20} />
-                            </button>
-                        </div>
-                    </div>
 
                     {popularArtistsLoading ? (
                         <p className="text-sm text-gray-400 py-6 text-center">Loading artists...</p>
