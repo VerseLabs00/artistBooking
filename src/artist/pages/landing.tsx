@@ -1,13 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getArtists, getCategories, getNearYou } from "../../customer/services/discoveryService";
 import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../../customer/services/discoveryService";
 import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
-    ArrowRight, ChevronRight, Star, Users, Zap, Shield, TrendingUp,
+    ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, Shield, TrendingUp,
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
     Play, RefreshCw, GitCompare, BookOpen
 } from "lucide-react";
+
+// ... (rest of imports and types unchanged)
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Artist {
@@ -198,9 +200,20 @@ export default function HomePage() {
     const [selectedBrowseCategory, setSelectedBrowseCategory] = useState<string | null>(null);
     const [browseArtistsLoading, setBrowseArtistsLoading] = useState(true);
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
+    const popularArtistsRef = useRef<HTMLDivElement>(null);
+
+    const scrollPopular = (direction: 'left' | 'right') => {
+        if (!popularArtistsRef.current) return;
+        const container = popularArtistsRef.current;
+        const scrollAmount = container.clientWidth * 0.8;
+        container.scrollBy({
+            left: direction === 'left' ? -scrollAmount : scrollAmount,
+            behavior: 'smooth'
+        });
+    };
 
     useEffect(() => {
-        getArtists({ per_page: 5 })
+        getArtists({ per_page: 50 })
             .then(({ data }) => {
                 const artists = data.map(mapDiscoveryArtist);
                 setDefaultPopularArtists(artists);
@@ -361,7 +374,7 @@ export default function HomePage() {
     };
 
     const renderArtistCard = (artist: Artist) => (
-        <div key={artist.id} className="artist-card cursor-pointer">
+        <div key={artist.id} className="flex-shrink-0 w-[240px] md:w-[220px] lg:w-[240px] artist-card cursor-pointer">
             <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "3/4" }}>
                 <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
@@ -443,6 +456,33 @@ export default function HomePage() {
         /* Offset for sticky navbar */
         section[id] {
             scroll-margin-top: 90px;
+        }
+
+        /* Carousel Styles */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .carousel-btn {
+            background: white;
+            border: 1.5px solid #eee;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .carousel-btn:hover {
+            border-color: #E8194B;
+            color: #E8194B;
+            transform: scale(1.1);
         }
       `}</style>
 
@@ -710,15 +750,28 @@ export default function HomePage() {
             {/* ══════════════════════════════════════════════════
           POPULAR ARTISTS
       ══════════════════════════════════════════════════ */}
-            <section id="artists-section" className="w-full px-6 md:px-12 lg:px-20 mt-14">
-                <div className="max-w-7xl mx-auto">
+            <section id="artists-section" className="w-full px-6 md:px-12 lg:px-20 mt-14 overflow-hidden">
+                <div className="max-w-7xl mx-auto relative group">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="section-title">
                             {hasActiveSearch ? "Search Results" : "Popular Artists"}
                         </h2>
-                        <button type="button" className="card-see-all" onClick={showAllPopularArtists}>
-                            See all <ChevronRight size={16} />
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={() => scrollPopular('left')}
+                                className="carousel-btn"
+                                aria-label="Previous"
+                            >
+                                <ChevronLeft size={20} />
+                            </button>
+                            <button 
+                                onClick={() => scrollPopular('right')}
+                                className="carousel-btn"
+                                aria-label="Next"
+                            >
+                                <ChevronRight size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     {popularArtistsLoading ? (
@@ -730,7 +783,10 @@ export default function HomePage() {
                                 : "No artists found."}
                         </p>
                     ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <div 
+                            ref={popularArtistsRef}
+                            className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2"
+                        >
                             {popularArtists.map(renderArtistCard)}
                         </div>
                     )}
