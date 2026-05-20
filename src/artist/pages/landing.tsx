@@ -353,6 +353,13 @@ export default function HomePage() {
         });
     };
 
+    const scrollToSection = (id: string) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    };
+
     const renderArtistCard = (artist: Artist) => (
         <div key={artist.id} className="artist-card cursor-pointer">
             <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "3/4" }}>
@@ -432,6 +439,11 @@ export default function HomePage() {
         .card-see-all:hover { text-decoration: underline; }
         .floating-badge { background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); padding: 12px 18px; display: flex; align-items: center; gap: 10px; }
         .hero-bg-dots { background-image: radial-gradient(circle, #E8194B22 1.5px, transparent 1.5px); background-size: 24px 24px; }
+        
+        /* Offset for sticky navbar */
+        section[id] {
+            scroll-margin-top: 90px;
+        }
       `}</style>
 
             {/* ══════════════════════════════════════════════════
@@ -445,9 +457,12 @@ export default function HomePage() {
 
                 {/* Nav Links */}
                 <div className="hidden md:flex items-center gap-7">
-                    {NAV_LINKS.map(link => (
-                        <button key={link} className="nav-link">{link}</button>
-                    ))}
+                    <button onClick={() => scrollToSection('search-section')} className="nav-link">Explore</button>
+                    <button onClick={() => scrollToSection('artists-section')} className="nav-link">Artists</button>
+                    <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
+                    <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
+                    <button onClick={() => scrollToSection('join-section')} className="nav-link">Join as Artist</button>
+                    <button className="nav-link">Event</button>
                 </div>
 
                 {/* Auth */}
@@ -489,12 +504,12 @@ export default function HomePage() {
                         </p>
 
                         <div className="flex flex-wrap gap-3 mt-8">
-                            <Link
-                                to="/loginCustomer"
+                            <button
+                                onClick={() => scrollToSection('search-section')}
                                 className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
                             >
                                 Explore Artists <ArrowRight size={16} />
-                            </Link>
+                            </button>
 
                             <Link
                                 to="/login"
@@ -580,7 +595,7 @@ export default function HomePage() {
             {/* ══════════════════════════════════════════════════
           SEARCH BAR
       ══════════════════════════════════════════════════ */}
-            <section className="w-full px-6 md:px-12 lg:px-20 mt-10">
+            <section id="search-section" className="w-full px-6 md:px-12 lg:px-20 mt-10">
                 <div className="max-w-7xl mx-auto">
                     <form
                         className="search-bar-wrap p-5"
@@ -695,7 +710,7 @@ export default function HomePage() {
             {/* ══════════════════════════════════════════════════
           POPULAR ARTISTS
       ══════════════════════════════════════════════════ */}
-            <section className="w-full px-6 md:px-12 lg:px-20 mt-14">
+            <section id="artists-section" className="w-full px-6 md:px-12 lg:px-20 mt-14">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="section-title">
@@ -725,7 +740,7 @@ export default function HomePage() {
             {/* ══════════════════════════════════════════════════
           BROWSE CATEGORIES
       ══════════════════════════════════════════════════ */}
-            <section className="w-full px-6 md:px-12 lg:px-20 mt-16">
+            <section id="categories-section" className="w-full px-6 md:px-12 lg:px-20 mt-16">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="section-title">Browse Categories</h2>
@@ -798,7 +813,7 @@ export default function HomePage() {
             {/* ══════════════════════════════════════════════════
           HOW IT WORKS
       ══════════════════════════════════════════════════ */}
-            <section className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
+            <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
                 <div className="max-w-5xl mx-auto">
                     <h2 className="text-center section-title mb-14">How It Works</h2>
 
@@ -842,7 +857,7 @@ export default function HomePage() {
             {/* ══════════════════════════════════════════════════
           CTA SECTION (dark)
       ══════════════════════════════════════════════════ */}
-            <section className="dark-section w-full px-6 md:px-12 lg:px-20 py-14 mt-0">
+            <section id="join-section" className="dark-section w-full px-6 md:px-12 lg:px-20 py-14 mt-0">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
 
                     {/* Left: Artists CTA */}
