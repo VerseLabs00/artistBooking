@@ -653,6 +653,49 @@ export default function HomePage() {
             </section>
 
             {/* ══════════════════════════════════════════════════
+          BROWSE CATEGORIES
+      ══════════════════════════════════════════════════ */}
+            <section id="categories-section" className="w-full px-6 md:px-12 lg:px-20 mt-16">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex items-center justify-between mb-8">
+                        <h2 className="section-title">Browse Categories</h2>
+                    </div>
+
+                    {browseCategoriesLoading ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {[1, 2, 3, 4, 5].map(i => (
+                                <div key={i} className="aspect-[3/4] rounded-[30px] bg-gray-100 animate-pulse" />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {browseCategories.map(cat => (
+                                <div
+                                    key={cat}
+                                    className="cat-card-modern group"
+                                    onClick={() => filterBrowseArtistsByCategory(cat)}
+                                >
+                                    <img
+                                        src={CATEGORY_IMAGES[cat] || DEFAULT_CAT_IMAGE}
+                                        className="cat-img"
+                                        alt={cat}
+                                    />
+                                    <div className="cat-overlay">
+                                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-3 group-hover:bg-pink transition-colors">
+                                            {getCategoryIcon(cat)}
+                                        </div>
+                                        <h3 className="text-white font-900 text-lg leading-tight">{cat}</h3>
+                                        <p className="text-white/60 text-xs mt-1 font-600">Explore Artists</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </section>
+
+
+            {/* ══════════════════════════════════════════════════
           SEARCH BAR
       ══════════════════════════════════════════════════ */}
             <section id="search-section" className="w-full px-6 md:px-12 lg:px-20 mt-10">
@@ -808,48 +851,6 @@ export default function HomePage() {
                             className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2"
                         >
                             {popularArtists.map(renderArtistCard)}
-                        </div>
-                    )}
-                </div>
-            </section>
-
-            {/* ══════════════════════════════════════════════════
-          BROWSE CATEGORIES
-      ══════════════════════════════════════════════════ */}
-            <section id="categories-section" className="w-full px-6 md:px-12 lg:px-20 mt-16">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="section-title">Browse Categories</h2>
-                    </div>
-
-                    {browseCategoriesLoading ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {[1, 2, 3, 4, 5].map(i => (
-                                <div key={i} className="aspect-[4/5] rounded-[20px] bg-gray-100 animate-pulse" />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {browseCategories.map(cat => (
-                                <div
-                                    key={cat}
-                                    className="cat-card-modern group"
-                                    onClick={() => filterBrowseArtistsByCategory(cat)}
-                                >
-                                    <img
-                                        src={CATEGORY_IMAGES[cat] || DEFAULT_CAT_IMAGE}
-                                        className="cat-img"
-                                        alt={cat}
-                                    />
-                                    <div className="cat-overlay">
-                                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-3 group-hover:bg-pink transition-colors">
-                                            {getCategoryIcon(cat)}
-                                        </div>
-                                        <h3 className="text-white font-900 text-lg leading-tight">{cat}</h3>
-                                        <p className="text-white/60 text-xs mt-1 font-600">Explore Artists</p>
-                                    </div>
-                                </div>
-                            ))}
                         </div>
                     )}
                 </div>
