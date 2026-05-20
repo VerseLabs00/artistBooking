@@ -253,6 +253,12 @@ export default function HomePage() {
         setHasActiveSearch(hasCriteria);
         setPopularArtistsLoading(true);
 
+        // Clear entered data
+        setSearchQuery("");
+        setLocation("");
+        setEventDate("");
+        setBudget("");
+
         try {
             if (!hasCriteria) {
                 setPopularArtists(defaultPopularArtists);
@@ -267,8 +273,47 @@ export default function HomePage() {
         }
     }, [searchQuery, selectedSearchCategory, location, eventDate, budget, defaultPopularArtists]);
 
-    const handleSearchCategoryClick = (category: string) => {
-        setSelectedSearchCategory(prev => (prev === category ? null : category));
+    const handleSearchCategoryClick = async (category: string | null) => {
+        const newCategory = selectedSearchCategory === category ? null : category;
+        setSelectedSearchCategory(newCategory);
+        
+        // Immediate search update
+        const filters: ArtistSearchFilters = {
+            search: searchQuery,
+            category: newCategory ?? undefined,
+            location: location,
+            eventDate: eventDate || undefined,
+            budget: parseBudget(budget) ?? undefined,
+        };
+
+        const hasCriteria =
+            Boolean(filters.search?.trim()) ||
+            Boolean(filters.category) ||
+            Boolean(filters.location?.trim()) ||
+            Boolean(filters.eventDate) ||
+            filters.budget != null;
+
+        setHasActiveSearch(hasCriteria);
+        setPopularArtistsLoading(true);
+
+        // Clear entered data
+        setSearchQuery("");
+        setLocation("");
+        setEventDate("");
+        setBudget("");
+
+        try {
+            if (!hasCriteria) {
+                setPopularArtists(defaultPopularArtists);
+                return;
+            }
+            const artists = await fetchArtistsWithFilters(filters);
+            setPopularArtists(artists);
+        } catch {
+            setPopularArtists([]);
+        } finally {
+            setPopularArtistsLoading(false);
+        }
     };
 
     const showAllPopularArtists = async () => {
@@ -635,17 +680,27 @@ export default function HomePage() {
                             {browseCategoriesLoading ? (
                                 <span className="text-xs text-gray-500">Loading categories...</span>
                             ) : (
-                                browseCategories.map(cat => (
+                                <>
                                     <button
-                                        key={cat}
                                         type="button"
-                                        onClick={() => handleSearchCategoryClick(cat)}
-                                        className={`tag-pill${selectedSearchCategory === cat ? " tag-pill-active" : ""}`}
+                                        onClick={() => handleSearchCategoryClick(null)}
+                                        className={`tag-pill${selectedSearchCategory === null ? " tag-pill-active" : ""}`}
                                     >
                                         <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
-                                        {cat}
+                                        All
                                     </button>
-                                ))
+                                    {browseCategories.map(cat => (
+                                        <button
+                                            key={cat}
+                                            type="button"
+                                            onClick={() => handleSearchCategoryClick(cat)}
+                                            className={`tag-pill${selectedSearchCategory === cat ? " tag-pill-active" : ""}`}
+                                        >
+                                            <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </>
                             )}
                         </div>
                     </form>
