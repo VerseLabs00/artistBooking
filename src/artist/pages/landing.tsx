@@ -6,10 +6,8 @@ import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
     ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, Shield, TrendingUp,
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
-    Play, RefreshCw, GitCompare, BookOpen
+    Play, RefreshCw, GitCompare, BookOpen, X, Loader2
 } from "lucide-react";
-
-// ... (rest of imports and types unchanged)
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Artist {
@@ -181,6 +179,20 @@ const NAV_LINKS = ["Explore", "Categories", "Artists", "Events", "How it works",
 
 const PARTNER_LOGOS = ["TAJ", "Shangri-La", "Cinnamon", "Hilton", "MOVENPICK", "Liga Escapes", "atogals"];
 
+const CATEGORY_IMAGES: Record<string, string> = {
+    "Musician": "https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=600&q=80",
+    "Band & Duo": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&q=80",
+    "DJ": "https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?w=600&q=80",
+    "Dancer": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&q=80",
+    "Comedian": "https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=600&q=80",
+    "Photographer": "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600&q=80",
+    "Producer": "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=80",
+    "Singer": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=80",
+    "Sound System": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80"
+};
+
+const DEFAULT_CAT_IMAGE = "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=600&q=80";
+
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 export default function HomePage() {
     const navigate = useNavigate();
@@ -195,12 +207,12 @@ export default function HomePage() {
     const [popularArtistsLoading, setPopularArtistsLoading] = useState(false);
     const [browseCategories, setBrowseCategories] = useState<string[]>([]);
     const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(true);
-    const [allBrowseArtists, setAllBrowseArtists] = useState<Artist[]>([]);
     const [browseArtists, setBrowseArtists] = useState<Artist[]>([]);
     const [selectedBrowseCategory, setSelectedBrowseCategory] = useState<string | null>(null);
-    const [browseArtistsLoading, setBrowseArtistsLoading] = useState(true);
+    const [browseArtistsLoading, setBrowseArtistsLoading] = useState(false);
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
     const popularArtistsRef = useRef<HTMLDivElement>(null);
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
 
     const scrollPopular = (direction: 'left' | 'right') => {
         if (!popularArtistsRef.current) return;
@@ -231,20 +243,6 @@ export default function HomePage() {
             .then(setBrowseCategories)
             .catch(() => setBrowseCategories([]))
             .finally(() => setBrowseCategoriesLoading(false));
-    }, []);
-
-    useEffect(() => {
-        setBrowseArtistsLoading(true);
-        fetchAllArtists()
-            .then(artists => {
-                setAllBrowseArtists(artists);
-                setBrowseArtists(artists);
-            })
-            .catch(() => {
-                setAllBrowseArtists([]);
-                setBrowseArtists([]);
-            })
-            .finally(() => setBrowseArtistsLoading(false));
     }, []);
 
     const runSearch = useCallback(async () => {
@@ -332,30 +330,8 @@ export default function HomePage() {
         }
     };
 
-    const showAllBrowseArtists = () => {
-        setSelectedBrowseCategory(null);
-        setBrowseArtists(allBrowseArtists);
-    };
-
-    const filterBrowseArtistsByCategory = async (category: string) => {
-        setSelectedBrowseCategory(category);
-        setBrowseArtistsLoading(true);
-        try {
-            const artists = await fetchAllArtists(category);
-            setBrowseArtists(artists);
-        } catch {
-            setBrowseArtists([]);
-        } finally {
-            setBrowseArtistsLoading(false);
-        }
-    };
-
-    const handleBrowseCategoryClick = (category: string) => {
-        if (selectedBrowseCategory === category) {
-            showAllBrowseArtists();
-            return;
-        }
-        filterBrowseArtistsByCategory(category);
+    const filterBrowseArtistsByCategory = (category: string) => {
+        window.open(`/category?name=${encodeURIComponent(category)}`, '_blank');
     };
 
     const toggleLike = (id: string | number) => {
@@ -374,12 +350,15 @@ export default function HomePage() {
     };
 
     const renderArtistCard = (artist: Artist) => (
-        <div key={artist.id} className="flex-shrink-0 w-[180px] sm:w-[200px] md:w-[220px] artist-card cursor-pointer">
+        <div key={artist.id} className="flex-shrink-0 w-[180px] sm:w-[200px] md:w-[220px] artist-card cursor-pointer" onClick={() => navigate(`/artist/${artist.id}`)}>
             <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "3/4" }}>
                 <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
                 <button
-                    onClick={() => toggleLike(artist.id)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        toggleLike(artist.id);
+                    }}
                     className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all hover:scale-110"
                 >
                     <Heart
@@ -426,9 +405,36 @@ export default function HomePage() {
         .btn-dark:hover { background: #222; }
         .artist-card { transition: transform 0.2s, box-shadow 0.2s; }
         .artist-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.13); }
-        .cat-card { transition: border-color 0.18s, background 0.18s; border: 1.5px solid #f0f0f0; }
-        .cat-card:hover { border-color: #E8194B; background: #fff5f7; }
-        .cat-card:hover .cat-icon { color: #E8194B; }
+        .cat-card-modern { 
+            position: relative; 
+            border-radius: 20px; 
+            overflow: hidden; 
+            aspect-ratio: 4/5;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .cat-card-modern:hover {
+            transform: scale(1.03);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .cat-card-modern:hover .cat-img {
+            transform: scale(1.1);
+        }
+        .cat-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .cat-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+        }
         .search-input { outline: none; }
         .search-input:focus { outline: none; }
         .hero-image-card { border-radius: 16px; overflow: hidden; }
@@ -483,6 +489,20 @@ export default function HomePage() {
             border-color: #E8194B;
             color: #E8194B;
             transform: scale(1.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(232,25,75,0.3);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(232,25,75,0.5);
         }
       `}</style>
 
@@ -754,17 +774,17 @@ export default function HomePage() {
                 <div className="max-w-7xl mx-auto relative group">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="section-title">
-                            {hasActiveSearch ? "Search Results" : "Popular Artists"}
+                            {hasActiveSearch ? "Search Results" : "Artists"}
                         </h2>
                         <div className="flex items-center gap-3">
-                            <button 
+                            <button
                                 onClick={() => scrollPopular('left')}
                                 className="carousel-btn"
                                 aria-label="Previous"
                             >
                                 <ChevronLeft size={20} />
                             </button>
-                            <button 
+                            <button
                                 onClick={() => scrollPopular('right')}
                                 className="carousel-btn"
                                 aria-label="Next"
@@ -783,7 +803,7 @@ export default function HomePage() {
                                 : "No artists found."}
                         </p>
                     ) : (
-                        <div 
+                        <div
                             ref={popularArtistsRef}
                             className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2"
                         >
@@ -798,73 +818,42 @@ export default function HomePage() {
       ══════════════════════════════════════════════════ */}
             <section id="categories-section" className="w-full px-6 md:px-12 lg:px-20 mt-16">
                 <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-8">
                         <h2 className="section-title">Browse Categories</h2>
-                        <button type="button" className="card-see-all" onClick={showAllBrowseArtists}>
-                            See all <ChevronRight size={16} />
-                        </button>
                     </div>
 
                     {browseCategoriesLoading ? (
-                        <p className="text-sm text-gray-400 py-4 text-center">Loading categories...</p>
-                    ) : browseCategories.length === 0 ? (
-                        <p className="text-sm text-gray-400 py-4 text-center">No categories available.</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {[1, 2, 3, 4, 5].map(i => (
+                                <div key={i} className="aspect-[4/5] rounded-[20px] bg-gray-100 animate-pulse" />
+                            ))}
+                        </div>
                     ) : (
-                        <div
-                            className="grid gap-3"
-                            style={{ gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))" }}
-                        >
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                             {browseCategories.map(cat => (
-                                <button
+                                <div
                                     key={cat}
-                                    type="button"
-                                    onClick={() => handleBrowseCategoryClick(cat)}
-                                    className={`cat-card rounded-2xl p-4 flex flex-col items-center gap-3 cursor-pointer transition-colors ${
-                                        selectedBrowseCategory === cat
-                                            ? "bg-[#fff5f7] border-[#E8194B]"
-                                            : "bg-gray-50"
-                                    }`}
-                                    style={
-                                        selectedBrowseCategory === cat
-                                            ? { border: "1.5px solid #E8194B" }
-                                            : { border: "1.5px solid #f0f0f0" }
-                                    }
+                                    className="cat-card-modern group"
+                                    onClick={() => filterBrowseArtistsByCategory(cat)}
                                 >
-                                    <span
-                                        className={`cat-icon transition-colors ${
-                                            selectedBrowseCategory === cat ? "text-[#E8194B]" : "text-gray-500"
-                                        }`}
-                                    >
-                                        {getCategoryIcon(cat)}
-                                    </span>
-                                    <span className="text-xs font-700 text-gray-700 text-center leading-tight">{cat}</span>
-                                </button>
+                                    <img
+                                        src={CATEGORY_IMAGES[cat] || DEFAULT_CAT_IMAGE}
+                                        className="cat-img"
+                                        alt={cat}
+                                    />
+                                    <div className="cat-overlay">
+                                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-3 group-hover:bg-pink transition-colors">
+                                            {getCategoryIcon(cat)}
+                                        </div>
+                                        <h3 className="text-white font-900 text-lg leading-tight">{cat}</h3>
+                                        <p className="text-white/60 text-xs mt-1 font-600">Explore Artists</p>
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     )}
-
-                    <div className="mt-10">
-                        <h3 className="text-lg font-800 text-gray-900 mb-5">
-                            {selectedBrowseCategory ? `${selectedBrowseCategory} Artists` : "All Artists"}
-                        </h3>
-                        {browseArtistsLoading ? (
-                            <p className="text-sm text-gray-400 py-6 text-center">Loading artists...</p>
-                        ) : browseArtists.length === 0 ? (
-                            <p className="text-sm text-gray-400 py-6 text-center">
-                                {selectedBrowseCategory
-                                    ? `No artists found in ${selectedBrowseCategory}.`
-                                    : "No artists found."}
-                            </p>
-                        ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                {browseArtists.map(renderArtistCard)}
-                            </div>
-                        )}
-                    </div>
                 </div>
             </section>
-
-
 
             {/* ══════════════════════════════════════════════════
           HOW IT WORKS

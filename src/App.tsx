@@ -16,6 +16,8 @@ import ArtistProfilePage from "./customer/pages/ArtistProfilePage.tsx";
 
 import AdminRoutes from "./admin/routes/AppRouter.jsx";
 
+import Category from "./artist/pages/artist/category.tsx";
+
 function App() {
     return (
         <Routes>
@@ -28,6 +30,7 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/editProfile" element={<EditProfile />} />
             <Route path="/bookingRequests" element={<Bookings />} />
+                <Route path="/category" element={<Category />} />
             
             {/* Customer Routes */}
             <Route path="/loginCustomer" element={<LoginCustomer />} />
