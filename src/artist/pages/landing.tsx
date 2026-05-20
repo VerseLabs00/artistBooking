@@ -74,6 +74,10 @@ function applyClientSearchFilters(artists: Artist[], filters: ArtistSearchFilter
         result = result.filter(a => a.location.toLowerCase().includes(loc));
     }
 
+    if (filters.category) {
+        result = result.filter(a => a.type === filters.category);
+    }
+
     if (filters.budget != null) {
         result = result.filter(
             a => a.startingPrice == null || a.startingPrice <= filters.budget!,
