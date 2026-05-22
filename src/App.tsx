@@ -14,6 +14,8 @@ import LoginCustomer from "./customer/pages/LoginPage.tsx";
 import SignupCustomer from "./customer/pages/SignUpPage.tsx";
 import HomePageCustomer from "./customer/pages/HomePage.tsx";
 import ArtistProfilePage from "./customer/pages/ArtistProfilePage.tsx";
+import ArtistProfile from "./customer/pages/ArtistProfile.tsx";
+import CategoryCustomer from "./artist/pages/artist/categoryCustomer.tsx";
 
 import AdminRoutes from "./admin/routes/AppRouter.jsx";
 
@@ -38,8 +40,10 @@ function App() {
             <Route path="/loginCustomer" element={<LoginCustomer />} />
             <Route path="/signupCustomer" element={<SignupCustomer />} />
             <Route path="/home" element={<HomePageCustomer />} />
+            <Route path="/artistProfile/:id" element={<ArtistProfile />} />
             <Route path="/artist/:id" element={<ArtistProfilePage />} />
-            
+            <Route path="/categoryCustomer" element={<CategoryCustomer />} />
+
             {/* Admin Routes */}
             <Route path="/admin/*" element={<AdminRoutes />} />
         </Routes>

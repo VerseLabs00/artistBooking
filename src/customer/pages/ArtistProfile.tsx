@@ -103,7 +103,7 @@ function MediaPreviewCard({ item }: { item: { id: string; url: string; media_typ
     );
 }
 
-export default function ArtistProfilePage() {
+export default function ArtistProfile() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [artist, setArtist] = useState<ArtistDetail | null>(null);
@@ -306,7 +306,7 @@ export default function ArtistProfilePage() {
                                     {/* BOOK BUTTON */}
                                     <div className="mt-7">
                                         <button
-                                            onClick={() => navigate("/loginCustomer")}
+                                            onClick={handleBookNow}
                                             className="w-full bg-[#FF2B6B] hover:bg-[#ff1b60] transition text-white py-3 rounded-full font-semibold text-sm shadow-md"
                                         >
                                             Book Now
@@ -478,7 +478,7 @@ export default function ArtistProfilePage() {
                             <div className="mt-12 bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-sm">
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">Leave a Review</h3>
                                 <p className="text-xs text-gray-400 mb-6">Share your experience with the community</p>
-                                
+
                                 <div className="flex items-center justify-center gap-1 mb-6">
                                     {[1, 2, 3, 4, 5].map((s) => (
                                         <button
