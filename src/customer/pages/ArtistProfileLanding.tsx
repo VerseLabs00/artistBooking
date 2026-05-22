@@ -196,13 +196,55 @@ export default function ArtistProfileLanding() {
             .catch(() => {});
     };
 
-    if (loading) return (
-        <div className="min-h-screen bg-[#F4F1F5]">
-            <div className="flex items-center justify-center h-96 text-gray-400 text-sm">
-                Loading profile...
+    if (loading) {
+        const skeletonClass = "animate-pulse bg-gray-200";
+        return (
+            <div className="min-h-screen bg-[#F4F1F5]">
+                {/* Skeleton Hero */}
+                <div className={`relative h-[220px] w-full ${skeletonClass}`} />
+
+                {/* Skeleton Avatar */}
+                <div className="absolute top-[156px] left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+120px)] lg:translate-x-0 z-30">
+                    <div className={`w-32 h-32 rounded-full border-[5px] border-white shadow-lg ${skeletonClass}`} />
+                </div>
+
+                <div className="max-w-6xl mx-auto px-4 mt-20 relative z-20 pb-20">
+                    <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
+
+                        {/* Skeleton Left Panel */}
+                        <div className="space-y-5">
+                            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                                <div className="pt-10 flex flex-col items-center space-y-4">
+                                    <div className={`h-8 w-48 rounded ${skeletonClass}`} /> {/* Name */}
+                                    <div className={`h-4 w-32 rounded ${skeletonClass}`} /> {/* Rating */}
+                                    <div className="flex gap-2">
+                                        <div className={`h-6 w-16 rounded-full ${skeletonClass}`} /> {/* Tag */}
+                                        <div className={`h-6 w-16 rounded-full ${skeletonClass}`} /> {/* Tag */}
+                                    </div>
+                                    <div className={`h-20 w-full rounded mt-4 ${skeletonClass}`} /> {/* Bio */}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Skeleton Right Panel */}
+                        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+                            <div className={`h-8 w-40 rounded mb-6 ${skeletonClass}`} /> {/* Overview title */}
+                            <div className="space-y-4">
+                                <div className={`h-4 w-full rounded ${skeletonClass}`} />
+                                <div className={`h-4 w-full rounded ${skeletonClass}`} />
+                                <div className={`h-4 w-3/4 rounded ${skeletonClass}`} />
+                            </div>
+                            <div className="grid grid-cols-3 gap-3 mt-10">
+                                <div className={`h-32 rounded-xl ${skeletonClass}`} />
+                                <div className={`h-32 rounded-xl ${skeletonClass}`} />
+                                <div className={`h-32 rounded-xl ${skeletonClass}`} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
 
     if (!artist) return (
         <div className="min-h-screen bg-[#F4F1F5]">
