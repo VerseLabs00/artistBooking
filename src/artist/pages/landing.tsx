@@ -331,7 +331,7 @@ export default function HomePage() {
     };
 
     const filterBrowseArtistsByCategory = (category: string) => {
-        navigate(`/category?name=${encodeURIComponent(category)}`);
+        window.open(`/category?name=${encodeURIComponent(category)}`, '_blank');
     };
 
     const toggleLike = (id: string | number) => {
