@@ -435,6 +435,66 @@ export default function ArtistProfile() {
                                 </div>
                             </>
                         )}
+
+                        {/* Reviews */}
+                        <h3 className="text-lg font-bold mt-12 mb-6">Reviews</h3>
+                        {rating && (
+                            <div className="grid md:grid-cols-2 gap-8 mb-10">
+                                <div className="text-center">
+                                    <h2 className="text-4xl font-bold">{rating.average ?? "—"}</h2>
+                                    <div className="flex justify-center text-yellow-400 mt-2">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star key={i} size={20} fill="currentColor" />
+                                        ))}
+                                    </div>
+                                    <p className="text-gray-400 text-xs mt-1">{rating.total} Reviews</p>
+                                </div>
+                                <div className="space-y-2">
+                                    {[5, 4, 3, 2, 1].map((star) => (
+                                        <div key={star} className="flex items-center gap-2 text-sm">
+                                            <span>{star}</span>
+                                            <Star size={14} />
+                                            <div className="flex-1 h-2 bg-gray-200 rounded-full">
+                                                <div
+                                                    className="h-2 bg-yellow-400 rounded-full"
+                                                    style={{ width: `${rating.total ? (rating.distribution[star] / rating.total) * 100 : 0}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+
+
+
+
+                        <div className="space-y-4">
+                            {rating?.recent_reviews.map(r => (
+                                <div key={r.id} className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                                    <div className="flex justify-between">
+                                        <div className="flex gap-3 items-center">
+                                            <div className="w-8 h-8 bg-gray-300 rounded-full" />
+                                            <div>
+                                                <p className="text-xs font-bold uppercase">{r.reviewer_name}</p>
+                                                <p className="text-[10px] text-gray-400">{r.created_at}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex text-yellow-400">
+                                            {[...Array(r.rating)].map((_, i) => (
+                                                <Star key={i} size={12} fill="currentColor" />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-3">{r.body}</p>
+                                </div>
+                            ))}
+                            {(!rating?.recent_reviews || rating.recent_reviews.length === 0) && (
+                                <p className="text-sm text-gray-400 text-center py-6">No reviews yet.</p>
+                            )}
+                        </div>
+
                     </div>
                 </div>
             </div>
