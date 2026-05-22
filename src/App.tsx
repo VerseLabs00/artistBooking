@@ -8,6 +8,7 @@ import Signup from "./artist/pages/auth/signup.tsx";
 import EditProfile from "./artist/pages/artist/editProfile.tsx";
 import Bookings from "./artist/pages/artist/bookingRequests.tsx";
 import Landing from "./artist/pages/landing.tsx";
+import ArtistHome from "./artist/pages/artist/artistHome.tsx";
 
 import LoginCustomer from "./customer/pages/LoginPage.tsx";
 import SignupCustomer from "./customer/pages/SignUpPage.tsx";
@@ -31,6 +32,7 @@ function App() {
             <Route path="/editProfile" element={<EditProfile />} />
             <Route path="/bookingRequests" element={<Bookings />} />
                 <Route path="/category" element={<Category />} />
+            <Route path="/artistHome" element={<ArtistHome />} />
             
             {/* Customer Routes */}
             <Route path="/loginCustomer" element={<LoginCustomer />} />

@@ -124,8 +124,14 @@ export default function ArtistProfile() {
                 />
                 <div className="absolute inset-0 h-[220px] bg-black/20" />
 
-                {/* LOGOUT */}
+                {/* TOP BUTTONS */}
                 <div className="absolute top-5 right-5 flex gap-3 z-20">
+                    <button
+                        onClick={() => navigate("/artistHome")}
+                        className="bg-white text-black rounded-full px-4 py-2 text-sm font-semibold shadow-md hover:scale-105 transition"
+                    >
+                        View Wall
+                    </button>
                     <button
                         onClick={handleLogout}
                         className="bg-black text-white rounded-full px-4 py-2 text-sm font-semibold shadow-md hover:scale-105 transition"
@@ -217,7 +223,7 @@ export default function ArtistProfile() {
                                         onClick={() => navigate("/bookingRequests")}
                                         className="flex-1 bg-[#FF2B6B] hover:bg-[#ff1b60] transition text-white py-3 rounded-full font-semibold text-sm shadow-md"
                                     >
-                                        Booking ({rating?.total ?? 0})
+                                        My Bookings ({rating?.total ?? 0})
                                     </button>
                                     <button
                                         onClick={() => navigate("/editProfile")}
