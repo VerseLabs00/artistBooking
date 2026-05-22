@@ -600,7 +600,7 @@ export default function HomePage() {
                     <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end">
                         {/* Main large image */}
                         <div className="absolute right-0 top-0 w-[58%] h-[75%] hero-image-card z-10" style={{ borderRadius: "20px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1571935441008-e42d7f4a8f65?w=600&q=80" className="w-full h-full object-cover" alt="DJ" />
+                            <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80" className="w-full h-full object-cover" alt="DJ" />
                         </div>
 
                         {/* Top right image */}

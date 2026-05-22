@@ -49,8 +49,6 @@ interface Rating {
     }[];
 }
 
-const HERO_HEIGHT = 280; // px — matches the tallest hero breakpoint
-
 export default function ArtistProfile() {
     const navigate = useNavigate();
     const { clearAuth } = useAuth();
@@ -60,36 +58,10 @@ export default function ArtistProfile() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    // Scroll-driven hero/avatar values
-    const [scrollY, setScrollY] = useState(0);
-    const leftColRef = useRef<HTMLDivElement>(null);
-    const [leftTop, setLeftTop] = useState(0);
-
     useEffect(() => {
         window.scrollTo(0, 0);
         fetchProfile();
     }, []);
-
-    // Track scroll for hero parallax + sticky left panel
-    useEffect(() => {
-        const onScroll = () => setScrollY(window.scrollY);
-        window.addEventListener("scroll", onScroll, { passive: true });
-        return () => window.removeEventListener("scroll", onScroll);
-    }, []);
-
-    // Calculate sticky offset for left column
-    useEffect(() => {
-        const measure = () => {
-            if (leftColRef.current) {
-                const rect = leftColRef.current.getBoundingClientRect();
-                // initial distance from viewport top when scroll=0
-                setLeftTop(rect.top + window.scrollY);
-            }
-        };
-        measure();
-        window.addEventListener("resize", measure);
-        return () => window.removeEventListener("resize", measure);
-    }, [loading]);
 
     const fetchProfile = async () => {
         try {
@@ -140,43 +112,19 @@ export default function ArtistProfile() {
 
     const displayName = profile?.stage_name || profile?.full_name || "Artist";
 
-    // Hero parallax: scroll fraction 0→1 over first HERO_HEIGHT px
-    const heroFraction = Math.min(scrollY / HERO_HEIGHT, 1);
-    // Avatar: starts fading a little later, disappears by 60% of hero
-    const avatarFraction = Math.min(scrollY / (HERO_HEIGHT * 0.6), 1);
-
-    const heroStyle: React.CSSProperties = {
-        opacity: 1 - heroFraction,
-        transform: `translateY(${-scrollY * 0.35}px)`,
-        willChange: "transform, opacity",
-        transition: "opacity 0.05s linear",
-    };
-
-    const avatarStyle: React.CSSProperties = {
-        opacity: 1 - avatarFraction,
-        transform: `translateY(${-scrollY * 0.2}px) scale(${1 - avatarFraction * 0.25})`,
-        willChange: "transform, opacity",
-        transition: "opacity 0.05s linear",
-        pointerEvents: avatarFraction >= 1 ? "none" : "auto",
-    };
-
-    // Sticky left: once scroll passes the initial top offset, fix it
-    const isLeftSticky = scrollY >= leftTop - 24; // 24px breathing room from top
-
     return (
         <div className="min-h-screen bg-[#F4F1F5] pb-20">
 
-            {/* HERO */}
-            <div className="relative h-[220px] w-full overflow-hidden">
+            {/* HERO — overflow-visible so avatar can bleed below */}
+            <div className="relative h-[220px] w-full overflow-visible">
                 <img
                     src={profile?.cover_url || "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e"}
-                    className="w-full h-full object-cover"
+                    className="w-full h-[220px] object-cover"
                     alt="cover"
                 />
+                <div className="absolute inset-0 h-[220px] bg-black/20" />
 
-                <div className="absolute inset-0 bg-black/20"></div>
-
-                {/* TOP RIGHT BUTTONS */}
+                {/* LOGOUT */}
                 <div className="absolute top-5 right-5 flex gap-3 z-20">
                     <button
                         onClick={handleLogout}
@@ -185,28 +133,29 @@ export default function ArtistProfile() {
                         Logout
                     </button>
                 </div>
+
+                {/* AVATAR — half inside hero, half below */}
+                <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+120px)] lg:translate-x-0 z-30">
+                    <img
+                        src={profile?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"}
+                        className="w-32 h-32 rounded-full border-[5px] border-white object-cover shadow-lg"
+                        alt="avatar"
+                    />
+                </div>
             </div>
 
-            {/* MAIN WRAPPER */}
-            <div className="max-w-6xl mx-auto px-4 -mt-20 relative z-20">
+            {/* MAIN WRAPPER — mt-4 (no negative margin; hero overlap handled by avatar position) */}
+            <div className="max-w-6xl mx-auto px-4 mt-4 relative z-20">
 
                 <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
 
                     {/* LEFT PANEL */}
                     <div className="space-y-5">
 
-                        <div className="bg-white border border-gray-200 rounded-sm overflow-hidden shadow-sm">
+                        {/* Main card — rounded-2xl, pt-20 to clear the overlapping avatar */}
+                        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
 
-                            {/* AVATAR */}
-                            <div className="flex justify-center pt-6">
-                                <img
-                                    src={profile?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"}
-                                    className="w-32 h-32 rounded-full border-[5px] border-white object-cover shadow-lg"
-                                    alt="avatar"
-                                />
-                            </div>
-
-                            <div className="px-6 pb-7 text-center">
+                            <div className="px-6 pb-7 text-center pt-20">
                                 <h1 className="text-[42px] font-bold text-black leading-none mt-4">
                                     {displayName}
                                 </h1>
@@ -216,11 +165,11 @@ export default function ArtistProfile() {
                                     <div className="flex items-center justify-center gap-1 mt-2 text-[13px]">
                                         <Star size={14} className="text-yellow-500 fill-yellow-400" />
                                         <span className="font-semibold text-gray-700">
-                                        {rating.average}
-                                    </span>
+                                            {rating.average}
+                                        </span>
                                         <span className="text-gray-400">
-                                        ({rating.total} reviews)
-                                    </span>
+                                            ({rating.total} reviews)
+                                        </span>
                                     </div>
                                 )}
 
@@ -230,10 +179,10 @@ export default function ArtistProfile() {
                                         {profile.tags.map((tag, i) => (
                                             <span
                                                 key={i}
-                                                className="bg-[#EEE8FF] text-[#7A57F2] text-[10px] px-2 py-1 rounded-sm capitalize"
+                                                className="bg-[#EEE8FF] text-[#7A57F2] text-[10px] px-3 py-1 rounded-full capitalize"
                                             >
-                                            {tag}
-                                        </span>
+                                                {tag}
+                                            </span>
                                         ))}
                                     </div>
                                 )}
@@ -251,10 +200,9 @@ export default function ArtistProfile() {
                                         <div className="text-[#FF2B6B] font-bold text-[28px] leading-none">
                                             ${profile.starting_price}
                                             <span className="text-gray-600 text-[15px] font-medium ml-2">
-                                            starting price
-                                        </span>
+                                                starting price
+                                            </span>
                                         </div>
-
                                         {profile.max_price && (
                                             <p className="text-[11px] text-gray-400 mt-1">
                                                 Range: ${profile.starting_price} - ${profile.max_price} depending on event type and duration
@@ -267,10 +215,10 @@ export default function ArtistProfile() {
                                 <div className="flex gap-3 mt-7">
                                     <button
                                         onClick={() => navigate("/bookingRequests")}
-                                        className="flex-1 bg-[#FF2B6B] hover:bg-[#ff1b60] transition text-white py-3 rounded-full font-semibold text-sm shadow-md">
+                                        className="flex-1 bg-[#FF2B6B] hover:bg-[#ff1b60] transition text-white py-3 rounded-full font-semibold text-sm shadow-md"
+                                    >
                                         Booking ({rating?.total ?? 0})
                                     </button>
-
                                     <button
                                         onClick={() => navigate("/editProfile")}
                                         className="flex-1 border border-gray-300 py-3 rounded-full font-semibold text-sm hover:bg-gray-50 transition"
@@ -281,12 +229,11 @@ export default function ArtistProfile() {
                             </div>
                         </div>
 
-                        {/* SOCIAL */}
-                        <div className="bg-white border border-gray-200 rounded-sm p-7 shadow-sm text-center">
+                        {/* SOCIAL — rounded-2xl */}
+                        <div className="bg-white border border-gray-200 rounded-2xl p-7 shadow-sm text-center">
                             <h3 className="text-[20px] font-semibold text-gray-700 mb-5">
                                 Social & Web
                             </h3>
-
                             <div className="flex justify-center gap-4">
                                 {profile?.instagram_link && (
                                     <a
@@ -298,7 +245,6 @@ export default function ArtistProfile() {
                                         <Instagram size={18} />
                                     </a>
                                 )}
-
                                 {profile?.facebook_link && (
                                     <a
                                         href={profile.facebook_link}
@@ -309,7 +255,6 @@ export default function ArtistProfile() {
                                         <Facebook size={18} />
                                     </a>
                                 )}
-
                                 {profile?.youtube_link && (
                                     <a
                                         href={profile.youtube_link}
@@ -320,7 +265,6 @@ export default function ArtistProfile() {
                                         <Twitter size={18} />
                                     </a>
                                 )}
-
                                 <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200 cursor-pointer">
                                     <Mail size={18} />
                                 </div>
@@ -328,8 +272,8 @@ export default function ArtistProfile() {
                         </div>
                     </div>
 
-                    {/* RIGHT PANEL */}
-                    <div className="bg-white border border-gray-200 rounded-sm p-8 shadow-sm">
+                    {/* RIGHT PANEL — rounded-2xl */}
+                    <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
 
                         {/* TOP SECTION */}
                         <div className="flex items-start justify-between">
@@ -337,28 +281,23 @@ export default function ArtistProfile() {
                                 <h2 className="text-[26px] font-bold text-gray-900">
                                     Overview
                                 </h2>
-
                                 <div className="flex flex-wrap gap-5 mt-2 text-[13px] text-gray-500">
                                     {profile?.category && (
                                         <span className="flex items-center gap-1">
-                                        <Music size={13} /> {profile.category}
-                                    </span>
+                                            <Music size={13} /> {profile.category}
+                                        </span>
                                     )}
-
                                     {profile?.location && (
                                         <span className="flex items-center gap-1">
-                                        <MapPin size={13} /> {profile.location}
-                                    </span>
+                                            <MapPin size={13} /> {profile.location}
+                                        </span>
                                     )}
-
                                 </div>
                             </div>
-
                             <div className="flex gap-2">
                                 <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50">
                                     <Heart size={18} />
                                 </button>
-
                                 <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50">
                                     <MoreHorizontal size={18} />
                                 </button>
@@ -376,33 +315,27 @@ export default function ArtistProfile() {
                             )}
                         </div>
 
-                        {/* GALLERY */}
+                        {/* GALLERY — images rounded-xl */}
                         {galleryImages.length > 0 && (
                             <>
-                                <h3 className="text-[24px] font-bold mt-10 mb-5">
-                                    Gallery
-                                </h3>
-
+                                <h3 className="text-[24px] font-bold mt-10 mb-5">Gallery</h3>
                                 <div className="grid grid-cols-3 gap-3">
                                     {galleryImages.slice(0, 3).map((img) => (
                                         <img
                                             key={img.id}
                                             src={img.url}
                                             alt="gallery"
-                                            className="w-full h-[180px] object-cover rounded-sm"
+                                            className="w-full h-[180px] object-cover rounded-xl"
                                         />
                                     ))}
                                 </div>
                             </>
                         )}
 
-                        {/* AUDIO VIDEO */}
+                        {/* AUDIO & VIDEO */}
                         {videoLinks.length > 0 && (
                             <>
-                                <h3 className="text-[24px] font-bold mt-10 mb-5">
-                                    Audio & Video
-                                </h3>
-
+                                <h3 className="text-[24px] font-bold mt-10 mb-5">Audio & Video</h3>
                                 <div className="space-y-4">
                                     {videoLinks.map((item) => (
                                         <div key={item.id} className="flex items-center justify-between border-b pb-4">
@@ -436,7 +369,7 @@ export default function ArtistProfile() {
                             </>
                         )}
 
-                        {/* Reviews */}
+                        {/* REVIEWS */}
                         <h3 className="text-lg font-bold mt-12 mb-6">Reviews</h3>
                         {rating && (
                             <div className="grid md:grid-cols-2 gap-8 mb-10">
@@ -466,13 +399,9 @@ export default function ArtistProfile() {
                             </div>
                         )}
 
-
-
-
-
                         <div className="space-y-4">
                             {rating?.recent_reviews.map(r => (
-                                <div key={r.id} className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                                <div key={r.id} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
                                     <div className="flex justify-between">
                                         <div className="flex gap-3 items-center">
                                             <div className="w-8 h-8 bg-gray-300 rounded-full" />
