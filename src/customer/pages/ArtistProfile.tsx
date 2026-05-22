@@ -198,7 +198,6 @@ export default function ArtistProfile() {
 
     if (loading) return (
         <div className="min-h-screen bg-[#F4F1F5]">
-            <Header />
             <div className="flex items-center justify-center h-96 text-gray-400 text-sm">
                 Loading profile...
             </div>
@@ -207,7 +206,6 @@ export default function ArtistProfile() {
 
     if (!artist) return (
         <div className="min-h-screen bg-[#F4F1F5]">
-            <Header />
             <div className="flex items-center justify-center h-96 text-gray-500">
                 Artist not found.
             </div>
@@ -222,7 +220,7 @@ export default function ArtistProfile() {
         <div className="min-h-screen bg-[#F4F1F5]">
             {/*<Header />*/}
 
-            <div className="pt-14">
+            <div>
                 {/* HERO */}
                 <div className="relative h-[220px] w-full overflow-visible">
                     <img

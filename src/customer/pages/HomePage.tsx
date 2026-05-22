@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
     ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, TrendingUp,
     Mic2, Music2, PersonStanding, Radio, Lightbulb, Globe,
     RefreshCw, GitCompare, BookOpen, Camera
 } from "lucide-react";
-import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { getArtists, getCategories, getNearYou } from "../services/discoveryService";
 import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../services/discoveryService";
@@ -201,6 +200,13 @@ export default function HomePage() {
         });
     };
 
+    const scrollToSection = (id: string) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    };
+
     useEffect(() => {
         getArtists({ per_page: 50 })
             .then(({ data }) => {
@@ -392,6 +398,9 @@ export default function HomePage() {
         .floating-badge { background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); padding: 12px 18px; display: flex; align-items: center; gap: 10px; }
         .hero-bg-dots { background-image: radial-gradient(circle, #E8194B22 1.5px, transparent 1.5px); background-size: 24px 24px; }
         
+        .nav-link { color: #444; font-weight: 500; font-size: 15px; transition: color 0.15s; cursor: pointer; }
+        .nav-link:hover { color: #E8194B; }
+
         /* Carousel Styles */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -411,7 +420,45 @@ export default function HomePage() {
         .carousel-btn:hover { border-color: #E8194B; color: #E8194B; transform: scale(1.1); }
       `}</style>
 
-            <Header />
+            {/* ══════════════════════════════════════════════════
+          NAVBAR (from landing.tsx)
+      ══════════════════════════════════════════════════ */}
+            <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
+                {/* Logo */}
+                <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 btn-pink rounded-xl flex items-center justify-center font-black text-white text-lg select-none">M</div>
+                </div>
+
+                {/* Nav Links */}
+                <div className="hidden md:flex items-center gap-7">
+                    <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
+                    <button onClick={() => scrollToSection('artists-section')} className="nav-link">Artist</button>
+                    <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
+                    <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
+                    <button onClick={() => scrollToSection('join-section')} className="nav-link">Join as Artist</button>
+                    <button className="nav-link">Events</button>
+                </div>
+
+                {/* Auth / Account */}
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => navigate('/home')}
+                        className="nav-link font-semibold text-sm px-3 py-1.5"
+                    >
+                        Account
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            // Sign out logic
+                            navigate('/loginCustomer');
+                        }}
+                        className="btn-pink text-sm font-bold px-5 py-2.5 rounded-xl"
+                    >
+                        Sign out
+                    </button>
+                </div>
+            </nav>
 
             {/* HERO SECTION */}
             <section className="relative w-full overflow-hidden bg-white pt-24 pb-0 px-6 md:px-12 lg:px-20">
@@ -660,7 +707,7 @@ export default function HomePage() {
             </section>
 
             {/* HOW IT WORKS */}
-            <section className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
+            <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
                 <div className="max-w-5xl mx-auto">
                     <h2 className="text-center section-title mb-14">How It Works</h2>
                     <div className="flex flex-col md:flex-row items-center">
@@ -685,7 +732,7 @@ export default function HomePage() {
             </section>
 
             {/* CTA SECTION */}
-            <section className="dark-section w-full px-6 md:px-12 lg:px-20 py-14">
+            <section id="join-section" className="dark-section w-full px-6 md:px-12 lg:px-20 py-14">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                     <div>
                         <p className="pink-text text-xs font-bold uppercase tracking-widest mb-2">For Customers</p>

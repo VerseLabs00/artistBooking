@@ -13,13 +13,13 @@ import ArtistHome from "./artist/pages/artist/artistHome.tsx";
 import LoginCustomer from "./customer/pages/LoginPage.tsx";
 import SignupCustomer from "./customer/pages/SignUpPage.tsx";
 import HomePageCustomer from "./customer/pages/HomePage.tsx";
-import ArtistProfilePage from "./customer/pages/ArtistProfilePage.tsx";
-import ArtistProfile from "./customer/pages/ArtistProfile.tsx";
+import ArtistProfileLanding from "./customer/pages/ArtistProfileLanding.tsx";
+import ArtistProfileCustomer from "./customer/pages/ArtistProfile.tsx";
 import CategoryCustomer from "./artist/pages/artist/categoryCustomer.tsx";
 
 import AdminRoutes from "./admin/routes/AppRouter.jsx";
 
-import Category from "./artist/pages/artist/category.tsx";
+import Category from "./artist/pages/artist/categoryLanding.tsx";
 
 function App() {
     return (
@@ -40,8 +40,8 @@ function App() {
             <Route path="/loginCustomer" element={<LoginCustomer />} />
             <Route path="/signupCustomer" element={<SignupCustomer />} />
             <Route path="/home" element={<HomePageCustomer />} />
-            <Route path="/artistProfile/:id" element={<ArtistProfile />} />
-            <Route path="/artist/:id" element={<ArtistProfilePage />} />
+            <Route path="/artistProfile/:id" element={<ArtistProfileCustomer />} />
+            <Route path="/artist/:id" element={<ArtistProfileLanding />} />
             <Route path="/categoryCustomer" element={<CategoryCustomer />} />
 
             {/* Admin Routes */}

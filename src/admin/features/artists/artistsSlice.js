@@ -18,7 +18,7 @@ const initialState = {
   pagination: null,
 }
 
-// ── Normalise backend ArtistProfile → UI shape ────────────────────────────────
+// ── Normalise backend ArtistProfileCustomer → UI shape ────────────────────────────────
 // Backend fields (from ArtistProfile model):
 //   full_name, stage_name, location, phone_number, dob, category, email,
 //   short_bio, bio_1, bio_2, paragraph, tags, starting_price, max_price,
