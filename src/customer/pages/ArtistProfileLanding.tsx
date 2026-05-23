@@ -207,7 +207,7 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                 <div className={`relative h-[220px] w-full ${skeletonClass}`} />
 
                 {/* Skeleton Avatar */}
-                <div className="absolute top-[156px] left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+120px)] lg:translate-x-0 z-30">
+                <div className="absolute top-[156px] left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+200px)] lg:translate-x-0 z-30">
                     <div className={`w-32 h-32 rounded-full border-[5px] border-white shadow-lg ${skeletonClass}`} />
                 </div>
 
@@ -262,13 +262,13 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
     const mediaLinks = artist.media;
 
     return (
-        <div className={`${onClose ? 'fixed inset-0 z-[100] overflow-y-auto' : 'min-h-screen'} bg-[#F4F1F5] transition-all duration-500`}>
+        <div className={`${onClose ? 'relative h-full overflow-y-auto custom-scrollbar' : 'min-h-screen'} bg-[#F4F1F5] transition-all duration-500`}>
             {onClose && (
                 <button
                     onClick={onClose}
-                    className="fixed top-6 right-6 z-[110] w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all text-gray-500 hover:text-black"
+                    className="absolute top-6 right-6 z-[110] w-10 h-10 bg-black/10 hover:bg-black/20 backdrop-blur-xl rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
                 >
-                    <X size={24} />
+                    <X size={20} className="text-white group-hover:rotate-90 transition-transform duration-300" />
                 </button>
             )}
             {/*<Header />*/}
@@ -284,7 +284,7 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                     <div className="absolute inset-0 h-[220px] bg-black/20" />
 
                     {/* AVATAR */}
-                    <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+120px)] lg:translate-x-0 z-30">
+                    <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+200px)] lg:translate-x-0 z-30">
                         <img
                             src={artist.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"}
                             className="w-32 h-32 rounded-full border-[5px] border-white object-cover shadow-lg"
