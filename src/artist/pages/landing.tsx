@@ -510,6 +510,11 @@ export default function HomePage() {
           NAVBAR
       ══════════════════════════════════════════════════ */}
             <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
+                {/*/!* Logo *!/*/}
+                {/*<Link to="/" className="flex items-center">*/}
+                {/*    <img src="/Perfoma.png" alt="Perfoma" className="h-10 w-auto object-contain" />*/}
+                {/*</Link>*/}
+
                 {/* Logo */}
                 <div className="flex items-center gap-2">
                     <div className="w-9 h-9 btn-pink rounded-xl flex items-center justify-center font-black text-white text-lg select-none">M</div>
@@ -546,106 +551,115 @@ export default function HomePage() {
             {/* ══════════════════════════════════════════════════
           HERO SECTION
       ══════════════════════════════════════════════════ */}
-            <section className="relative w-full overflow-hidden bg-white pt-10 pb-0 px-6 md:px-12 lg:px-20">
+            <section
+                className="relative w-full overflow-hidden bg-cover bg-center py-12 px-6 md:px-12 lg:px-20"
+                style={{ backgroundImage: "url('/Cover3.png')" }}
+            >
+                {/* Overlay for better text readability */}
+                <div className="absolute inset-0 bg-black/40 z-0" />
+
                 {/* Pink dot background - top right */}
-                <div className="hero-bg-dots absolute top-0 right-0 w-72 h-72 opacity-60 pointer-events-none" />
+                <div className="hero-bg-dots absolute top-0 right-0 w-72 h-72 opacity-30 pointer-events-none z-10" />
 
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-                    {/* Left: Copy */}
-                    <div className="z-10">
-                        <p className="text-gray-500 text-base font-600 mb-1">Find & Book</p>
-                        <h1 className="font-black leading-tight text-gray-900" style={{ fontSize: "clamp(38px, 5vw, 62px)", lineHeight: 1.1 }}>
-                            Sri Lanka's<br />
-                            <span style={{ color: "#E8194B" }}>Best Artists</span>
-                        </h1>
-                        <p className="text-gray-500 mt-4 text-base leading-relaxed max-w-sm">
-                            DJs, musicians, dancers, MCs, sound systems<br className="hidden sm:block" />
-                            and event professionals – all in one platform.
-                        </p>
+                <div className="max-w-7xl mx-auto relative z-20">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                        {/* Left: Copy */}
+                        <div className="z-10">
+                            <p className="text-gray-200 text-base font-600 mb-1">Find & Book</p>
+                            <h1 className="font-black leading-tight text-white" style={{ fontSize: "clamp(38px, 5vw, 62px)", lineHeight: 1.1 }}>
+                                Sri Lanka's<br />
+                                <span style={{ color: "#E8194B" }}>Best Artists</span>
+                            </h1>
+                            <p className="text-gray-300 mt-4 text-base leading-relaxed max-w-sm">
+                                DJs, musicians, dancers, MCs, sound systems<br className="hidden sm:block" />
+                                and event professionals – all in one platform.
+                            </p>
 
-                        <div className="flex flex-wrap gap-3 mt-8">
-                            <button
-                                onClick={() => scrollToSection('artists-section')}
-                                className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
-                            >
-                                Explore Artists <ArrowRight size={16} />
-                            </button>
+                            <div className="flex flex-wrap gap-3 mt-8">
+                                <button
+                                    onClick={() => scrollToSection('artists-section')}
+                                    className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
+                                >
+                                    Explore Artists <ArrowRight size={16} />
+                                </button>
 
-                            <Link
-                                to="/login"
-                                className="btn-dark flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
-                            >
-                                Join as Artist
-                            </Link>
-                        </div>
-
-                        {/* Social proof */}
-                        <div className="flex items-center gap-3 mt-7">
-                            <div className="flex -space-x-2">
-                                {[
-                                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
-                                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
-                                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=80",
-                                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
-                                    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
-                                ].map((src, i) => (
-                                    <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
-                                ))}
+                                <Link
+                                    to="/login"
+                                    //className="btn-dark flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm border border-gray-700"
+                                    className="bg-white text-black flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm border border-white hover:bg-gray-100 transition"
+                                >
+                                    Join as Artist
+                                </Link>
                             </div>
-                            <p className="text-sm text-gray-500 font-500">1,200+ artists already joined</p>
-                        </div>
-                    </div>
 
-                    {/* Right: Collage */}
-                    <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end">
-                        {/* Main large image */}
-                        <div className="absolute right-0 top-0 w-[58%] h-[75%] hero-image-card z-10" style={{ borderRadius: "20px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80" className="w-full h-full object-cover" alt="DJ" />
-                        </div>
-
-                        {/* Top right image */}
-                        <div className="absolute right-[30%] top-[2%] w-[36%] h-[46%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80" className="w-full h-full object-cover" alt="Singer" />
-                        </div>
-
-                        {/* Middle right image */}
-                        <div className="absolute right-[28%] top-[48%] w-[34%] h-[42%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80" className="w-full h-full object-cover" alt="Dancer" />
-                        </div>
-
-                        {/* Bottom right image */}
-                        <div className="absolute right-0 bottom-0 w-[40%] h-[35%] hero-image-card z-10" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&q=80" className="w-full h-full object-cover" alt="Band" />
-                        </div>
-
-                        {/* Floating badge – Rating */}
-                        <div className="floating-badge absolute left-2 top-[10%] z-30 min-w-[130px]">
-                            <Star size={18} fill="#facc15" className="text-yellow-400 flex-shrink-0" />
-                            <div>
-                                <p className="font-black text-gray-900 text-base leading-none">4.9</p>
-                                <p className="text-gray-400 text-xs mt-0.5">Average Rating</p>
+                            {/* Social proof */}
+                            <div className="flex items-center gap-3 mt-7">
+                                <div className="flex -space-x-2">
+                                    {[
+                                        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
+                                        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
+                                        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=80",
+                                        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
+                                        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
+                                    ].map((src, i) => (
+                                        <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
+                                    ))}
+                                </div>
+                                <p className="text-sm text-gray-300 font-500">1,200+ artists already joined</p>
                             </div>
                         </div>
 
-                        {/* Floating badge – Artists */}
-                        <div className="floating-badge absolute left-2 top-[42%] z-30 min-w-[140px]">
-                            <div className="w-8 h-8 btn-pink rounded-lg flex items-center justify-center flex-shrink-0">
-                                <Users size={16} className="text-white" />
+                        {/* Right: Collage */}
+                        <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end">
+                            {/* Main large image */}
+                            <div className="absolute right-0 top-0 w-[58%] h-[75%] hero-image-card z-10" style={{ borderRadius: "20px", overflow: "hidden" }}>
+                                <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80" className="w-full h-full object-cover" alt="DJ" />
                             </div>
-                            <div>
-                                <p className="font-black text-gray-900 text-base leading-none">1,200+</p>
-                                <p className="text-gray-400 text-xs mt-0.5">Professional Artists</p>
-                            </div>
-                        </div>
 
-                        {/* Floating badge – Events */}
-                        <div className="floating-badge absolute left-2 bottom-[12%] z-30 min-w-[140px]">
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#f0f0f0" }}>
-                                <TrendingUp size={16} className="text-gray-700" />
+                            {/* Top right image */}
+                            <div className="absolute right-[30%] top-[2%] w-[36%] h-[46%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>
+                                <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80" className="w-full h-full object-cover" alt="Singer" />
                             </div>
-                            <div>
-                                <p className="font-black text-gray-900 text-base leading-none">3,400+</p>
-                                <p className="text-gray-400 text-xs mt-0.5">Events Booked</p>
+
+                            {/* Middle right image */}
+                            <div className="absolute right-[28%] top-[48%] w-[34%] h-[42%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>
+                                <img src="https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80" className="w-full h-full object-cover" alt="Dancer" />
+                            </div>
+
+                            {/* Bottom right image */}
+                            <div className="absolute right-0 bottom-0 w-[40%] h-[35%] hero-image-card z-10" style={{ borderRadius: "16px", overflow: "hidden" }}>
+                                <img src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&q=80" className="w-full h-full object-cover" alt="Band" />
+                            </div>
+
+                            {/* Floating badge – Rating */}
+                            <div className="floating-badge absolute left-2 top-[10%] z-30 min-w-[130px]">
+                                <Star size={18} fill="#facc15" className="text-yellow-400 flex-shrink-0" />
+                                <div>
+                                    <p className="font-black text-gray-900 text-base leading-none">4.9</p>
+                                    <p className="text-gray-400 text-xs mt-0.5">Average Rating</p>
+                                </div>
+                            </div>
+
+                            {/* Floating badge – Artists */}
+                            <div className="floating-badge absolute left-2 top-[42%] z-30 min-w-[140px]">
+                                <div className="w-8 h-8 btn-pink rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <Users size={16} className="text-white" />
+                                </div>
+                                <div>
+                                    <p className="font-black text-gray-900 text-base leading-none">1,200+</p>
+                                    <p className="text-gray-400 text-xs mt-0.5">Professional Artists</p>
+                                </div>
+                            </div>
+
+                            {/* Floating badge – Events */}
+                            <div className="floating-badge absolute left-2 bottom-[12%] z-30 min-w-[140px]">
+                                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#f0f0f0" }}>
+                                    <TrendingUp size={16} className="text-gray-700" />
+                                </div>
+                                <div>
+                                    <p className="font-black text-gray-900 text-base leading-none">3,400+</p>
+                                    <p className="text-gray-400 text-xs mt-0.5">Events Booked</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -848,6 +862,7 @@ export default function HomePage() {
                     )}
                 </div>
             </section>
+
 
             {/* ══════════════════════════════════════════════════
           HOW IT WORKS
