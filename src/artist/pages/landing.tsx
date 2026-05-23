@@ -8,6 +8,7 @@ import {
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
     Play, RefreshCw, GitCompare, BookOpen, X, Loader2
 } from "lucide-react";
+import ArtistProfileLanding from "../../customer/pages/ArtistProfileLanding";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Artist {
@@ -211,8 +212,18 @@ export default function HomePage() {
     const [selectedBrowseCategory, setSelectedBrowseCategory] = useState<string | null>(null);
     const [browseArtistsLoading, setBrowseArtistsLoading] = useState(false);
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
+    const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
+    const [isClosingProfile, setIsClosingProfile] = useState(false);
     const popularArtistsRef = useRef<HTMLDivElement>(null);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
+
+    const handleCloseProfile = () => {
+        setIsClosingProfile(true);
+        setTimeout(() => {
+            setSelectedArtistId(null);
+            setIsClosingProfile(false);
+        }, 500); // Matches animation duration
+    };
 
     const scrollPopular = (direction: 'left' | 'right') => {
         if (!popularArtistsRef.current) return;
@@ -223,6 +234,16 @@ export default function HomePage() {
             behavior: 'smooth'
         });
     };
+
+    // Prevent body scroll when overlay is open
+    useEffect(() => {
+        if (selectedArtistId) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => { document.body.style.overflow = 'unset'; };
+    }, [selectedArtistId]);
 
     useEffect(() => {
         getArtists({ per_page: 50 })
@@ -350,7 +371,7 @@ export default function HomePage() {
     };
 
     const renderArtistCard = (artist: Artist) => (
-        <div key={artist.id} className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px] artist-card cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100" onClick={() => navigate(`/artist/${artist.id}`)}>
+        <div key={artist.id} className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px] artist-card cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100" onClick={() => setSelectedArtistId(artist.id.toString())}>
             <div className="relative" style={{ aspectRatio: "3/4" }}>
                 <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
@@ -525,7 +546,42 @@ export default function HomePage() {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: rgba(232,25,75,0.5);
         }
+
+        /* Slide up animation */
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        @keyframes slideDown {
+            from { transform: translateY(0); }
+            to { transform: translateY(100%); }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.5s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+        .animate-slide-down {
+            animation: slideDown 0.5s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+        .blur-bg {
+            filter: blur(8px);
+            transition: filter 0.5s ease;
+        }
       `}</style>
+
+            {/* Profile Overlay */}
+            {selectedArtistId && (
+                <div className={`fixed inset-0 z-[100] flex items-end justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-500 ${isClosingProfile ? 'opacity-0' : 'opacity-100'}`}>
+                    <div className={`w-full h-full bg-white shadow-2xl overflow-hidden ${isClosingProfile ? 'animate-slide-down' : 'animate-slide-up'}`}>
+                        <ArtistProfileLanding 
+                            id={selectedArtistId} 
+                            onClose={handleCloseProfile} 
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Main Content */}
+            <div className={`transition-all duration-500 ${selectedArtistId ? 'blur-bg scale-[0.98]' : ''}`}>
 
             {/* ══════════════════════════════════════════════════
           NAVBAR
@@ -1016,5 +1072,6 @@ export default function HomePage() {
                 </div>
             </section>
         </div>
+        </div>
     );
-}
+};

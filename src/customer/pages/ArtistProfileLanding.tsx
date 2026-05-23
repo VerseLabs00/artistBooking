@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     Heart, MoreHorizontal, Play, Music, MapPin, Star,
-    Instagram, Facebook, Twitter, Mail,
+    Instagram, Facebook, Twitter, Mail, X
 } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -102,9 +102,10 @@ function MediaPreviewCard({ item }: { item: { id: string; url: string; media_typ
         </a>
     );
 }
+export default function ArtistProfileLanding({ id: propId, onClose }: { id?: string; onClose?: () => void }) {
+    const { id: paramId } = useParams<{ id: string }>();
+    const id = propId || paramId;
 
-export default function ArtistProfileLanding() {
-    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [artist, setArtist] = useState<ArtistDetail | null>(null);
     const [loading, setLoading] = useState(true);
@@ -117,13 +118,15 @@ export default function ArtistProfileLanding() {
 
     useEffect(() => {
         if (!id) return;
-        window.scrollTo(0, 0);
+        if (!propId) window.scrollTo(0, 0);
         setLoading(true);
         getArtist(id)
             .then(setArtist)
             .catch(() => setArtist(null))
             .finally(() => setLoading(false));
-    }, [id]);
+    }, [id, propId]);
+
+    // ... rest of logic
 
     // FAILSAFE REDIRECT: If the booking modal is about to open but we are not logged in as a customer
     useEffect(() => {
@@ -259,7 +262,15 @@ export default function ArtistProfileLanding() {
     const mediaLinks = artist.media;
 
     return (
-        <div className="min-h-screen bg-[#F4F1F5]">
+        <div className={`${onClose ? 'fixed inset-0 z-[100] overflow-y-auto' : 'min-h-screen'} bg-[#F4F1F5] transition-all duration-500`}>
+            {onClose && (
+                <button
+                    onClick={onClose}
+                    className="fixed top-6 right-6 z-[110] w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all text-gray-500 hover:text-black"
+                >
+                    <X size={24} />
+                </button>
+            )}
             {/*<Header />*/}
 
             <div>
