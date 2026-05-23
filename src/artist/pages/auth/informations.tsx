@@ -145,8 +145,15 @@ const Information: React.FC = () => {
                                     <select name="category" value={form.category} onChange={handleChange}
                                         className="w-full h-12 rounded-xl border border-gray-300 px-4 appearance-none focus:outline-none focus:ring-2 focus:ring-black">
                                         <option>Musician</option>
+                                        <option>Solo Singer</option>
+                                        <option>Rapper</option>
+                                        <option>Live Band</option>
+                                        <option>Dance Group</option>
                                         <option>Producer</option>
                                         <option>DJ</option>
+                                        <option>Sound System</option>
+                                        <option>Lightning System</option>
+                                        <option>Videographers</option>
                                     </select>
                                 </div>
                             </div>

@@ -753,17 +753,20 @@ export default function HomePage() {
                         </div>
 
                         {browseCategoriesLoading ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                {[1, 2, 3, 4, 5].map(i => (
-                                    <div key={i} className="aspect-[3/4] rounded-[30px] bg-gray-100 animate-pulse" />
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+                                {[1, 2, 3, 4, 5, 6].map(i => (
+                                    <div
+                                        key={i}
+                                        className="w-full aspect-[5/6] rounded-2xl bg-gray-100 animate-pulse"
+                                    />
                                 ))}
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
                                 {browseCategories.map(cat => (
                                     <div
                                         key={cat}
-                                        className="cat-card-modern group"
+                                        className="cat-card-modern group w-full"
                                         onClick={() => filterBrowseArtistsByCategory(cat)}
                                     >
                                         <img
@@ -772,9 +775,9 @@ export default function HomePage() {
                                             alt={cat}
                                         />
                                         <div className="cat-overlay">
-                                            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-3 group-hover:bg-pink transition-colors">
-                                                {getCategoryIcon(cat)}
-                                            </div>
+                                            {/*<div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-3 group-hover:bg-pink transition-colors">*/}
+                                            {/*    {getCategoryIcon(cat)}*/}
+                                            {/*</div>*/}
                                             <h3 className="text-white font-900 text-lg leading-tight">{cat}</h3>
                                             <p className="text-white/60 text-xs mt-1 font-600">Explore Artists</p>
                                         </div>
