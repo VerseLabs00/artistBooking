@@ -37,7 +37,7 @@ export default function LoginPage() {
           </svg>
         </button>
         <button
-          onClick={() => navigate('/signup')}
+          onClick={() => navigate('/signupCustomer')}
           className="flex items-center gap-1 text-sm text-black hover:opacity-70 transition-opacity"
         >
           <span className="text-lg leading-none">+</span>
