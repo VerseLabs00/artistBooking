@@ -392,6 +392,27 @@ export default function HomePage() {
         </div>
     );
 
+    const renderArtistSkeleton = (index: number) => (
+        <div key={index} className="flex-shrink-0 w-[180px] sm:w-[200px] md:w-[220px] animate-pulse">
+            <div className="relative rounded-2xl overflow-hidden bg-gray-100" style={{ aspectRatio: "3/4" }} />
+            <div className="mt-2.5 px-0.5 space-y-2">
+                <div className="h-4 bg-gray-100 rounded w-3/4" />
+                <div className="h-3 bg-gray-100 rounded w-1/2" />
+                <div className="flex items-center gap-1 mt-1">
+                    <div className="w-3 h-3 bg-gray-100 rounded-full" />
+                    <div className="h-3 bg-gray-100 rounded w-1/3" />
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 bg-gray-100 rounded-full" />
+                        <div className="h-3 bg-gray-100 rounded w-8" />
+                    </div>
+                    <div className="h-3 bg-gray-100 rounded w-12" />
+                </div>
+            </div>
+        </div>
+    );
+
     return (
         <div className="min-h-screen bg-white" style={{ fontFamily: "'Nunito', 'Plus Jakarta Sans', sans-serif" }}>
             <style>{`
@@ -817,7 +838,11 @@ export default function HomePage() {
                         {/* Category tags */}
                         <div className="flex flex-wrap gap-2 mt-4 px-1">
                             {browseCategoriesLoading ? (
-                                <span className="text-xs text-gray-500">Loading categories...</span>
+                                <div className="flex flex-wrap gap-2 animate-pulse">
+                                    {[1, 2, 3, 4, 5, 6].map(i => (
+                                        <div key={i} className="h-8 w-20 bg-gray-100 rounded-full" />
+                                    ))}
+                                </div>
                             ) : (
                                 <>
                                     <button
@@ -845,7 +870,9 @@ export default function HomePage() {
                     </form>
 
                     {popularArtistsLoading ? (
-                        <p className="text-sm text-gray-400 py-6 text-center">Loading artists...</p>
+                        <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2">
+                            {[1, 2, 3, 4, 5].map(i => renderArtistSkeleton(i))}
+                        </div>
                     ) : popularArtists.length === 0 ? (
                         <p className="text-sm text-gray-400 py-6 text-center">
                             {hasActiveSearch
