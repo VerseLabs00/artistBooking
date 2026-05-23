@@ -350,8 +350,8 @@ export default function HomePage() {
     };
 
     const renderArtistCard = (artist: Artist) => (
-        <div key={artist.id} className="flex-shrink-0 w-[180px] sm:w-[200px] md:w-[220px] artist-card cursor-pointer" onClick={() => navigate(`/artist/${artist.id}`)}>
-            <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "3/4" }}>
+        <div key={artist.id} className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px] artist-card cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100" onClick={() => navigate(`/artist/${artist.id}`)}>
+            <div className="relative" style={{ aspectRatio: "3/4" }}>
                 <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
                 <button
@@ -373,41 +373,41 @@ export default function HomePage() {
                     </div>
                 )}
             </div>
-            <div className="mt-2.5 px-0.5">
-                <h3 className="font-800 text-gray-900 text-[15px] leading-tight truncate">{artist.name}</h3>
-                <p className="text-gray-400 text-xs mt-0.5">{artist.type}</p>
+            <div className="p-2.5">
+                <h3 className="font-800 text-gray-900 text-[14px] leading-tight truncate">{artist.name}</h3>
+                <p className="text-gray-400 text-[11px] mt-0.5">{artist.type}</p>
                 <div className="flex items-center gap-1 mt-1">
-                    <MapPin size={11} className="text-gray-400" />
-                    <span className="text-gray-400 text-xs">{artist.location}</span>
+                    <MapPin size={10} className="text-gray-400" />
+                    <span className="text-gray-400 text-[10px]">{artist.location}</span>
                 </div>
                 <div className="flex items-center justify-between mt-2">
                     <div className="rating-row">
-                        <Star size={12} fill="#facc15" className="text-yellow-400" />
-                        <span className="text-xs font-700 text-gray-800">{artist.rating}</span>
-                        <span className="text-xs text-gray-400">({artist.reviews})</span>
+                        <Star size={10} fill="#facc15" className="text-yellow-400" />
+                        <span className="text-[10px] font-700 text-gray-800">{artist.rating}</span>
+                        <span className="text-[10px] text-gray-400">({artist.reviews})</span>
                     </div>
-                    <span className="text-xs font-800 pink-text">{artist.price}</span>
+                    <span className="text-[10px] font-800 pink-text">{artist.price}</span>
                 </div>
             </div>
         </div>
     );
 
     const renderArtistSkeleton = (index: number) => (
-        <div key={index} className="flex-shrink-0 w-[180px] sm:w-[200px] md:w-[220px] animate-pulse">
-            <div className="relative rounded-2xl overflow-hidden bg-gray-100" style={{ aspectRatio: "3/4" }} />
-            <div className="mt-2.5 px-0.5 space-y-2">
-                <div className="h-4 bg-gray-100 rounded w-3/4" />
-                <div className="h-3 bg-gray-100 rounded w-1/2" />
+        <div key={index} className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px] animate-pulse bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+            <div className="relative bg-gray-100" style={{ aspectRatio: "3/4" }} />
+            <div className="p-2.5 space-y-2">
+                <div className="h-3 bg-gray-100 rounded w-3/4" />
+                <div className="h-2 bg-gray-100 rounded w-1/2" />
                 <div className="flex items-center gap-1 mt-1">
-                    <div className="w-3 h-3 bg-gray-100 rounded-full" />
-                    <div className="h-3 bg-gray-100 rounded w-1/3" />
+                    <div className="w-2.5 h-2.5 bg-gray-100 rounded-full" />
+                    <div className="h-2 bg-gray-100 rounded w-1/3" />
                 </div>
                 <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 bg-gray-100 rounded-full" />
-                        <div className="h-3 bg-gray-100 rounded w-8" />
+                        <div className="w-2.5 h-2.5 bg-gray-100 rounded-full" />
+                        <div className="h-2 bg-gray-100 rounded w-6" />
                     </div>
-                    <div className="h-3 bg-gray-100 rounded w-12" />
+                    <div className="h-2 bg-gray-100 rounded w-10" />
                 </div>
             </div>
         </div>
