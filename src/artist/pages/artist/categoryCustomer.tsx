@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { getArtists } from "../../../customer/services/discoveryService";
 import {
-    MapPin, Heart, CheckCircle, Star, Search, ChevronDown
+    MapPin, Heart, CheckCircle, Star, Search, ChevronDown, X
 } from "lucide-react";
+import ArtistProfile from "../../../customer/pages/ArtistProfile";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Artist {
@@ -42,6 +43,26 @@ export default function DJsPage() {
     const [rating, setRating] = useState("any");
     const [favs, setFavs] = useState<Set<string | number>>(new Set());
     const [sortBy, setSortBy] = useState("Most Popular");
+    const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
+    const [isClosingProfile, setIsClosingProfile] = useState(false);
+
+    const handleCloseProfile = () => {
+        setIsClosingProfile(true);
+        setTimeout(() => {
+            setSelectedArtistId(null);
+            setIsClosingProfile(false);
+        }, 500);
+    };
+
+    // Prevent body scroll when overlay is open
+    useEffect(() => {
+        if (selectedArtistId) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => { document.body.style.overflow = 'unset'; };
+    }, [selectedArtistId]);
 
     useEffect(() => {
         setLoading(true);
@@ -184,7 +205,7 @@ export default function DJsPage() {
     };
 
     const renderArtistCard = (artist: Artist) => (
-        <div key={artist.id} className="w-full artist-card cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100" onClick={() => navigate(`/artistProfile/${artist.id}`)}>
+        <div key={artist.id} className="w-full artist-card cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100" onClick={() => setSelectedArtistId(artist.id.toString())}>
             <div className="relative" style={{ aspectRatio: "3/4" }}>
                 <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
@@ -248,8 +269,9 @@ export default function DJsPage() {
     );
 
     return (
-        <div className="min-h-screen bg-[#FDFDFF] font-sans text-slate-900">
+        <div className="min-h-screen bg-[#FDFDFF] text-slate-900" style={{ fontFamily: "'Fraunces', serif" }}>
             <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
                 .pink-text { color: #E8194B; }
                 .bg-primary { background-color: #E8194B; }
                 .text-primary { color: #E8194B; }
@@ -257,175 +279,185 @@ export default function DJsPage() {
                 .artist-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.13); }
                 .verified-dot-simple { position: absolute; bottom: 6px; left: 6px; background: #E8194B; border-radius: 100px; padding: 2px; display: flex; align-items: center; justify-content: center; }
                 .rating-row-simple { display: flex; align-items: center; gap: 4px; }
+                
+                @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+                @keyframes slideDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
+                .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0, 0, 0.2, 1) forwards; }
+                .animate-slide-down { animation: slideDown 0.5s cubic-bezier(0, 0, 0.2, 1) forwards; }
+                .blur-bg { filter: blur(8px); transition: filter 0.5s ease; }
             `}</style>
-            {/* Elegant Header */}
-            <div className="px-12 pt-16 pb-12">
-                <div className="flex items-end justify-between">
-                    <div>
-                        <nav className="flex items-center gap-2 text-xs font-medium text-slate-400 uppercase tracking-widest mb-4">
-                            <span>Home</span>
-                            <span>/</span>
-                            <span className="text-primary font-bold">Discovery</span>
-                        </nav>
-                        <h1 className="text-6xl font-black text-slate-900 tracking-tight leading-none">{categoryName}</h1>
-                        <p className="text-slate-500 mt-4 text-lg max-w-2xl font-medium">
-                            Discover {artists.length} premium {categoryName.toLowerCase()} curated for exceptional events.
-                        </p>
+
+            {/* Profile Overlay */}
+            {selectedArtistId && (
+                <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity duration-500 ${isClosingProfile ? 'opacity-0' : 'opacity-100'}`}>
+                    <div className={`max-w-5xl w-full h-full bg-white shadow-[0_0_60px_rgba(0,0,0,0.3)] overflow-hidden ${isClosingProfile ? 'animate-slide-down' : 'animate-slide-up'}`}>
+                        <ArtistProfile id={selectedArtistId} onClose={handleCloseProfile} />
                     </div>
-                    <div className="hidden lg:flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
-                        <div className="px-6 py-2 border-r border-slate-100 text-center">
-                            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Top Rated</p>
-                            <p className="text-xl font-black text-slate-900">4.9/5</p>
+                </div>
+            )}
+
+            <div className={`transition-all duration-500 ${selectedArtistId ? 'blur-bg scale-[0.98]' : ''}`}>
+                <div className="px-12 pt-16 pb-12">
+                    <div className="flex items-end justify-between">
+                        <div>
+                            <nav className="flex items-center gap-2 text-xs font-medium text-slate-400 uppercase tracking-widest mb-4">
+                                <span className="cursor-pointer hover:text-primary transition-colors" onClick={() => navigate('/')}>Home</span>
+                                <span>/</span>
+                                <span className="text-primary font-bold">Discovery</span>
+                            </nav>
+                            <h1 className="text-6xl font-black text-slate-900 tracking-tight leading-none">{categoryName}</h1>
+                            <p className="text-slate-500 mt-4 text-lg max-w-2xl font-medium">
+                                Discover {artists.length} premium {categoryName.toLowerCase()} curated for exceptional events.
+                            </p>
                         </div>
-                        <div className="px-6 py-2 text-center">
-                            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Verified</p>
-                            <p className="text-xl font-black text-slate-900">100%</p>
+                        <div className="hidden lg:flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+                            <div className="px-6 py-2 border-r border-slate-100 text-center">
+                                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Top Rated</p>
+                                <p className="text-xl font-black text-slate-900">4.9/5</p>
+                            </div>
+                            <div className="px-6 py-2 text-center">
+                                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Verified</p>
+                                <p className="text-xl font-black text-slate-900">100%</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="flex px-12 pb-24 gap-12">
-                {/* Modern Sidebar */}
-                <aside className="w-64 shrink-0">
-                    <div className="sticky top-8 space-y-10">
-                        {/* Location */}
-                        <div>
-                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-6">Location</h3>
-                            <div className="space-y-3">
-                                {locations.map((loc) => (
-                                    <label key={loc} className="flex items-center gap-3 group cursor-pointer">
-                                        <div className="relative flex items-center justify-center">
+                <div className="flex px-12 pb-24 gap-12">
+                    <aside className="w-64 shrink-0">
+                        <div className="sticky top-8 space-y-10">
+                            <div>
+                                <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-6">Location</h3>
+                                <div className="space-y-3">
+                                    {locations.map((loc) => (
+                                        <label key={loc} className="flex items-center gap-3 group cursor-pointer">
+                                            <div className="relative flex items-center justify-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedLocations.includes(loc)}
+                                                    onChange={() => toggleLocation(loc)}
+                                                    className="peer appearance-none w-5 h-5 rounded-md border-2 border-slate-200 checked:border-primary checked:bg-primary transition-all duration-200"
+                                                />
+                                                <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                                                    <polyline points="20 6 9 17 4 12" />
+                                                </svg>
+                                            </div>
+                                            <span className="text-sm font-semibold text-slate-600 group-hover:text-primary transition-colors">{loc}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-6">Budget Range</h3>
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Min</label>
                                             <input
-                                                type="checkbox"
-                                                checked={selectedLocations.includes(loc)}
-                                                onChange={() => toggleLocation(loc)}
-                                                className="peer appearance-none w-5 h-5 rounded-md border-2 border-slate-200 checked:border-primary checked:bg-primary transition-all duration-200"
+                                                type="text"
+                                                value={priceMin}
+                                                onChange={(e) => setPriceMin(e.target.value)}
+                                                className="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                                             />
-                                            <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
-                                                <polyline points="20 6 9 17 4 12" />
-                                            </svg>
                                         </div>
-                                        <span className="text-sm font-semibold text-slate-600 group-hover:text-primary transition-colors">{loc}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Budget */}
-                        <div>
-                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-6">Budget Range</h3>
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Min</label>
-                                        <input
-                                            type="text"
-                                            value={priceMin}
-                                            onChange={(e) => setPriceMin(e.target.value)}
-                                            className="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Max</label>
-                                        <input
-                                            type="text"
-                                            value={priceMax}
-                                            onChange={(e) => setPriceMax(e.target.value)}
-                                            className="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                                        />
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Max</label>
+                                            <input
+                                                type="text"
+                                                value={priceMax}
+                                                onChange={(e) => setPriceMax(e.target.value)}
+                                                className="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Rating Selection */}
-                        <div>
-                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-6">Minimum Rating</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {[["any", "All"], ["4.0", "4.0+"], ["4.5", "4.5+"]].map(([val, label]) => (
-                                    <button
-                                        key={val}
-                                        onClick={() => setRating(val)}
-                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${
-                                            rating === val
-                                                ? "bg-slate-900 text-white shadow-lg shadow-slate-200"
-                                                : "bg-slate-50 text-slate-500 hover:bg-slate-100"
-                                        }`}
-                                    >
-                                        {label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={handleApplyFilters}
-                            className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 rounded-2xl text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 group"
-                        >
-                            <span>Refine Search</span>
-                            <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                <path d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                        </button>
-                    </div>
-                </aside>
-
-                {/* Main Content Area */}
-                <main className="flex-1">
-                    {/* Toolbar */}
-                    <div className="flex items-center justify-between mb-10 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                        <div className="flex items-center gap-4">
-                            <span className="text-sm font-bold text-slate-900">{artists.length} results</span>
-                            <div className="h-4 w-[1px] bg-slate-100"></div>
-                            <div className="flex gap-2">
-                                {selectedLocations.filter(l => l !== "All Sri Lanka").map(l => (
-                                    <span key={l} className="px-3 py-1 bg-primary/5 text-primary text-[10px] font-bold rounded-full border border-primary/10">{l}</span>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Sort by</span>
-                            <div className="relative">
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value)}
-                                    className="appearance-none bg-slate-50 border-0 rounded-xl px-4 py-2.5 pr-10 text-xs font-bold text-slate-700 cursor-pointer focus:ring-2 focus:ring-primary/10 outline-none"
-                                >
-                                    <option>Most Popular</option>
-                                    <option>Price: Low to High</option>
-                                    <option>Price: High to Low</option>
-                                    <option>Highest Rated</option>
-                                </select>
-                                <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                                    <ChevronDown />
+                            <div>
+                                <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-6">Minimum Rating</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {[["any", "All"], ["4.0", "4.0+"], ["4.5", "4.5+"]].map(([val, label]) => (
+                                        <button
+                                            key={val}
+                                            onClick={() => setRating(val)}
+                                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${
+                                                rating === val
+                                                    ? "bg-slate-900 text-white shadow-lg shadow-slate-200"
+                                                    : "bg-slate-50 text-slate-500 hover:bg-slate-100"
+                                            }`}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Content States */}
-                    {loading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => renderArtistSkeleton(i))}
-                        </div>
-                    ) : artists.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-96 text-center">
-                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-                                <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            <button
+                                onClick={handleApplyFilters}
+                                className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 rounded-2xl text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 group"
+                            >
+                                <span>Refine Search</span>
+                                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                    <path d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                 </svg>
+                            </button>
+                        </div>
+                    </aside>
+
+                    <main className="flex-1">
+                        <div className="flex items-center justify-between mb-10 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm font-bold text-slate-900">{artists.length} results</span>
+                                <div className="h-4 w-[1px] bg-slate-100"></div>
+                                <div className="flex gap-2">
+                                    {selectedLocations.filter(l => l !== "All Sri Lanka").map(l => (
+                                        <span key={l} className="px-3 py-1 bg-primary/5 text-primary text-[10px] font-bold rounded-full border border-primary/10">{l}</span>
+                                    ))}
+                                </div>
                             </div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-2">No matches found</h3>
-                            <p className="text-slate-500 max-w-xs mx-auto">Try adjusting your filters to discover more artists in this category.</p>
+
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Sort by</span>
+                                <div className="relative">
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                        className="appearance-none bg-slate-50 border-0 rounded-xl px-4 py-2.5 pr-10 text-xs font-bold text-slate-700 cursor-pointer focus:ring-2 focus:ring-primary/10 outline-none"
+                                    >
+                                        <option>Most Popular</option>
+                                        <option>Price: Low to High</option>
+                                        <option>Price: High to Low</option>
+                                        <option>Highest Rated</option>
+                                    </select>
+                                    <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                        <ChevronDown />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {artists.map(renderArtistCard)}
-                        </div>
-                    )}
-                </main>
+
+                        {loading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                {[1, 2, 3, 4, 5, 6, 7, 8].map(i => renderArtistSkeleton(i))}
+                            </div>
+                        ) : artists.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-96 text-center">
+                                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                                    <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 mb-2">No matches found</h3>
+                                <p className="text-slate-500 max-w-xs mx-auto">Try adjusting your filters to discover more artists in this category.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                {artists.map(renderArtistCard)}
+                            </div>
+                        )}
+                    </main>
+                </div>
             </div>
         </div>
     );
