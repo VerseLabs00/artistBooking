@@ -37,6 +37,7 @@ export interface Media {
   id: string
   media_type: string
   url: string
+  title?: string | null
   is_external_link: boolean
 }
 

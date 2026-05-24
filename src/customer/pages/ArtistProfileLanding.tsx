@@ -14,7 +14,7 @@ import { useAuth } from "../context/AuthContext";
 // ── Media preview helpers ──────────────────────────────────────────────────
 
 function getYouTubeId(url: string): string | null {
-    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/);
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/))([^&?/]+)/);
     return match ? match[1] : null;
 }
 
@@ -27,57 +27,122 @@ function isDirectVideo(url: string): boolean {
     return /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
 }
 
-function MediaPreviewCard({ item }: { item: { id: string; url: string; media_type: string; is_external_link: boolean } }) {
+// ── Fetch YouTube title via oEmbed (no API key required) ──────────────────
+async function fetchYouTubeTitle(ytId: string): Promise<string> {
+    const res = await fetch(
+        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ytId}&format=json`
+    );
+    if (!res.ok) throw new Error("oEmbed fetch failed");
+    const data = await res.json();
+    return data.title as string;
+}
+
+function MediaPreviewCard({ item }: { item: { id: string; url: string; media_type: string; is_external_link: boolean; title?: string | null } }) {
+    const [showVideo, setShowVideo] = useState(false);
+    const [resolvedTitle, setResolvedTitle] = useState<string>(item.title || "");
+
     const ytId = getYouTubeId(item.url);
     const spotifyEmbed = getSpotifyEmbedUrl(item.url);
 
+    // Auto-fetch YouTube title if not provided by the backend
+    useEffect(() => {
+        if (ytId && !item.title) {
+            fetchYouTubeTitle(ytId)
+                .then(setResolvedTitle)
+                .catch(() => setResolvedTitle("YouTube Video"));
+        }
+    }, [ytId, item.title]);
+
+    // Keep resolvedTitle in sync if item.title changes (e.g. after a re-fetch)
+    useEffect(() => {
+        if (item.title) setResolvedTitle(item.title);
+    }, [item.title]);
+
     if (ytId) {
         return (
-            <a
-                href={item.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-between border-b pb-4 hover:opacity-80 transition"
-            >
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="w-11 h-11 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                        <Play size={16} className="text-red-600 fill-red-600" />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="text-[14px] font-medium text-gray-700">YouTube Video</p>
-                        <p className="text-[12px] text-gray-400 truncate max-w-[220px]">{item.url}</p>
+            <div className="flex flex-col h-full">
+                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div className="aspect-video w-full bg-black relative group cursor-pointer" onClick={() => setShowVideo(true)}>
+                        {!showVideo ? (
+                            <>
+                                <img
+                                    src={`https://i.ytimg.com/vi/${ytId}/maxresdefault.jpg`}
+                                    className="w-full h-full object-cover"
+                                    alt={resolvedTitle || "YouTube Video"}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src = `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
+                                        (e.target as HTMLImageElement).onerror = (ev) => {
+                                            (ev.target as HTMLImageElement).src = `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg`;
+                                        };
+                                    }}
+                                />
+                                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-lg group-hover:scale-110 transition-transform">
+                                        <Play size={24} fill="currentColor" />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <iframe
+                                width="100%"
+                                height="100%"
+                                src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+                                title="YouTube video player"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowFullScreen
+                            ></iframe>
+                        )}
                     </div>
                 </div>
-            </a>
+                <div className="mt-2 px-1">
+                    <p className="text-[14px] font-medium text-gray-700 truncate">
+                        {resolvedTitle || "YouTube Video"}
+                    </p>
+                    <p className="text-[11px] text-gray-400">YouTube Video</p>
+                </div>
+            </div>
         );
     }
 
     if (spotifyEmbed) {
         return (
-            <div className="rounded-xl overflow-hidden mb-4">
-                <iframe
-                    src={spotifyEmbed}
-                    width="100%"
-                    height="152"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
-                    className="rounded-xl border-0"
-                />
+            <div className="flex flex-col h-full">
+                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div className="w-full h-[152px]">
+                        <iframe
+                            src={spotifyEmbed}
+                            width="100%"
+                            height="100%"
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                            loading="lazy"
+                            className="border-0"
+                        />
+                    </div>
+                </div>
+                <div className="mt-2 px-1">
+                    <p className="text-[14px] font-medium text-gray-700 truncate">
+                        {resolvedTitle || "Spotify"}
+                    </p>
+                    <p className="text-[11px] text-gray-400">Spotify</p>
+                </div>
             </div>
         );
     }
 
     if (isDirectVideo(item.url)) {
         return (
-            <div className="flex items-center justify-between border-b pb-4 hover:opacity-80 transition">
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                        <Play size={16} className="text-gray-600" />
+            <div className="flex flex-col h-full">
+                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
+                        <Play size={32} className="text-gray-400" />
                     </div>
-                    <div className="min-w-0">
-                        <p className="text-[14px] font-medium text-gray-700">Video File</p>
-                        <p className="text-[12px] text-gray-400 truncate max-w-[220px]">{item.url}</p>
-                    </div>
+                </div>
+                <div className="p-3">
+                    <p className="text-[14px] font-medium text-gray-700 truncate">
+                        {resolvedTitle || "Video"}
+                    </p>
+                    <p className="text-[11px] text-gray-400 truncate">{item.url}</p>
                 </div>
             </div>
         );
@@ -88,20 +153,23 @@ function MediaPreviewCard({ item }: { item: { id: string; url: string; media_typ
             href={item.url}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-between border-b pb-4 hover:opacity-80 transition"
+            className="flex flex-col h-full"
         >
-            <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                    <Play size={16} className="text-gray-600" />
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 h-full block">
+                <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
+                    <Play size={32} className="text-gray-400" />
                 </div>
-                <div className="min-w-0">
-                    <p className="text-[14px] font-medium text-gray-700">External Media</p>
-                    <p className="text-[12px] text-gray-400 truncate max-w-[220px]">{item.url}</p>
-                </div>
+            </div>
+            <div className="p-3">
+                <p className="text-[14px] font-medium text-gray-700 truncate">
+                    {resolvedTitle || item.url}
+                </p>
+                <p className="text-[11px] text-gray-400 truncate">{item.url}</p>
             </div>
         </a>
     );
 }
+
 export default function ArtistProfileLanding({ id: propId, onClose }: { id?: string; onClose?: () => void }) {
     const { id: paramId } = useParams<{ id: string }>();
     const id = propId || paramId;
@@ -125,8 +193,6 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
             .catch(() => setArtist(null))
             .finally(() => setLoading(false));
     }, [id, propId]);
-
-    // ... rest of logic
 
     // FAILSAFE REDIRECT: If the booking modal is about to open but we are not logged in as a customer
     useEffect(() => {
@@ -218,20 +284,20 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                         <div className="space-y-5">
                             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                                 <div className="pt-10 flex flex-col items-center space-y-4">
-                                    <div className={`h-8 w-48 rounded ${skeletonClass}`} /> {/* Name */}
-                                    <div className={`h-4 w-32 rounded ${skeletonClass}`} /> {/* Rating */}
+                                    <div className={`h-8 w-48 rounded ${skeletonClass}`} />
+                                    <div className={`h-4 w-32 rounded ${skeletonClass}`} />
                                     <div className="flex gap-2">
-                                        <div className={`h-6 w-16 rounded-full ${skeletonClass}`} /> {/* Tag */}
-                                        <div className={`h-6 w-16 rounded-full ${skeletonClass}`} /> {/* Tag */}
+                                        <div className={`h-6 w-16 rounded-full ${skeletonClass}`} />
+                                        <div className={`h-6 w-16 rounded-full ${skeletonClass}`} />
                                     </div>
-                                    <div className={`h-20 w-full rounded mt-4 ${skeletonClass}`} /> {/* Bio */}
+                                    <div className={`h-20 w-full rounded mt-4 ${skeletonClass}`} />
                                 </div>
                             </div>
                         </div>
 
                         {/* Skeleton Right Panel */}
                         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
-                            <div className={`h-8 w-40 rounded mb-6 ${skeletonClass}`} /> {/* Overview title */}
+                            <div className={`h-8 w-40 rounded mb-6 ${skeletonClass}`} />
                             <div className="space-y-4">
                                 <div className={`h-4 w-full rounded ${skeletonClass}`} />
                                 <div className={`h-4 w-full rounded ${skeletonClass}`} />
@@ -259,7 +325,27 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
 
     const avgRating = artist.rating.average ?? 0;
     const galleryImages = artist.gallery;
-    const mediaLinks = artist.media;
+
+    // Combine portfolio media with main social links if not already present
+    const mediaLinks = [...artist.media];
+    if (artist.youtube_link && !mediaLinks.some(m => m.url === artist.youtube_link)) {
+        mediaLinks.push({
+            id: 'main-youtube',
+            url: artist.youtube_link,
+            media_type: 'video',
+            is_external_link: true,
+            title: 'Official YouTube'
+        });
+    }
+    if (artist.spotify_link && !mediaLinks.some(m => m.url === artist.spotify_link)) {
+        mediaLinks.push({
+            id: 'main-spotify',
+            url: artist.spotify_link,
+            media_type: 'audio',
+            is_external_link: true,
+            title: 'Official Spotify'
+        });
+    }
 
     return (
         <div className={`${onClose ? 'relative h-full overflow-y-auto custom-scrollbar' : 'min-h-screen'} bg-[#F4F1F5] transition-all duration-500`}>
@@ -454,11 +540,11 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                                 </>
                             )}
 
-                            {/* AUDIO & VIDEO */}
+                            {/* Audio & Video */}
                             {mediaLinks.length > 0 && (
                                 <>
                                     <h3 className="text-[24px] font-bold mt-10 mb-5">Audio & Video</h3>
-                                    <div className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {mediaLinks.map((item) => (
                                             <MediaPreviewCard key={item.id} item={item} />
                                         ))}
@@ -529,7 +615,7 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                             <div className="mt-12 bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-sm">
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">Leave a Review</h3>
                                 <p className="text-xs text-gray-400 mb-6">Share your experience with the community</p>
-                                
+
                                 <div className="flex items-center justify-center gap-1 mb-6">
                                     {[1, 2, 3, 4, 5].map((s) => (
                                         <button

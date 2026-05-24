@@ -164,13 +164,13 @@ function mapDiscoveryArtist(a: DiscoveryArtist): Artist {
 function getCategoryIcon(label: string): React.ReactNode {
     const key = label.toLowerCase();
     if (key.includes("dj")) return <Radio size={28} />;
-    if (key.includes("sing") || key.includes("vocal")) return <Mic2 size={28} />;
-    if (key.includes("band") || key.includes("music") || key.includes("producer")) return <Music2 size={28} />;
+    if (key.includes("sing") || key.includes("vocal") || key.includes("rapper")) return <Mic2 size={28} />;
+    if (key.includes("band") || key.includes("music") || key.includes("producer") || key.includes("musician")) return <Music2 size={28} />;
     if (key.includes("danc")) return <PersonStanding size={28} />;
     if (key.includes("sound")) return <Zap size={28} />;
     if (key.includes("host") || key.includes("mc") || key.includes("emcee")) return <Globe size={28} />;
     if (key.includes("light")) return <Lightbulb size={28} />;
-    if (key.includes("photo") || key.includes("camera")) return <Camera size={28} />;
+    if (key.includes("photo") || key.includes("camera") || key.includes("video") || key.includes("videographer")) return <Camera size={28} />;
     if (key.includes("cultural") || key.includes("show") || key.includes("comed")) return <Star size={28} />;
     return <Music2 size={28} />;
 }
@@ -182,15 +182,34 @@ const PARTNER_LOGOS = ["TAJ", "Shangri-La", "Cinnamon", "Hilton", "MOVENPICK", "
 
 const CATEGORY_IMAGES: Record<string, string> = {
     "Musician": "https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=600&q=80",
-    "Band & Duo": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&q=80",
+    "Solo Singer": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=80",
+    "Rapper": "https://images.unsplash.com/photo-1546707012-c46675f12716?w=600&q=80",
+    "Live Band": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&q=80",
+    "Dance Group": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&q=80",
+    "Producer": "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=80",
     "DJ": "https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?w=600&q=80",
+    "Sound System": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80",
+    "Lightning System": "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80",
+    "Videographers": "https://images.unsplash.com/photo-1533107862482-0e6974b06ef4?w=600&q=80",
+    "Band & Duo": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&q=80",
     "Dancer": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&q=80",
     "Comedian": "https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=600&q=80",
     "Photographer": "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600&q=80",
-    "Producer": "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=80",
-    "Singer": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=80",
-    "Sound System": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80"
+    "Singer": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=80"
 };
+
+const ALL_CATEGORIES = [
+    "Musician",
+    "Solo Singer",
+    "Rapper",
+    "Live Band",
+    "Dance Group",
+    "Producer",
+    "DJ",
+    "Sound System",
+    "Lightning System",
+    "Videographers"
+];
 
 const DEFAULT_CAT_IMAGE = "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=600&q=80";
 
@@ -206,8 +225,8 @@ export default function HomePage() {
     const [selectedSearchCategory, setSelectedSearchCategory] = useState<string | null>(null);
     const [hasActiveSearch, setHasActiveSearch] = useState(false);
     const [popularArtistsLoading, setPopularArtistsLoading] = useState(false);
-    const [browseCategories, setBrowseCategories] = useState<string[]>([]);
-    const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(true);
+    const [browseCategories, setBrowseCategories] = useState<string[]>(ALL_CATEGORIES);
+    const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(false);
     const [browseArtists, setBrowseArtists] = useState<Artist[]>([]);
     const [selectedBrowseCategory, setSelectedBrowseCategory] = useState<string | null>(null);
     const [browseArtistsLoading, setBrowseArtistsLoading] = useState(false);
@@ -261,8 +280,11 @@ export default function HomePage() {
     useEffect(() => {
         setBrowseCategoriesLoading(true);
         getCategories()
-            .then(setBrowseCategories)
-            .catch(() => setBrowseCategories([]))
+            .then(cats => {
+                const combined = Array.from(new Set([...ALL_CATEGORIES, ...cats]));
+                setBrowseCategories(combined);
+            })
+            .catch(() => setBrowseCategories(ALL_CATEGORIES))
             .finally(() => setBrowseCategoriesLoading(false));
     }, []);
 
@@ -587,15 +609,19 @@ export default function HomePage() {
           NAVBAR
       ══════════════════════════════════════════════════ */}
                 <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
-                    {/*/!* Logo *!/*/}
-                    {/*<Link to="/" className="flex items-center">*/}
-                    {/*    <img src="/Perfoma.png" alt="Perfoma" className="h-10 w-auto object-contain" />*/}
-                    {/*</Link>*/}
-
                     {/* Logo */}
-                    <div className="flex items-center gap-2">
-                        <div className="w-9 h-9 btn-pink rounded-xl flex items-center justify-center font-black text-white text-lg select-none">M</div>
-                    </div>
+                    <Link to="/" className="flex items-center">
+                        <img
+                            src="/logoBlack.svg"
+                            alt="Perfoma"
+                            className="h-10 w-auto object-contain"
+                        />
+                    </Link>
+
+                    {/*/!* Logo *!/*/}
+                    {/*<div className="flex items-center gap-2">*/}
+                    {/*    <div className="w-9 h-9 btn-pink rounded-xl flex items-center justify-center font-black text-white text-lg select-none">M</div>*/}
+                    {/*</div>*/}
 
                     {/* Nav Links */}
                     <div className="hidden md:flex items-center gap-7">
@@ -630,7 +656,7 @@ export default function HomePage() {
       ══════════════════════════════════════════════════ */}
                 <section
                     className="relative w-full overflow-hidden bg-cover bg-center py-12 px-6 md:px-12 lg:px-20"
-                    style={{ backgroundImage: "url('/Cover3.png')" }}
+                    style={{ backgroundImage: "url('/Cover7.jpg')" }}
                 >
                     {/* Overlay for better text readability */}
                     <div className="absolute inset-0 bg-black/40 z-0" />
@@ -689,55 +715,55 @@ export default function HomePage() {
                             {/* Right: Collage */}
                             <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end">
                                 {/* Main large image */}
-                                <div className="absolute right-0 top-0 w-[58%] h-[75%] hero-image-card z-10" style={{ borderRadius: "20px", overflow: "hidden" }}>
-                                    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80" className="w-full h-full object-cover" alt="DJ" />
-                                </div>
+                                {/*<div className="absolute right-0 top-0 w-[58%] h-[75%] hero-image-card z-10" style={{ borderRadius: "20px", overflow: "hidden" }}>*/}
+                                {/*    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80" className="w-full h-full object-cover" alt="DJ" />*/}
+                                {/*</div>*/}
 
-                                {/* Top right image */}
-                                <div className="absolute right-[30%] top-[2%] w-[36%] h-[46%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                                    <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80" className="w-full h-full object-cover" alt="Singer" />
-                                </div>
+                                {/*/!* Top right image *!/*/}
+                                {/*<div className="absolute right-[30%] top-[2%] w-[36%] h-[46%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>*/}
+                                {/*    <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80" className="w-full h-full object-cover" alt="Singer" />*/}
+                                {/*</div>*/}
 
-                                {/* Middle right image */}
-                                <div className="absolute right-[28%] top-[48%] w-[34%] h-[42%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                                    <img src="https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80" className="w-full h-full object-cover" alt="Dancer" />
-                                </div>
+                                {/*/!* Middle right image *!/*/}
+                                {/*<div className="absolute right-[28%] top-[48%] w-[34%] h-[42%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>*/}
+                                {/*    <img src="https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80" className="w-full h-full object-cover" alt="Dancer" />*/}
+                                {/*</div>*/}
 
-                                {/* Bottom right image */}
-                                <div className="absolute right-0 bottom-0 w-[40%] h-[35%] hero-image-card z-10" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                                    <img src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&q=80" className="w-full h-full object-cover" alt="Band" />
-                                </div>
+                                {/*/!* Bottom right image *!/*/}
+                                {/*<div className="absolute right-0 bottom-0 w-[40%] h-[35%] hero-image-card z-10" style={{ borderRadius: "16px", overflow: "hidden" }}>*/}
+                                {/*    <img src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&q=80" className="w-full h-full object-cover" alt="Band" />*/}
+                                {/*</div>*/}
 
                                 {/* Floating badge – Rating */}
-                                <div className="floating-badge absolute left-2 top-[10%] z-30 min-w-[130px]">
-                                    <Star size={18} fill="#facc15" className="text-yellow-400 flex-shrink-0" />
-                                    <div>
-                                        <p className="font-black text-gray-900 text-base leading-none">4.9</p>
-                                        <p className="text-gray-400 text-xs mt-0.5">Average Rating</p>
-                                    </div>
-                                </div>
+                                {/*<div className="floating-badge absolute left-2 top-[10%] z-30 min-w-[130px]">*/}
+                                {/*    <Star size={18} fill="#facc15" className="text-yellow-400 flex-shrink-0" />*/}
+                                {/*    <div>*/}
+                                {/*        <p className="font-black text-gray-900 text-base leading-none">4.9</p>*/}
+                                {/*        <p className="text-gray-400 text-xs mt-0.5">Average Rating</p>*/}
+                                {/*    </div>*/}
+                                {/*</div>*/}
 
-                                {/* Floating badge – Artists */}
-                                <div className="floating-badge absolute left-2 top-[42%] z-30 min-w-[140px]">
-                                    <div className="w-8 h-8 btn-pink rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <Users size={16} className="text-white" />
-                                    </div>
-                                    <div>
-                                        <p className="font-black text-gray-900 text-base leading-none">1,200+</p>
-                                        <p className="text-gray-400 text-xs mt-0.5">Professional Artists</p>
-                                    </div>
-                                </div>
+                                {/*/!* Floating badge – Artists *!/*/}
+                                {/*<div className="floating-badge absolute left-2 top-[42%] z-30 min-w-[140px]">*/}
+                                {/*    <div className="w-8 h-8 btn-pink rounded-lg flex items-center justify-center flex-shrink-0">*/}
+                                {/*        <Users size={16} className="text-white" />*/}
+                                {/*    </div>*/}
+                                {/*    <div>*/}
+                                {/*        <p className="font-black text-gray-900 text-base leading-none">1,200+</p>*/}
+                                {/*        <p className="text-gray-400 text-xs mt-0.5">Professional Artists</p>*/}
+                                {/*    </div>*/}
+                                {/*</div>*/}
 
-                                {/* Floating badge – Events */}
-                                <div className="floating-badge absolute left-2 bottom-[12%] z-30 min-w-[140px]">
-                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#f0f0f0" }}>
-                                        <TrendingUp size={16} className="text-gray-700" />
-                                    </div>
-                                    <div>
-                                        <p className="font-black text-gray-900 text-base leading-none">3,400+</p>
-                                        <p className="text-gray-400 text-xs mt-0.5">Events Booked</p>
-                                    </div>
-                                </div>
+                                {/*/!* Floating badge – Events *!/*/}
+                                {/*<div className="floating-badge absolute left-2 bottom-[12%] z-30 min-w-[140px]">*/}
+                                {/*    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#f0f0f0" }}>*/}
+                                {/*        <TrendingUp size={16} className="text-gray-700" />*/}
+                                {/*    </div>*/}
+                                {/*    <div>*/}
+                                {/*        <p className="font-black text-gray-900 text-base leading-none">3,400+</p>*/}
+                                {/*        <p className="text-gray-400 text-xs mt-0.5">Events Booked</p>*/}
+                                {/*    </div>*/}
+                                {/*</div>*/}
                             </div>
                         </div>
                     </div>
