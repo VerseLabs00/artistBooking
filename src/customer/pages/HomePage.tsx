@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
-    ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, TrendingUp,
-    Mic2, Music2, PersonStanding, Radio, Lightbulb, Globe,
-    RefreshCw, GitCompare, BookOpen, Camera, X
+    ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, Shield, TrendingUp,
+    Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
+    Play, RefreshCw, GitCompare, BookOpen, X, Loader2
 } from "lucide-react";
 import Footer from "../components/Footer";
 import { getArtists, getCategories, getNearYou } from "../services/discoveryService";
@@ -34,20 +34,66 @@ interface ArtistSearchFilters {
     budget?: number;
 }
 
+interface CategoryData {
+    name: string;
+    description: string;
+    image: string;
+}
+
 const FALLBACK_ARTIST_IMAGE =
     "https://images.unsplash.com/photo-1571935441008-e42d7f4a8f65?w=400&q=80";
 
-const ALL_CATEGORIES = [
-    "Musician",
-    "Solo Singer",
-    "Rapper",
-    "Live Band",
-    "Dance Group",
-    "Producer",
-    "DJ",
-    "Sound System",
-    "Lightning System",
-    "Videographers"
+const ALL_CATEGORIES_DATA: CategoryData[] = [
+    {
+        name: "Musician",
+        description: "Elegant solo instrumentalists and performers for ambient atmosphere.",
+        image: "./assets/categories/musician.jpg"
+    },
+    {
+        name: "Solo Singer",
+        description: "Powerful vocalists covering a wide range of genres and styles.",
+        image: "./assets/categories/solosinger.jpg"
+    },
+    {
+        name: "Rapper",
+        description: "Dynamic hip-hop artists and lyricists for high-energy performances.",
+        image: "./assets/categories/rapper.jpg"
+    },
+    {
+        name: "Live Band",
+        description: "Full musical ensembles providing an immersive live experience.",
+        image: "./assets/categories/liveband.jpg"
+    },
+    {
+        name: "Dance Group",
+        description: "Professional choreographies and high-energy dance routines.",
+        image: "./assets/categories/dancegroups.jpg"
+    },
+    {
+        name: "Producer",
+        description: "Creative minds behind the beats and sound engineering.",
+        image: "./assets/categories/producer.jpg"
+    },
+    {
+        name: "DJ",
+        description: "Expert curators of energy and rhythm for every dance floor.",
+        image: "./assets/categories/dj.jpg"
+    },
+    {
+        name: "Sound System",
+        description: "Premium audio equipment and technicians for crystal clear sound.",
+        image: "./assets/categories/soundsystem.jpg"
+    },
+    {
+        name: "Lightning System",
+        description: "Atmospheric and stage lighting to set the perfect visual mood.",
+        image: "./assets/categories/lightningsystem.jpg"
+    },
+    {
+        name: "Videographers",
+        description: "Cinematic storytellers capturing your most precious moments.",
+        image: "./assets/categories/videographers.jpg"
+    }
 ];
 
 const CATEGORY_IMAGES: Record<string, string> = {
@@ -185,7 +231,7 @@ export default function HomePage() {
     const [selectedSearchCategory, setSelectedSearchCategory] = useState<string | null>(null);
     const [hasActiveSearch, setHasActiveSearch] = useState(false);
     const [popularArtistsLoading, setPopularArtistsLoading] = useState(false);
-    const [browseCategories, setBrowseCategories] = useState<string[]>(ALL_CATEGORIES);
+    const [browseCategories, setBrowseCategories] = useState<CategoryData[]>(ALL_CATEGORIES_DATA);
     const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(true);
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
@@ -246,10 +292,17 @@ export default function HomePage() {
         setBrowseCategoriesLoading(true);
         getCategories()
             .then(cats => {
-                const combined = Array.from(new Set([...ALL_CATEGORIES, ...cats]));
-                setBrowseCategories(combined);
+                const existingNames = ALL_CATEGORIES_DATA.map(c => c.name);
+                const newCats = cats
+                    .filter(c => !existingNames.includes(c))
+                    .map(c => ({
+                        name: c,
+                        description: `Explore professional ${c.toLowerCase()} for your next event.`,
+                        image: DEFAULT_CAT_IMAGE
+                    }));
+                setBrowseCategories([...ALL_CATEGORIES_DATA, ...newCats]);
             })
-            .catch(() => setBrowseCategories(ALL_CATEGORIES))
+            .catch(() => setBrowseCategories(ALL_CATEGORIES_DATA))
             .finally(() => setBrowseCategoriesLoading(false));
     }, []);
 
@@ -555,33 +608,31 @@ export default function HomePage() {
                         </div>
 
                         {browseCategoriesLoading ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
-                                {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                {Array.from({ length: ALL_CATEGORIES_DATA.length }).map((_, i) => (
                                     <div
                                         key={i}
-                                        className="w-full aspect-[5/6] rounded-2xl bg-gray-100 animate-pulse"
+                                        className="w-full aspect-[3/4] rounded-2xl bg-gray-100 animate-pulse"
                                     />
                                 ))}
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {browseCategories.map(cat => (
                                     <div
-                                        key={cat}
+                                        key={cat.name}
                                         className="cat-card-modern group w-full"
-                                        onClick={() => filterBrowseArtistsByCategory(cat)}
+                                        onClick={() => filterBrowseArtistsByCategory(cat.name)}
                                     >
                                         <img
-                                            src={CATEGORY_IMAGES[cat] || DEFAULT_CAT_IMAGE}
+                                            src={cat.image}
                                             className="cat-img"
-                                            alt={cat}
+                                            alt={cat.name}
                                         />
                                         <div className="cat-overlay">
-                                            {/*<div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-3 group-hover:bg-pink transition-colors">*/}
-                                            {/*    {getCategoryIcon(cat)}*/}
-                                            {/*</div>*/}
-                                            <h3 className="text-white font-900 text-lg leading-tight">{cat}</h3>
-                                            <p className="text-white/60 text-xs mt-1 font-600">Explore Artists</p>
+                                            <h3 className="text-white font-900 text-lg leading-tight">{cat.name}</h3>
+                                            <p className="text-white/80 text-[10px] mt-1 line-clamp-2 leading-relaxed">{cat.description}</p>
+                                            {/*<p className="text-white/60 text-[9px] mt-2 font-600 uppercase tracking-wider">Explore Artists</p>*/}
                                         </div>
                                     </div>
                                 ))}
@@ -681,13 +732,13 @@ export default function HomePage() {
                                         </button>
                                         {browseCategories.map(cat => (
                                             <button
-                                                key={cat}
+                                                key={cat.name}
                                                 type="button"
-                                                onClick={() => handleSearchCategoryClick(cat)}
-                                                className={`tag-pill${selectedSearchCategory === cat ? " tag-pill-active" : ""}`}
+                                                onClick={() => handleSearchCategoryClick(cat.name)}
+                                                className={`tag-pill${selectedSearchCategory === cat.name ? " tag-pill-active" : ""}`}
                                             >
                                                 <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
-                                                {cat}
+                                                {cat.name}
                                             </button>
                                         ))}
                                     </>
@@ -781,15 +832,15 @@ export default function HomePage() {
                         <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
                             {PARTNER_LOGOS.map(logo => (
                                 <span key={logo} className="text-gray-400 font-bold text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
-                                    {logo}
-                                </span>
-                            ))}
-                        </div>
+                                {logo}
+                            </span>
+                        ))}
                     </div>
-                </section>
+                </div>
+            </section>
 
-                <Footer />
-            </div>
+            <Footer />
         </div>
+    </div>
     );
 }

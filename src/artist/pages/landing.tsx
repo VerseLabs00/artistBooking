@@ -198,17 +198,63 @@ const CATEGORY_IMAGES: Record<string, string> = {
     "Singer": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=80"
 };
 
-const ALL_CATEGORIES = [
-    "Musician",
-    "Solo Singer",
-    "Rapper",
-    "Live Band",
-    "Dance Group",
-    "Producer",
-    "DJ",
-    "Sound System",
-    "Lightning System",
-    "Videographers"
+interface CategoryData {
+    name: string;
+    description: string;
+    image: string;
+}
+
+const ALL_CATEGORIES_DATA: CategoryData[] = [
+    { 
+        name: "Musician", 
+        description: "Elegant solo instrumentalists and performers for ambient atmosphere.", 
+        image: "./assets/categories/musician.jpg"
+    },
+    { 
+        name: "Solo Singer", 
+        description: "Powerful vocalists covering a wide range of genres and styles.", 
+        image: "./assets/categories/solosinger.jpg"
+    },
+    { 
+        name: "Rapper", 
+        description: "Dynamic hip-hop artists and lyricists for high-energy performances.", 
+        image: "./assets/categories/rapper.jpg"
+    },
+    { 
+        name: "Live Band", 
+        description: "Full musical ensembles providing an immersive live experience.", 
+        image: "./assets/categories/liveband.jpg"
+    },
+    { 
+        name: "Dance Group", 
+        description: "Professional choreographies and high-energy dance routines.", 
+        image: "./assets/categories/dancegroups.jpg"
+    },
+    { 
+        name: "Producer", 
+        description: "Creative minds behind the beats and sound engineering.", 
+        image: "./assets/categories/producer.jpg"
+    },
+    { 
+        name: "DJ", 
+        description: "Expert curators of energy and rhythm for every dance floor.", 
+        image: "./assets/categories/dj.jpg"
+    },
+    { 
+        name: "Sound System", 
+        description: "Premium audio equipment and technicians for crystal clear sound.", 
+        image: "./assets/categories/soundsystem.jpg"
+    },
+    { 
+        name: "Lightning System", 
+        description: "Atmospheric and stage lighting to set the perfect visual mood.", 
+        image: "./assets/categories/lightningsystem.jpg"
+    },
+    { 
+        name: "Videographers", 
+        description: "Cinematic storytellers capturing your most precious moments.",
+        image: "./assets/categories/videographers.jpg"
+    }
 ];
 
 const DEFAULT_CAT_IMAGE = "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=600&q=80";
@@ -225,7 +271,7 @@ export default function HomePage() {
     const [selectedSearchCategory, setSelectedSearchCategory] = useState<string | null>(null);
     const [hasActiveSearch, setHasActiveSearch] = useState(false);
     const [popularArtistsLoading, setPopularArtistsLoading] = useState(false);
-    const [browseCategories, setBrowseCategories] = useState<string[]>(ALL_CATEGORIES);
+    const [browseCategories, setBrowseCategories] = useState<CategoryData[]>(ALL_CATEGORIES_DATA);
     const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(false);
     const [browseArtists, setBrowseArtists] = useState<Artist[]>([]);
     const [selectedBrowseCategory, setSelectedBrowseCategory] = useState<string | null>(null);
@@ -281,10 +327,17 @@ export default function HomePage() {
         setBrowseCategoriesLoading(true);
         getCategories()
             .then(cats => {
-                const combined = Array.from(new Set([...ALL_CATEGORIES, ...cats]));
-                setBrowseCategories(combined);
+                const existingNames = ALL_CATEGORIES_DATA.map(c => c.name);
+                const newCats = cats
+                    .filter(c => !existingNames.includes(c))
+                    .map(c => ({
+                        name: c,
+                        description: `Explore professional ${c.toLowerCase()} for your next event.`,
+                        image: DEFAULT_CAT_IMAGE
+                    }));
+                setBrowseCategories([...ALL_CATEGORIES_DATA, ...newCats]);
             })
-            .catch(() => setBrowseCategories(ALL_CATEGORIES))
+            .catch(() => setBrowseCategories(ALL_CATEGORIES_DATA))
             .finally(() => setBrowseCategoriesLoading(false));
     }, []);
 
@@ -473,7 +526,7 @@ export default function HomePage() {
             position: relative; 
             border-radius: 20px; 
             overflow: hidden; 
-            aspect-ratio: 4/5;
+            aspect-ratio: 3/4;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -618,15 +671,9 @@ export default function HomePage() {
                         />
                     </Link>
 
-                    {/*/!* Logo *!/*/}
-                    {/*<div className="flex items-center gap-2">*/}
-                    {/*    <div className="w-9 h-9 btn-pink rounded-xl flex items-center justify-center font-black text-white text-lg select-none">M</div>*/}
-                    {/*</div>*/}
-
                     {/* Nav Links */}
                     <div className="hidden md:flex items-center gap-7">
                         <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
-                        {/*<button onClick={() => scrollToSection('artists-section')} className="nav-link">Artist</button>*/}
                         <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
                         <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
                         <button onClick={() => scrollToSection('join-section')} className="nav-link">Join as Artist</button>
@@ -688,7 +735,6 @@ export default function HomePage() {
 
                                     <Link
                                         to="/login"
-                                        //className="btn-dark flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm border border-gray-700"
                                         className="bg-white text-black flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm border border-white hover:bg-gray-100 transition"
                                     >
                                         Join as Artist
@@ -714,56 +760,6 @@ export default function HomePage() {
 
                             {/* Right: Collage */}
                             <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end">
-                                {/* Main large image */}
-                                {/*<div className="absolute right-0 top-0 w-[58%] h-[75%] hero-image-card z-10" style={{ borderRadius: "20px", overflow: "hidden" }}>*/}
-                                {/*    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80" className="w-full h-full object-cover" alt="DJ" />*/}
-                                {/*</div>*/}
-
-                                {/*/!* Top right image *!/*/}
-                                {/*<div className="absolute right-[30%] top-[2%] w-[36%] h-[46%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>*/}
-                                {/*    <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80" className="w-full h-full object-cover" alt="Singer" />*/}
-                                {/*</div>*/}
-
-                                {/*/!* Middle right image *!/*/}
-                                {/*<div className="absolute right-[28%] top-[48%] w-[34%] h-[42%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>*/}
-                                {/*    <img src="https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80" className="w-full h-full object-cover" alt="Dancer" />*/}
-                                {/*</div>*/}
-
-                                {/*/!* Bottom right image *!/*/}
-                                {/*<div className="absolute right-0 bottom-0 w-[40%] h-[35%] hero-image-card z-10" style={{ borderRadius: "16px", overflow: "hidden" }}>*/}
-                                {/*    <img src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&q=80" className="w-full h-full object-cover" alt="Band" />*/}
-                                {/*</div>*/}
-
-                                {/* Floating badge – Rating */}
-                                {/*<div className="floating-badge absolute left-2 top-[10%] z-30 min-w-[130px]">*/}
-                                {/*    <Star size={18} fill="#facc15" className="text-yellow-400 flex-shrink-0" />*/}
-                                {/*    <div>*/}
-                                {/*        <p className="font-black text-gray-900 text-base leading-none">4.9</p>*/}
-                                {/*        <p className="text-gray-400 text-xs mt-0.5">Average Rating</p>*/}
-                                {/*    </div>*/}
-                                {/*</div>*/}
-
-                                {/*/!* Floating badge – Artists *!/*/}
-                                {/*<div className="floating-badge absolute left-2 top-[42%] z-30 min-w-[140px]">*/}
-                                {/*    <div className="w-8 h-8 btn-pink rounded-lg flex items-center justify-center flex-shrink-0">*/}
-                                {/*        <Users size={16} className="text-white" />*/}
-                                {/*    </div>*/}
-                                {/*    <div>*/}
-                                {/*        <p className="font-black text-gray-900 text-base leading-none">1,200+</p>*/}
-                                {/*        <p className="text-gray-400 text-xs mt-0.5">Professional Artists</p>*/}
-                                {/*    </div>*/}
-                                {/*</div>*/}
-
-                                {/*/!* Floating badge – Events *!/*/}
-                                {/*<div className="floating-badge absolute left-2 bottom-[12%] z-30 min-w-[140px]">*/}
-                                {/*    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#f0f0f0" }}>*/}
-                                {/*        <TrendingUp size={16} className="text-gray-700" />*/}
-                                {/*    </div>*/}
-                                {/*    <div>*/}
-                                {/*        <p className="font-black text-gray-900 text-base leading-none">3,400+</p>*/}
-                                {/*        <p className="text-gray-400 text-xs mt-0.5">Events Booked</p>*/}
-                                {/*    </div>*/}
-                                {/*</div>*/}
                             </div>
                         </div>
                     </div>
@@ -779,33 +775,31 @@ export default function HomePage() {
                         </div>
 
                         {browseCategoriesLoading ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
-                                {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                {Array.from({ length: ALL_CATEGORIES_DATA.length }).map((_, i) => (
                                     <div
                                         key={i}
-                                        className="w-full aspect-[5/6] rounded-2xl bg-gray-100 animate-pulse"
+                                        className="w-full aspect-[3/4] rounded-2xl bg-gray-100 animate-pulse"
                                     />
                                 ))}
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {browseCategories.map(cat => (
                                     <div
-                                        key={cat}
+                                        key={cat.name}
                                         className="cat-card-modern group w-full"
-                                        onClick={() => filterBrowseArtistsByCategory(cat)}
+                                        onClick={() => filterBrowseArtistsByCategory(cat.name)}
                                     >
                                         <img
-                                            src={CATEGORY_IMAGES[cat] || DEFAULT_CAT_IMAGE}
+                                            src={cat.image}
                                             className="cat-img"
-                                            alt={cat}
+                                            alt={cat.name}
                                         />
                                         <div className="cat-overlay">
-                                            {/*<div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-3 group-hover:bg-pink transition-colors">*/}
-                                            {/*    {getCategoryIcon(cat)}*/}
-                                            {/*</div>*/}
-                                            <h3 className="text-white font-900 text-lg leading-tight">{cat}</h3>
-                                            <p className="text-white/60 text-xs mt-1 font-600">Explore Artists</p>
+                                            <h3 className="text-white font-900 text-lg leading-tight">{cat.name}</h3>
+                                            <p className="text-white/80 text-[10px] mt-1 line-clamp-2 leading-relaxed">{cat.description}</p>
+                                            {/*<p className="text-white/60 text-[9px] mt-2 font-600 uppercase tracking-wider">Explore Artists</p>*/}
                                         </div>
                                     </div>
                                 ))}
@@ -873,7 +867,7 @@ export default function HomePage() {
                                         <p className="text-xs text-gray-400 font-600">Location</p>
                                         <input
                                             type="text"
-                                            placeholder="All Sri Lanka ˅"
+                                            placeholder="All Sri Lanka"
                                             value={location}
                                             onChange={e => setLocation(e.target.value)}
                                             className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
@@ -903,7 +897,7 @@ export default function HomePage() {
                                         <p className="text-xs text-gray-400 font-600">Budget</p>
                                         <input
                                             type="text"
-                                            placeholder="Any Budget ˅"
+                                            placeholder="Any Budget"
                                             value={budget}
                                             onChange={e => setBudget(e.target.value)}
                                             className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
@@ -940,13 +934,13 @@ export default function HomePage() {
                                         </button>
                                         {browseCategories.map(cat => (
                                             <button
-                                                key={cat}
+                                                key={cat.name}
                                                 type="button"
-                                                onClick={() => handleSearchCategoryClick(cat)}
-                                                className={`tag-pill${selectedSearchCategory === cat ? " tag-pill-active" : ""}`}
+                                                onClick={() => handleSearchCategoryClick(cat.name)}
+                                                className={`tag-pill${selectedSearchCategory === cat.name ? " tag-pill-active" : ""}`}
                                             >
                                                 <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
-                                                {cat}
+                                                {cat.name}
                                             </button>
                                         ))}
                                     </>
@@ -956,7 +950,7 @@ export default function HomePage() {
 
                         {popularArtistsLoading ? (
                             <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2">
-                                {[1, 2, 3, 4, 5].map(i => renderArtistSkeleton(i))}
+                                {[1, 2, 3, 4, 5, 6].map(i => renderArtistSkeleton(i))}
                             </div>
                         ) : popularArtists.length === 0 ? (
                             <p className="text-sm text-gray-400 py-6 text-center">
