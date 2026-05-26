@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AuthCard from '../components/AuthCard'
-import PasswordInput from '../components/PasswordInput'
-import SocialLogins from '../components/SocialLogins'
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import stage from '../../../public/bg-login.png'
+import artistImage from '../../../public/person.png'
 import { useAuth } from '../context/AuthContext'
 
 export default function SignUpPage() {
@@ -13,6 +13,7 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -35,61 +36,115 @@ export default function SignUpPage() {
   }
 
   return (
-    <AuthCard>
-      <div className="flex items-center justify-between mb-10">
-        <button className="text-black hover:opacity-70 transition-opacity">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-        </button>
-        <button
-          onClick={() => navigate('/login')}
-          className="text-sm text-black hover:opacity-70 transition-opacity"
-        >
-          already have an account ?
-        </button>
+    <div className="min-h-screen flex flex-col bg-cover bg-center" style={{ backgroundImage: `url(${stage})` }}>
+      <div className="flex-grow flex items-center justify-center p-4">
+        <div className="relative overflow-hidden bg-white/90 backdrop-blur-xl border border-white/40 w-full max-w-4xl rounded-2xl shadow-[0_20px_60_rgba(0,0,0,0.3)] grid grid-cols-1 lg:grid-cols-2 p-6 md:p-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none"></div>
+          <div className="pr-0 lg:pr-10 relative z-10">
+            <div className="flex items-center justify-between mb-10">
+              <ArrowLeft 
+                className="cursor-pointer text-gray-600 hover:text-black transition-colors" 
+                size={20} 
+                onClick={() => navigate('/')}
+              />
+              <button onClick={() => navigate('/login')} className="text-sm text-gray-500 hover:text-black transition-colors">
+                + already have an account
+              </button>
+            </div>
+            <h1 className="text-3xl font-semibold mb-10 text-black">Sign up</h1>
+            {error && (
+              <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</div>
+            )}
+            <div className="space-y-6">
+              <div>
+                <p className="text-sm text-black mb-1">Full Name</p>
+                <input 
+                  type="text" 
+                  value={name} 
+                  onChange={e => setName(e.target.value)}
+                  placeholder="John Doe"
+                  className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-black transition-all duration-300" 
+                />
+              </div>
+              <div>
+                <p className="text-sm text-black mb-1">Email</p>
+                <input 
+                  type="email" 
+                  value={email} 
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="john@gmail.com"
+                  className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-black transition-all duration-300" 
+                />
+              </div>
+              <div className="relative">
+                <p className="text-sm text-black mb-1">Password</p>
+                <input 
+                  type={showPassword ? 'text' : 'password'} 
+                  value={password} 
+                  onChange={e => setPassword(e.target.value)}
+                  className="w-full border-b border-gray-300 bg-transparent outline-none py-2 pr-8 text-black focus:border-black transition-all duration-300" 
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-0 bottom-2 text-gray-400 hover:text-gray-600 transition-colors">
+                  {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+              </div>
+              <div className="relative">
+                <p className="text-sm text-black mb-1">Confirm Password</p>
+                <input 
+                  type={showPassword ? 'text' : 'password'} 
+                  value={confirm} 
+                  onChange={e => setConfirm(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSignUp()}
+                  className="w-full border-b border-gray-300 bg-transparent outline-none py-2 pr-8 text-black focus:border-black transition-all duration-300" 
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-0 bottom-2 text-gray-400 hover:text-gray-600 transition-colors">
+                  {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+              </div>
+              <button onClick={handleSignUp} disabled={loading}
+                className="w-full bg-[#DB0000] text-white py-4 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
+                {loading ? 'Creating...' : 'Create Account'}
+              </button>
+              <p className="text-center text-xs text-gray-400">or sign up with</p>
+              <div className="flex justify-center gap-4">
+                {[
+                  'https://cdn-icons-png.flaticon.com/512/124/124010.png',
+                  'https://cdn-icons-png.flaticon.com/512/300/300221.png',
+                  'https://cdn-icons-png.flaticon.com/512/0/747.png',
+                ].map((src, i) => (
+                  <button key={i} className="w-11 h-11 bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.12)] flex items-center justify-center hover:scale-110 transition-transform">
+                    <img src={src} className="w-5 h-5" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-center mt-10 lg:mt-0 relative z-10">
+            <div className="relative w-full max-w-[280px] md:max-w-[320px] h-[360px] md:h-[420px] rounded-[40px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] hover:scale-105 transition-all duration-300">
+              <img src={artistImage} className="w-full h-full object-cover grayscale" />
+              <div className="absolute top-4 left-4 text-white font-bold text-lg">M</div>
+              <div className="absolute bottom-6 left-6 right-6 text-white text-xs">
+                Lorem ipsum dolor sit amet, consectetur scing elit.
+              </div>
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+                <div className="w-2 h-2 bg-white/40 rounded-full"></div>
+                <div className="w-2 h-2 bg-white/40 rounded-full"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <h1 className="text-3xl font-semibold text-black mb-8">Sign up</h1>
-
-      <div className="mb-6">
-        <label className="block text-sm text-black mb-1">Name</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="John Doe"
-          className="w-full bg-transparent border-b border-gray-400 pb-2 text-sm text-gray-500 placeholder-gray-400 outline-none focus:border-black transition-colors"
-        />
+      <div className="text-white text-xs md:text-sm flex justify-center gap-4 pb-4 flex-wrap">
+        <span className="cursor-pointer hover:opacity-70 transition">Contact</span>
+        <span>|</span>
+        <span className="cursor-pointer hover:opacity-70 transition">Privacy</span>
+        <span>|</span>
+        <span className="cursor-pointer hover:opacity-70 transition">Terms & Conditions</span>
       </div>
-
-      <div className="mb-6">
-        <label className="block text-sm text-black mb-1">Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="jhon@gmail.com"
-          className="w-full bg-transparent border-b border-gray-400 pb-2 text-sm text-gray-500 placeholder-gray-400 outline-none focus:border-black transition-colors"
-        />
-      </div>
-
-      <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} />
-      <PasswordInput label="Confirm Password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-
-      {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
-
-      <div className="mb-8" />
-
-      <button
-        onClick={handleSignUp}
-        disabled={loading}
-        className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-medium text-base py-3 rounded-full transition-colors mb-6"
-      >
-        {loading ? 'Creating account...' : 'Sign up'}
-      </button>
-
-      <SocialLogins />
-    </AuthCard>
+    </div>
   )
 }
+

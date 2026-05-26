@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import stage from "../../../../public/bg-login.png";
 import artistImage from "../../../../public/person.png";
 import api from "../../api/axios";
@@ -13,6 +13,7 @@ export default function SignUp() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [passwordConfirmation, setPasswordConfirmation] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -58,7 +59,9 @@ export default function SignUp() {
                     <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none"></div>
                     <div className="pr-0 lg:pr-10 relative z-10">
                         <div className="flex items-center justify-between mb-10">
-                            <ArrowLeft className="cursor-pointer text-gray-600 hover:text-black transition-colors" size={20} />
+                            <ArrowLeft
+                                onClick={() => navigate('/')}
+                                className="cursor-pointer text-gray-600 hover:text-black transition-colors" size={20} />
                             <Link to="/login" className="text-sm text-gray-500 hover:text-black transition-colors">
                                 + already have an account
                             </Link>
@@ -80,16 +83,24 @@ export default function SignUp() {
                                     placeholder="john@gmail.com"
                                     className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-black transition-all duration-300" />
                             </div>
-                            <div>
+                            <div className="relative">
                                 <p className="text-sm text-black mb-1">Password</p>
-                                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                                    className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-black transition-all duration-300" />
+                                <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
+                                    className="w-full border-b border-gray-300 bg-transparent outline-none py-2 pr-8 text-black focus:border-black transition-all duration-300" />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-0 bottom-2 text-gray-400 hover:text-gray-600 transition-colors">
+                                    {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+                                </button>
                             </div>
-                            <div>
+                            <div className="relative">
                                 <p className="text-sm text-black mb-1">Confirm Password</p>
-                                <input type="password" value={passwordConfirmation} onChange={e => setPasswordConfirmation(e.target.value)}
+                                <input type={showPassword ? "text" : "password"} value={passwordConfirmation} onChange={e => setPasswordConfirmation(e.target.value)}
                                     onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                                    className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-black transition-all duration-300" />
+                                    className="w-full border-b border-gray-300 bg-transparent outline-none py-2 pr-8 text-black focus:border-black transition-all duration-300" />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-0 bottom-2 text-gray-400 hover:text-gray-600 transition-colors">
+                                    {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+                                </button>
                             </div>
                             <button onClick={handleCreate} disabled={loading}
                                 className="bg-[#DB0000] text-white px-40 py-4 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed">
@@ -123,3 +134,4 @@ export default function SignUp() {
         </div>
     );
 }
+

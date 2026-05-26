@@ -55,7 +55,9 @@ export default function LoginPage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none"></div>
                     <div className="pr-0 lg:pr-10 relative z-10">
                         <div className="flex items-center justify-between mb-10">
-                            <ArrowLeft className="cursor-pointer text-gray-600 hover:text-black transition-colors" size={20} />
+                            <ArrowLeft
+                                onClick={() => navigate('/')}
+                                className="cursor-pointer text-gray-600 hover:text-black transition-colors" size={20} />
                             <button onClick={() => navigate('/signup')} className="text-sm text-gray-500 hover:text-black transition-colors">
                                 + create an account
                             </button>
