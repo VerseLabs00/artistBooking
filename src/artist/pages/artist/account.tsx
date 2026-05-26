@@ -55,12 +55,14 @@ export default function ArtistProfile() {
     const [profile, setProfile] = useState<Profile | null>(null);
     const [media, setMedia] = useState<Media[]>([]);
     const [rating, setRating] = useState<Rating | null>(null);
+    const [artistStats, setArtistStats] = useState<{ total: number } | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
         window.scrollTo(0, 0);
         fetchProfile();
+        fetchStats();
     }, []);
 
     const fetchProfile = async () => {
@@ -77,6 +79,15 @@ export default function ArtistProfile() {
             }
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchStats = async () => {
+        try {
+            const { data } = await api.get("/bookings/dashboard");
+            setArtistStats(data.stats);
+        } catch (err) {
+            console.error("Failed to load stats", err);
         }
     };
 
@@ -223,7 +234,7 @@ export default function ArtistProfile() {
                                         onClick={() => navigate("/bookingRequests")}
                                         className="flex-1 bg-[#FF2B6B] hover:bg-[#ff1b60] transition text-white py-3 rounded-full font-semibold text-sm shadow-md"
                                     >
-                                        My Bookings ({rating?.total ?? 0})
+                                        My Bookings ({artistStats?.total ?? 0})
                                     </button>
                                     <button
                                         onClick={() => navigate("/editProfile")}

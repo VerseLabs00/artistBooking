@@ -1,29 +1,29 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle,
-  ChevronRight,
-  User,
-  Search,
-  ArrowLeft,
-  Loader2,
-  X,
-  CreditCard,
-  FileText,
-  MessageSquare,
-  DollarSign,
-  TrendingUp
+import {
+    Calendar,
+    Clock,
+    MapPin,
+    CheckCircle,
+    XCircle,
+    AlertCircle,
+    ChevronRight,
+    User,
+    Search,
+    ArrowLeft,
+    Loader2,
+    X,
+    CreditCard,
+    FileText,
+    MessageSquare,
+    DollarSign,
+    TrendingUp
 } from 'lucide-react'
 import api from "../../api/axios";
 
 // --- Extended Booking Type for UI ---
 interface DetailedBooking {
-    id: number;
+    id: string;
     booking_status: string;
     payment_status: string;
     event_date: string;
@@ -46,9 +46,10 @@ interface DetailedBooking {
 function normalizeBooking(b: any): DetailedBooking {
     // Check multiple locations for customer data (inspired by Admin logic)
     const customer = b.customer || b.user || b.customer_profile || {};
-    
+
     return {
         ...b,
+        id: String(b.id),
         customer_name: b.customer_name || customer.name || customer.full_name || "Customer",
         customer_avatar: customer.avatar_url || customer.avatar || `https://i.pravatar.cc/150?u=c${customer.id || b.customer_id || b.id}`,
         customer_email: b.customer_email || customer.email || "N/A",
@@ -66,9 +67,9 @@ export default function BookingRequests() {
     const navigate = useNavigate();
     const [bookings, setBookings] = useState<DetailedBooking[]>([]);
     const [loading, setLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState<number | null>(null);
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [selectedBooking, setSelectedBooking] = useState<DetailedBooking | null>(null);
-    const [detailsLoading, setDetailsLoading] = useState<number | null>(null);
+    const [detailsLoading, setDetailsLoading] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all');
 
     useEffect(() => { fetchBookings(); }, []);
@@ -76,7 +77,7 @@ export default function BookingRequests() {
     const fetchBookings = async () => {
         setLoading(true);
         try {
-            const { data } = await api.get("/bookings");
+            const { data } = await api.get("/artist/bookings");
             // Robust check for data location (handle wrapped or direct array)
             const raw = Array.isArray(data) ? data : (data.data || []);
             setBookings(raw.map(normalizeBooking));
@@ -87,10 +88,10 @@ export default function BookingRequests() {
         }
     };
 
-    const handleShowDetails = async (id: number) => {
+    const handleShowDetails = async (id: string) => {
         setDetailsLoading(id);
         try {
-            const { data } = await api.get(`/bookings/${id}`);
+            const { data } = await api.get(`/artist/bookings/${id}`);
             // Robust check for details
             const detailData = data.data || data;
             setSelectedBooking(normalizeBooking(detailData));
@@ -101,10 +102,10 @@ export default function BookingRequests() {
         }
     };
 
-    const updateStatus = async (id: number, status: "rejected" | "completed") => {
+    const updateStatus = async (id: string, status: "rejected" | "completed" | "confirmed") => {
         setActionLoading(id);
         try {
-            await api.put(`/bookings/${id}/status`, { status });
+            await api.put(`/artist/bookings/${id}/status`, { status });
             setBookings(prev => prev.map(b => b.id === id ? { ...b, booking_status: status } : b));
             if (selectedBooking?.id === id) {
                 setSelectedBooking(prev => prev ? { ...prev, booking_status: status } : null);
@@ -116,7 +117,7 @@ export default function BookingRequests() {
         }
     };
 
-    const filteredBookings = bookings.filter(b => 
+    const filteredBookings = bookings.filter(b =>
         activeTab === 'all' || b.booking_status === activeTab
     );
 
@@ -149,13 +150,13 @@ export default function BookingRequests() {
             {selectedBooking && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
                     <div className="bg-white w-full max-w-2xl rounded-[40px] overflow-hidden shadow-2xl relative">
-                        <button 
+                        <button
                             onClick={() => setSelectedBooking(null)}
                             className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
                         >
                             <X size={24} className="text-gray-400" />
                         </button>
-                        
+
                         <div className="flex flex-col md:flex-row h-full max-h-[90vh] overflow-y-auto">
                             <div className="w-full md:w-1/3 bg-gray-100">
                                 <img src={selectedBooking.customer_avatar} className="w-full h-full object-cover" alt="" />
@@ -235,8 +236,26 @@ export default function BookingRequests() {
                                 )}
 
                                 <div className="flex gap-3">
+                                    {(selectedBooking.booking_status === "pending" || selectedBooking.booking_status === "pending_payment") && (
+                                        <>
+                                            <button
+                                                onClick={() => updateStatus(selectedBooking.id, "confirmed")}
+                                                disabled={actionLoading === selectedBooking.id}
+                                                className="flex-1 btn-pink py-4 rounded-2xl font-bold text-sm disabled:opacity-50"
+                                            >
+                                                {actionLoading === selectedBooking.id ? 'Accepting...' : 'Accept Request'}
+                                            </button>
+                                            <button
+                                                onClick={() => updateStatus(selectedBooking.id, "rejected")}
+                                                disabled={actionLoading === selectedBooking.id}
+                                                className="flex-1 px-6 py-4 border border-red-200 text-red-500 rounded-2xl font-bold text-sm hover:bg-red-50 transition-colors disabled:opacity-50"
+                                            >
+                                                {actionLoading === selectedBooking.id ? 'Declining...' : 'Decline Request'}
+                                            </button>
+                                        </>
+                                    )}
                                     {selectedBooking.booking_status === "confirmed" && (
-                                        <button 
+                                        <button
                                             onClick={() => updateStatus(selectedBooking.id, "completed")}
                                             disabled={actionLoading === selectedBooking.id}
                                             className="flex-1 btn-pink py-4 rounded-2xl font-bold text-sm disabled:opacity-50"
@@ -244,16 +263,7 @@ export default function BookingRequests() {
                                             {actionLoading === selectedBooking.id ? 'Updating...' : 'Mark Completed'}
                                         </button>
                                     )}
-                                    {selectedBooking.booking_status === "pending" && (
-                                        <button 
-                                            onClick={() => updateStatus(selectedBooking.id, "rejected")}
-                                            disabled={actionLoading === selectedBooking.id}
-                                            className="flex-1 px-6 py-4 border border-red-200 text-red-500 rounded-2xl font-bold text-sm hover:bg-red-50 transition-colors disabled:opacity-50"
-                                        >
-                                            {actionLoading === selectedBooking.id ? 'Processing...' : 'Decline Request'}
-                                        </button>
-                                    )}
-                                    <button 
+                                    <button
                                         onClick={() => setSelectedBooking(null)}
                                         className="flex-1 bg-gray-900 text-white rounded-2xl font-bold text-sm hover:bg-black transition-colors px-6 py-4"
                                     >
@@ -280,7 +290,7 @@ export default function BookingRequests() {
 
             <div className="flex-grow max-w-7xl mx-auto w-full px-4 md:px-8 py-10">
                 <div className="flex flex-col md:flex-row gap-8">
-                    
+
                     {/* SIDEBAR */}
                     <aside className="w-full md:w-64 flex-shrink-0">
                         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sticky top-24">
@@ -303,8 +313,8 @@ export default function BookingRequests() {
                                         key={item.id}
                                         onClick={() => setActiveTab(item.id as any)}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                                            activeTab === item.id 
-                                                ? 'bg-pink text-white shadow-lg shadow-pink/20' 
+                                            activeTab === item.id
+                                                ? 'bg-pink text-white shadow-lg shadow-pink/20'
                                                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                                         }`}
                                     >
@@ -357,7 +367,7 @@ export default function BookingRequests() {
                                                         {booking.booking_status}
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                                                         <div>
@@ -401,15 +411,35 @@ export default function BookingRequests() {
                                                     </div>
 
                                                     <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-50">
-                                                        <button 
+                                                        <button
                                                             onClick={() => handleShowDetails(booking.id)}
                                                             className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-colors flex items-center gap-2"
                                                         >
                                                             {detailsLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
                                                             View Request
                                                         </button>
+                                                        {(booking.booking_status === "pending" || booking.booking_status === "pending_payment") && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => updateStatus(booking.id, "confirmed")}
+                                                                    disabled={actionLoading === booking.id}
+                                                                    className="btn-pink px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2"
+                                                                >
+                                                                    {actionLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
+                                                                    Accept
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => updateStatus(booking.id, "rejected")}
+                                                                    disabled={actionLoading === booking.id}
+                                                                    className="px-6 py-2.5 border border-red-200 text-red-500 rounded-xl text-xs font-bold hover:bg-red-50 transition-colors flex items-center gap-2"
+                                                                >
+                                                                    {actionLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
+                                                                    Decline
+                                                                </button>
+                                                            </>
+                                                        )}
                                                         {booking.booking_status === "confirmed" && (
-                                                            <button 
+                                                            <button
                                                                 onClick={() => updateStatus(booking.id, "completed")}
                                                                 disabled={actionLoading === booking.id}
                                                                 className="btn-pink px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2"
