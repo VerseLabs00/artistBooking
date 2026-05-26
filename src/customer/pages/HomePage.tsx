@@ -834,13 +834,13 @@ export default function HomePage() {
                                 <span key={logo} className="text-gray-400 font-bold text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
                                 {logo}
                             </span>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <Footer />
+                <Footer />
+            </div>
         </div>
-    </div>
     );
 }
