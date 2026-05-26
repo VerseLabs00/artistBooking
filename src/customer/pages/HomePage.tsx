@@ -553,7 +553,7 @@ export default function HomePage() {
 
                     {/* Auth / Account */}
                     <div className="flex items-center gap-3">
-                        <button onClick={() => navigate('/home')} className="nav-link font-semibold text-sm px-3 py-1.5">Account</button>
+                        <button onClick={() => navigate('/customerAccount')} className="nav-link font-semibold text-sm px-3 py-1.5">Account</button>
                         <button onClick={() => navigate('/loginCustomer')} className="btn-pink text-sm font-bold px-5 py-2.5 rounded-xl">Sign out</button>
                     </div>
                 </nav>
