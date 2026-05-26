@@ -401,7 +401,9 @@ export default function ArtistHome() {
                 </div>
             </nav>
 
-            <section className="relative w-full overflow-hidden bg-white pt-10 pb-0 px-6 md:px-12 lg:px-20">
+            {/*hero*/}
+            <section className="relative w-full overflow-hidden bg-cover bg-center py-12 px-6 md:px-12 lg:px-20"
+                     style={{ backgroundImage: "url('/Cover7.jpg')" }}>
                 <div className="hero-bg-dots absolute top-0 right-0 w-72 h-72 opacity-60 pointer-events-none" />
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
                     <div className="z-10">
@@ -425,30 +427,30 @@ export default function ArtistHome() {
                         </div>
                     </div>
                     <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end">
-                        <div className="absolute right-0 top-0 w-[58%] h-[75%] z-10" style={{ borderRadius: "20px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80" className="w-full h-full object-cover" alt="DJ" />
-                        </div>
-                        <div className="absolute right-[30%] top-[2%] w-[36%] h-[46%] z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80" className="w-full h-full object-cover" alt="Singer" />
-                        </div>
-                        <div className="absolute right-[28%] top-[48%] w-[34%] h-[42%] z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80" className="w-full h-full object-cover" alt="Dancer" />
-                        </div>
-                        <div className="absolute right-0 bottom-0 w-[40%] h-[35%] z-10" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&q=80" className="w-full h-full object-cover" alt="Band" />
-                        </div>
-                        <div className="bg-white p-3 rounded-2xl shadow-xl absolute left-2 top-[10%] z-30 flex items-center gap-3 min-w-[130px]">
-                            <Star size={18} fill="#facc15" className="text-yellow-400" />
-                            <div><p className="font-black text-gray-900 text-base leading-none">4.9</p><p className="text-gray-400 text-xs mt-0.5">Average Rating</p></div>
-                        </div>
-                        <div className="bg-white p-3 rounded-2xl shadow-xl absolute left-2 top-[42%] z-30 flex items-center gap-3 min-w-[140px]">
-                            <div className="w-8 h-8 btn-pink rounded-lg flex items-center justify-center"><Users size={16} className="text-white" /></div>
-                            <div><p className="font-black text-gray-900 text-base leading-none">1,200+</p><p className="text-gray-400 text-xs mt-0.5">Professional Artists</p></div>
-                        </div>
-                        <div className="bg-white p-3 rounded-2xl shadow-xl absolute left-2 bottom-[12%] z-30 flex items-center gap-3 min-w-[140px]">
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100"><TrendingUp size={16} className="text-gray-700" /></div>
-                            <div><p className="font-black text-gray-900 text-base leading-none">3,400+</p><p className="text-gray-400 text-xs mt-0.5">Events Booked</p></div>
-                        </div>
+                        {/*<div className="absolute right-0 top-0 w-[58%] h-[75%] z-10" style={{ borderRadius: "20px", overflow: "hidden" }}>*/}
+                        {/*    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80" className="w-full h-full object-cover" alt="DJ" />*/}
+                        {/*</div>*/}
+                        {/*<div className="absolute right-[30%] top-[2%] w-[36%] h-[46%] z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>*/}
+                        {/*    <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80" className="w-full h-full object-cover" alt="Singer" />*/}
+                        {/*</div>*/}
+                        {/*<div className="absolute right-[28%] top-[48%] w-[34%] h-[42%] z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>*/}
+                        {/*    <img src="https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80" className="w-full h-full object-cover" alt="Dancer" />*/}
+                        {/*</div>*/}
+                        {/*<div className="absolute right-0 bottom-0 w-[40%] h-[35%] z-10" style={{ borderRadius: "16px", overflow: "hidden" }}>*/}
+                        {/*    <img src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&q=80" className="w-full h-full object-cover" alt="Band" />*/}
+                        {/*</div>*/}
+                        {/*<div className="bg-white p-3 rounded-2xl shadow-xl absolute left-2 top-[10%] z-30 flex items-center gap-3 min-w-[130px]">*/}
+                        {/*    <Star size={18} fill="#facc15" className="text-yellow-400" />*/}
+                        {/*    <div><p className="font-black text-gray-900 text-base leading-none">4.9</p><p className="text-gray-400 text-xs mt-0.5">Average Rating</p></div>*/}
+                        {/*</div>*/}
+                        {/*<div className="bg-white p-3 rounded-2xl shadow-xl absolute left-2 top-[42%] z-30 flex items-center gap-3 min-w-[140px]">*/}
+                        {/*    <div className="w-8 h-8 btn-pink rounded-lg flex items-center justify-center"><Users size={16} className="text-white" /></div>*/}
+                        {/*    <div><p className="font-black text-gray-900 text-base leading-none">1,200+</p><p className="text-gray-400 text-xs mt-0.5">Professional Artists</p></div>*/}
+                        {/*</div>*/}
+                        {/*<div className="bg-white p-3 rounded-2xl shadow-xl absolute left-2 bottom-[12%] z-30 flex items-center gap-3 min-w-[140px]">*/}
+                        {/*    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100"><TrendingUp size={16} className="text-gray-700" /></div>*/}
+                        {/*    <div><p className="font-black text-gray-900 text-base leading-none">3,400+</p><p className="text-gray-400 text-xs mt-0.5">Events Booked</p></div>*/}
+                        {/*</div>*/}
                     </div>
                 </div>
             </section>
