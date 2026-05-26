@@ -17,7 +17,9 @@ import {
     FileText,
     MessageSquare,
     DollarSign,
-    TrendingUp
+    TrendingUp,
+    Phone,
+    Mail
 } from 'lucide-react'
 import api from "../../api/axios";
 
@@ -53,7 +55,7 @@ function normalizeBooking(b: any): DetailedBooking {
         customer_name: b.customer_name || customer.name || customer.full_name || "Customer",
         customer_avatar: customer.avatar_url || customer.avatar || `https://i.pravatar.cc/150?u=c${customer.id || b.customer_id || b.id}`,
         customer_email: b.customer_email || customer.email || "N/A",
-        customer_phone: b.customer_phone || customer.phone || "N/A",
+        customer_phone: b.customer_phone || customer.phone || b.customer_phone || "N/A",
         event_date: b.event_date || "N/A",
         event_type: b.event_type || "N/A",
         venue: b.venue || "To be shared",
@@ -133,7 +135,8 @@ export default function BookingRequests() {
         switch (status?.toLowerCase()) {
             case 'confirmed': return 'bg-green-100 text-green-700 border-green-200';
             case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-            case 'rejected':
+            case 'pending_payment': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+            case 'rejected': return 'bg-red-100 text-red-700 border-red-200';
             case 'cancelled': return 'bg-red-100 text-red-700 border-red-200';
             case 'completed': return 'bg-blue-100 text-blue-700 border-blue-200';
             default: return 'bg-gray-100 text-gray-700 border-gray-200';
@@ -226,11 +229,21 @@ export default function BookingRequests() {
                                     </div>
                                 </div>
 
-                                <div className="mb-8">
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Customer Contact</p>
-                                    <div className="text-sm text-gray-600 space-y-1">
-                                        <p>Email: {selectedBooking.customer_email}</p>
-                                        <p>Phone: {selectedBooking.customer_phone}</p>
+                                <div className="mb-8 p-6 bg-pink/5 rounded-2xl border border-pink/10">
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Customer Contact</p>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink shadow-sm">
+                                                <Mail size={14} />
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-700">{selectedBooking.customer_email}</p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink shadow-sm">
+                                                <Phone size={14} />
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-700">{selectedBooking.customer_phone}</p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -286,13 +299,14 @@ export default function BookingRequests() {
 
             {/* NAVBAR */}
             <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
-                <Link to="/artistHome" className="flex items-center">
+                <Link to="/artistDashboard" className="flex items-center">
                     <img src="/logoBlack.svg" alt="Perfoma" className="h-10 w-auto object-contain" />
                 </Link>
                 <div className="flex items-center gap-4">
-                    <button onClick={() => navigate('/account')} className="text-gray-600 hover:text-black transition-colors text-sm font-semibold flex items-center gap-2">
-                        <ArrowLeft size={16} /> Back to Profile
-                    </button>
+                    <button onClick={() => navigate('/artistDashboard')} className="text-gray-600 hover:text-black transition-colors text-sm font-semibold">Dashboard</button>
+                    <div className="w-10 h-10 rounded-full bg-pink flex items-center justify-center text-white font-bold">
+                        A
+                    </div>
                 </div>
             </nav>
 
@@ -304,10 +318,10 @@ export default function BookingRequests() {
                         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sticky top-24">
                             <div className="text-center mb-8">
                                 <div className="w-20 h-20 rounded-full bg-pink/10 flex items-center justify-center text-pink mx-auto mb-4 border-2 border-pink/20">
-                                    <Calendar size={32} />
+                                    <User size={32} />
                                 </div>
-                                <h2 className="font-bold text-xl text-gray-900">Bookings</h2>
-                                <p className="text-gray-500 text-xs mt-1">Manage your event requests</p>
+                                <h2 className="font-bold text-xl text-gray-900">Artist Panel</h2>
+                                <p className="text-gray-500 text-xs mt-1">Manage Requests</p>
                             </div>
 
                             <nav className="space-y-2">
@@ -344,80 +358,82 @@ export default function BookingRequests() {
                     {/* MAIN CONTENT */}
                     <main className="flex-1 min-w-0">
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <header className="flex items-center justify-between">
-                                <div>
-                                    <h1 className="text-3xl font-black text-gray-900">
-                                        {activeTab === 'all' ? 'All Booking Requests' : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Bookings`}
-                                    </h1>
-                                    <p className="text-gray-500 mt-2">View and manage your incoming performance requests.</p>
-                                </div>
-                                <button onClick={fetchBookings} className="p-2 text-gray-400 hover:text-pink transition-colors">
-                                    <Loader2 className={loading ? "animate-spin" : ""} size={20} />
-                                </button>
+                            <header>
+                                <h1 className="text-3xl font-black text-gray-900">Booking Requests</h1>
+                                <p className="text-gray-500 mt-2">View and manage your incoming booking requests.</p>
                             </header>
 
                             {loading ? (
-                                <div className="flex items-center justify-center py-40 bg-white rounded-3xl border border-gray-100">
-                                    <Loader2 className="animate-spin text-pink" size={40} />
+                                <div className="flex items-center justify-center py-40 bg-white rounded-[40px] border border-gray-100 shadow-sm">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <Loader2 className="animate-spin text-pink" size={40} />
+                                        <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Loading requests...</p>
+                                    </div>
                                 </div>
                             ) : filteredBookings.length === 0 ? (
-                                <div className="text-center py-32 bg-white rounded-3xl border border-gray-100 px-6">
-                                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mx-auto mb-4">
-                                        <Calendar size={32} />
+                                <div className="text-center py-40 bg-white rounded-[40px] border border-gray-100 shadow-sm px-6">
+                                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mx-auto mb-6">
+                                        <Calendar size={40} />
                                     </div>
                                     <h4 className="font-bold text-gray-900">No {activeTab !== 'all' ? activeTab : ''} bookings found</h4>
-                                    <p className="text-gray-500 text-sm mt-2">When customers book you, they will appear here.</p>
+                                    <p className="text-gray-500 text-sm mt-2">New requests will appear here once customers book you.</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 gap-4">
+                                <div className="grid grid-cols-1 gap-6">
                                     {filteredBookings.map(booking => (
-                                        <div key={booking.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                                            <div className="flex flex-col md:flex-row gap-6">
-                                                <div className="relative w-full md:w-40 h-28 rounded-2xl overflow-hidden flex-shrink-0">
-                                                    <img src={booking.customer_avatar} className="w-full h-full object-cover" alt="" />
-                                                    <div className={`absolute top-2 left-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase border glass-card ${getStatusColor(booking.booking_status)}`}>
+                                        <div key={booking.id} className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group">
+                                            <div className="flex flex-col md:flex-row gap-8">
+                                                <div className="relative w-full md:w-48 h-48 rounded-[32px] overflow-hidden flex-shrink-0 shadow-inner">
+                                                    <img src={booking.customer_avatar} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={booking.customer_name} />
+                                                    <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[10px] font-bold uppercase border glass-card ${getStatusColor(booking.booking_status)}`}>
                                                         {booking.booking_status}
                                                     </div>
                                                 </div>
 
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                                                        <div>
-                                                            <h3 className="text-xl font-bold text-gray-900 truncate">{booking.customer_name}</h3>
-                                                            <p className="text-pink text-sm font-semibold">{booking.event_type}</p>
+                                                <div className="flex-1 flex flex-col justify-between py-2">
+                                                    <div>
+                                                        <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+                                                            <div>
+                                                                <h3 className="text-2xl font-black text-gray-900">{booking.customer_name}</h3>
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <span className="text-pink font-bold text-sm">{booking.event_type}</span>
+                                                                    <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                                                    <span className="text-gray-400 text-xs font-bold uppercase tracking-tighter">Request ID: #{booking.id.slice(0, 8)}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="bg-gray-50 px-6 py-3 rounded-2xl border border-gray-100">
+                                                                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Price</p>
+                                                                <p className="text-xl font-black text-gray-900">Rs. {booking.agreed_price.toLocaleString()}</p>
+                                                            </div>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Agreed Price</p>
-                                                            <p className="text-xl font-black text-gray-900">Rs. {booking.agreed_price.toLocaleString()}</p>
-                                                        </div>
-                                                    </div>
 
-                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 shrink-0">
-                                                                <Calendar size={16} />
+                                                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 rounded-xl bg-pink/5 flex items-center justify-center text-pink">
+                                                                    <Calendar size={18} />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] text-gray-400 font-bold uppercase">Event Date</p>
+                                                                    <p className="text-sm font-bold text-gray-900">{booking.event_date}</p>
+                                                                </div>
                                                             </div>
-                                                            <div className="min-w-0">
-                                                                <p className="text-[10px] text-gray-400 font-bold uppercase">Date</p>
-                                                                <p className="text-xs font-bold text-gray-900 truncate">{booking.event_date}</p>
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 rounded-xl bg-pink/5 flex items-center justify-center text-pink">
+                                                                    <Clock size={18} />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] text-gray-400 font-bold uppercase">Start Time</p>
+                                                                    <p className="text-sm font-bold text-gray-900">{booking.event_start_time}</p>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 shrink-0">
-                                                                <MapPin size={16} />
-                                                            </div>
-                                                            <div className="min-w-0">
-                                                                <p className="text-[10px] text-gray-400 font-bold uppercase">Venue</p>
-                                                                <p className="text-xs font-bold text-gray-900 truncate">{booking.venue}</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 shrink-0">
-                                                                <MessageSquare size={16} />
-                                                            </div>
-                                                            <div className="min-w-0">
-                                                                <p className="text-[10px] text-gray-400 font-bold uppercase">Contact</p>
-                                                                <p className="text-xs font-bold text-gray-900 truncate">{booking.customer_phone}</p>
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 rounded-xl bg-pink/5 flex items-center justify-center text-pink">
+                                                                    <MapPin size={18} />
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-[10px] text-gray-400 font-bold uppercase">Venue</p>
+                                                                    <p className="text-sm font-bold text-gray-900 truncate">{booking.venue}</p>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>

@@ -121,11 +121,12 @@ function Step1({
 
 // ── Step 2: Location & Event ──
 function Step2({
-  venue, setVenue, eventType, setEventType, specialNotes, setSpecialNotes,
+  venue, setVenue, eventType, setEventType, customerPhone, setCustomerPhone, specialNotes, setSpecialNotes,
   onPrev, onContinue,
 }: {
   venue: string; setVenue: (v: string) => void
   eventType: string; setEventType: (t: string) => void
+  customerPhone: string; setCustomerPhone: (p: string) => void
   specialNotes: string; setSpecialNotes: (n: string) => void
   onPrev: () => void; onContinue: () => void
 }) {
@@ -133,7 +134,7 @@ function Step2({
     <div className="flex flex-col h-full">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Event Details</h2>
 
-      <div className="flex flex-col gap-4 flex-1">
+      <div className="flex flex-col gap-4 flex-1 overflow-y-auto pr-1">
         <div>
           <label className="block text-xs text-gray-400 mb-1">Venue / Address</label>
           <input
@@ -153,12 +154,23 @@ function Step2({
           />
         </div>
         <div>
+          <label className="block text-xs text-gray-400 mb-1">Your Phone Number</label>
+          <input
+            type="tel"
+            value={customerPhone}
+            onChange={e => setCustomerPhone(e.target.value)}
+            placeholder="e.g. 077 123 4567"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400 transition-colors"
+          />
+          <p className="text-[10px] text-gray-400 mt-1">So the artist can contact you about the event.</p>
+        </div>
+        <div>
           <label className="block text-xs text-gray-400 mb-1">Special Notes (optional)</label>
           <textarea
             value={specialNotes}
             onChange={e => setSpecialNotes(e.target.value)}
             placeholder="Any special requirements..."
-            rows={3}
+            rows={2}
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400 resize-none transition-colors"
           />
         </div>
@@ -173,7 +185,7 @@ function Step2({
         </button>
         <button
           onClick={onContinue}
-          disabled={!venue || !eventType}
+          disabled={!venue || !eventType || !customerPhone}
           className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors"
         >
           Continue
@@ -277,6 +289,7 @@ export default function BookingModal({ onClose, artistProfileId, artistName, sta
   // Step 2 state
   const [venue, setVenue] = useState('')
   const [eventType, setEventType] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
   const [specialNotes, setSpecialNotes] = useState('')
 
   // Step 3 state
@@ -306,6 +319,7 @@ export default function BookingModal({ onClose, artistProfileId, artistName, sta
         event_start_time: timeStr,
         event_type: eventType,
         venue,
+        customer_phone: customerPhone,
         special_notes: specialNotes || undefined,
       })
 
@@ -356,6 +370,7 @@ export default function BookingModal({ onClose, artistProfileId, artistName, sta
             <Step2
               venue={venue} setVenue={setVenue}
               eventType={eventType} setEventType={setEventType}
+              customerPhone={customerPhone} setCustomerPhone={setCustomerPhone}
               specialNotes={specialNotes} setSpecialNotes={setSpecialNotes}
               onPrev={() => setStep(1)}
               onContinue={() => setStep(3)}
