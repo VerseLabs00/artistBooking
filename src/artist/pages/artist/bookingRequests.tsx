@@ -70,7 +70,7 @@ export default function BookingRequests() {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [selectedBooking, setSelectedBooking] = useState<DetailedBooking | null>(null);
     const [detailsLoading, setDetailsLoading] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all');
+    const [activeTab, setActiveTab] = useState<'all' | 'cancelled' | 'confirmed' | 'completed'>('all');
 
     useEffect(() => { fetchBookings(); }, []);
 
@@ -117,9 +117,11 @@ export default function BookingRequests() {
         }
     };
 
-    const filteredBookings = bookings.filter(b =>
-        activeTab === 'all' || b.booking_status === activeTab
-    );
+    const filteredBookings = bookings.filter(b => {
+        if (activeTab === 'all') return true;
+        if (activeTab === 'cancelled') return b.booking_status === 'rejected' || b.booking_status === 'cancelled';
+        return b.booking_status === activeTab;
+    });
 
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
@@ -305,7 +307,7 @@ export default function BookingRequests() {
                             <nav className="space-y-2">
                                 {[
                                     { id: 'all', icon: <Search size={18} />, label: 'All Requests' },
-                                    { id: 'pending', icon: <Clock size={18} />, label: 'Pending' },
+                                    { id: 'cancelled', icon: <XCircle size={18} />, label: 'Cancel' },
                                     { id: 'confirmed', icon: <CheckCircle size={18} />, label: 'Confirmed' },
                                     { id: 'completed', icon: <TrendingUp size={18} />, label: 'Completed' },
                                 ].map(item => (
@@ -321,7 +323,11 @@ export default function BookingRequests() {
                                         {item.icon}
                                         {item.label}
                                         <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTab === item.id ? 'bg-white/20' : 'bg-gray-100'}`}>
-                                            {bookings.filter(b => item.id === 'all' || b.booking_status === item.id).length}
+                                            {bookings.filter(b => {
+                                                if (item.id === 'all') return true;
+                                                if (item.id === 'cancelled') return b.booking_status === 'rejected' || b.booking_status === 'cancelled';
+                                                return b.booking_status === item.id;
+                                            }).length}
                                         </span>
                                     </button>
                                 ))}

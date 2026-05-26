@@ -122,9 +122,23 @@ export default function CustomerAccount() {
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'confirmed': return 'bg-green-100 text-green-700 border-green-200'
-      case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+      case 'pending': 
+      case 'pending_payment': return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+      case 'rejected':
       case 'cancelled': return 'bg-red-100 text-red-700 border-red-200'
+      case 'completed': return 'bg-blue-100 text-blue-700 border-blue-200'
       default: return 'bg-gray-100 text-gray-700 border-gray-200'
+    }
+  }
+
+  const getStatusMessage = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'confirmed': return 'The artist has accepted your booking! Get ready for the event.'
+      case 'rejected': return 'The artist has declined this request. You can browse other artists.'
+      case 'cancelled': return 'This booking has been cancelled.'
+      case 'pending_payment': return 'Payment is pending. Please complete the advance payment.'
+      case 'completed': return 'This event has been successfully completed.'
+      default: return 'Your request is being processed.'
     }
   }
 
@@ -191,6 +205,10 @@ export default function CustomerAccount() {
                 </div>
 
                 <div className="bg-gray-50 rounded-2xl p-6 mb-8 space-y-4">
+                  <div className="bg-pink/5 rounded-xl p-4 border border-pink/10 flex items-center gap-3 mb-2">
+                    <AlertCircle size={18} className="text-pink flex-shrink-0" />
+                    <p className="text-xs font-bold text-gray-700">{getStatusMessage(selectedBooking.booking_status)}</p>
+                  </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-gray-500">
                       <CreditCard size={16} />
@@ -315,7 +333,7 @@ export default function CustomerAccount() {
                   </div>
                   <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
                     <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Upcoming</p>
-                    <p className="text-3xl font-black text-pink">{bookings.filter(b => b.booking_status === 'confirmed' || b.booking_status === 'pending').length}</p>
+                    <p className="text-3xl font-black text-pink">{bookings.filter(b => b.booking_status === 'confirmed' || b.booking_status === 'pending' || b.booking_status === 'pending_payment').length}</p>
                   </div>
                   <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
                     <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Completed</p>
@@ -361,6 +379,7 @@ export default function CustomerAccount() {
                               </span>
                               <span className="text-xs font-bold text-gray-900">Rs. {booking.agreed_price.toLocaleString()}</span>
                             </div>
+                            <p className="text-[10px] font-bold mt-2 text-pink animate-pulse">{getStatusMessage(booking.booking_status)}</p>
                           </div>
                           <div className="flex gap-2">
                              <button 
@@ -454,6 +473,7 @@ export default function CustomerAccount() {
                           </div>
 
                           <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-50">
+                            <p className="mr-auto text-[10px] font-bold text-pink animate-pulse">{getStatusMessage(booking.booking_status)}</p>
                             {booking.booking_status !== 'cancelled' && booking.booking_status !== 'completed' && (
                               <button 
                                 onClick={() => handleCancelBooking(booking.id)}
