@@ -47,52 +47,52 @@ const ALL_CATEGORIES_DATA: CategoryData[] = [
     {
         name: "Musician",
         description: "Elegant solo instrumentalists and performers for ambient atmosphere.",
-        image: "./assets/categories/musician.jpg"
+        image: "./assets/categories/musician.webp"
     },
     {
         name: "Solo Singer",
         description: "Powerful vocalists covering a wide range of genres and styles.",
-        image: "./assets/categories/solosinger.jpg"
+        image: "./assets/categories/solosinger.webp"
     },
     {
         name: "Rapper",
         description: "Dynamic hip-hop artists and lyricists for high-energy performances.",
-        image: "./assets/categories/rapper.jpg"
+        image: "./assets/categories/rapper.webp"
     },
     {
         name: "Live Band",
         description: "Full musical ensembles providing an immersive live experience.",
-        image: "./assets/categories/liveband.jpg"
+        image: "./assets/categories/liveband.webp"
     },
     {
         name: "Dance Group",
         description: "Professional choreographies and high-energy dance routines.",
-        image: "./assets/categories/dancegroups.jpg"
+        image: "./assets/categories/dancegroups.webp"
     },
     {
         name: "Producer",
         description: "Creative minds behind the beats and sound engineering.",
-        image: "./assets/categories/producer.jpg"
+        image: "./assets/categories/producer.webp"
     },
     {
         name: "DJ",
         description: "Expert curators of energy and rhythm for every dance floor.",
-        image: "./assets/categories/dj.jpg"
+        image: "./assets/categories/dj.webp"
     },
     {
         name: "Sound System",
         description: "Premium audio equipment and technicians for crystal clear sound.",
-        image: "./assets/categories/soundsystem.jpg"
+        image: "./assets/categories/soundsystem.webp"
     },
     {
         name: "Lightning System",
         description: "Atmospheric and stage lighting to set the perfect visual mood.",
-        image: "./assets/categories/lightningsystem.jpg"
+        image: "./assets/categories/lightningsystem.webp"
     },
     {
         name: "Videographers",
         description: "Cinematic storytellers capturing your most precious moments.",
-        image: "./assets/categories/videographers.jpg"
+        image: "./assets/categories/videographers.webp"
     }
 ];
 
