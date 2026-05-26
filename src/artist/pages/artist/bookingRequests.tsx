@@ -80,7 +80,13 @@ export default function BookingRequests() {
             const { data } = await api.get("/artist/bookings");
             // Robust check for data location (handle wrapped or direct array)
             const raw = Array.isArray(data) ? data : (data.data || []);
-            setBookings(raw.map(normalizeBooking));
+            
+            // Sort by created_at descending (newest first)
+            const sorted = raw.sort((a: any, b: any) => 
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            
+            setBookings(sorted.map(normalizeBooking));
         } catch (err: any) {
             console.error("Failed to load bookings", err);
         } finally {

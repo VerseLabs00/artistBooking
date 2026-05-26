@@ -76,7 +76,13 @@ export default function CustomerAccount() {
       const response = await getBookings()
       // Handle both { data: [...] } and directly [...]
       const raw = Array.isArray(response) ? response : (response.data || [])
-      const mapped = raw.map(normalizeBooking)
+      
+      // Sort by created_at descending (newest first)
+      const sorted = raw.sort((a: any, b: any) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+      
+      const mapped = sorted.map(normalizeBooking)
       setBookings(mapped)
     } catch (err) {
       console.error("Failed to fetch bookings", err)
@@ -235,7 +241,7 @@ export default function CustomerAccount() {
                 )}
 
                 <div className="flex gap-3">
-                  {selectedBooking.booking_status !== 'cancelled' && (
+                  {selectedBooking.booking_status !== 'cancelled' && selectedBooking.booking_status !== 'confirmed' && (
                     <button 
                       onClick={() => handleCancelBooking(selectedBooking.id)}
                       disabled={cancellingId === selectedBooking.id}
@@ -389,7 +395,7 @@ export default function CustomerAccount() {
                                {detailsLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
                                Details
                              </button>
-                             {booking.booking_status !== 'cancelled' && (
+                             {booking.booking_status !== 'cancelled' && booking.booking_status !== 'confirmed' && (
                                <button 
                                  onClick={() => handleCancelBooking(booking.id)}
                                  disabled={cancellingId === booking.id}
@@ -474,7 +480,7 @@ export default function CustomerAccount() {
 
                           <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-50">
                             <p className="mr-auto text-[10px] font-bold text-pink animate-pulse">{getStatusMessage(booking.booking_status)}</p>
-                            {booking.booking_status !== 'cancelled' && booking.booking_status !== 'completed' && (
+                            {booking.booking_status !== 'cancelled' && booking.booking_status !== 'confirmed' && booking.booking_status !== 'completed' && (
                               <button 
                                 onClick={() => handleCancelBooking(booking.id)}
                                 disabled={cancellingId === booking.id}
