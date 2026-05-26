@@ -269,10 +269,10 @@ export default function CustomerAccount() {
           <img src="/logoBlack.svg" alt="Perfoma" className="h-10 w-auto object-contain" />
         </Link>
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/')} className="text-gray-600 hover:text-black transition-colors text-sm font-semibold">Back to Discovery</button>
-          <div className="w-10 h-10 rounded-full bg-pink flex items-center justify-center text-white font-bold">
-            {user?.name?.[0] || 'C'}
-          </div>
+          <button onClick={() => navigate('/home')} className="text-gray-600 hover:text-black transition-colors text-sm font-semibold">Back to Discovery</button>
+          {/*<div className="w-10 h-10 rounded-full bg-pink flex items-center justify-center text-white font-bold">*/}
+          {/*  {user?.name?.[0] || 'C'}*/}
+          {/*</div>*/}
         </div>
       </nav>
 
