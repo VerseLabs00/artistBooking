@@ -147,6 +147,7 @@ export default function LoginPage() {
                                     className={`absolute inset-0 w-full h-full object-cover grayscale transition-opacity duration-700 ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
                                 />
                             ))}
+                            {/*logo*/}
                             <div className="absolute top-[-40px] left-4 z-50 text-black text-xs">
                                 <img src={logo} className="w-40 h-40" alt="Logo" />
                             </div>

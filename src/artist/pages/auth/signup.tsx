@@ -3,8 +3,26 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import stage from "../../../../public/bg-login.png";
 import artistImage from "../../../../public/person.png";
+import cover1 from "../../../../public/Cover1.png";
+import cover7 from "../../../../public/Cover7.jpg";
+import logo from "../../../../public/logoBlack.svg";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
+
+const carouselData = [
+    {
+        image: artistImage,
+        text: "Join our community of world-class performers and showcase your talent to a global audience."
+    },
+    {
+        image: cover1,
+        text: "Manage your bookings, track your performance, and grow your artistic career with ease."
+    },
+    {
+        image: cover7,
+        text: "Connect with event organizers and secure high-quality gigs that match your unique style."
+    }
+]
 
 export default function SignUp() {
     const navigate = useNavigate();
@@ -16,6 +34,18 @@ export default function SignUp() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
+    const [currentSlide, setCurrentSlide] = useState(0)
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const width = rect.width
+        const index = Math.floor((x / width) * carouselData.length)
+        if (index >= 0 && index < carouselData.length && index !== currentSlide) {
+            setCurrentSlide(index)
+        }
+    }
 
     const handleCreate = async () => {
         setError("");
@@ -59,9 +89,11 @@ export default function SignUp() {
                     <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none"></div>
                     <div className="pr-0 lg:pr-10 relative z-10">
                         <div className="flex items-center justify-between mb-10">
-                            <ArrowLeft
-                                onClick={() => navigate('/')}
-                                className="cursor-pointer text-gray-600 hover:text-black transition-colors" size={20} />
+                            <ArrowLeft 
+                                className="cursor-pointer text-gray-600 hover:text-black transition-colors" 
+                                size={20} 
+                                onClick={() => navigate('/login')}
+                            />
                             <Link to="/login" className="text-sm text-gray-500 hover:text-black transition-colors">
                                 + already have an account
                             </Link>
@@ -103,22 +135,37 @@ export default function SignUp() {
                                 </button>
                             </div>
                             <button onClick={handleCreate} disabled={loading}
-                                className="bg-[#DB0000] text-white px-40 py-4 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed">
-                                {loading ? 'Creating...' : 'Create'}
+                                className="w-full bg-[#DB0000] text-white py-4 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
+                                {loading ? 'Creating...' : 'Create Account'}
                             </button>
                         </div>
                     </div>
                     <div className="flex items-center justify-center mt-10 lg:mt-0 relative z-10">
-                        <div className="relative w-full max-w-[280px] md:max-w-[320px] h-[360px] md:h-[420px] rounded-[40px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] hover:scale-105 transition-all duration-300">
-                            <img src={artistImage} className="w-full h-full object-cover grayscale" />
-                            <div className="absolute top-4 left-4 text-white font-bold text-lg">M</div>
-                            <div className="absolute bottom-6 left-6 right-6 text-white text-xs">
-                                Lorem ipsum dolor sit amet, consectetur scing elit.
+                        <div 
+                            onMouseMove={handleMouseMove}
+                            className="relative w-full max-w-[280px] md:max-w-[320px] h-[450px] md:h-[520px] rounded-[40px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] hover:scale-105 transition-all duration-300 cursor-pointer"
+                        >
+                            {carouselData.map((slide, index) => (
+                                <img
+                                    key={index}
+                                    src={slide.image}
+                                    className={`absolute inset-0 w-full h-full object-cover grayscale transition-opacity duration-700 ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
+                                />
+                            ))}
+                            {/*logo*/}
+                            <div className="absolute top-[-40px] left-4 z-50 text-black text-xs">
+                                <img src={logo} className="w-40 h-40" alt="Logo" />
                             </div>
-                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                                <div className="w-2 h-2 bg-white/40 rounded-full"></div>
-                                <div className="w-2 h-2 bg-white/40 rounded-full"></div>
+                            <div className="absolute bottom-10 left-6 right-6 text-white text-xs leading-relaxed drop-shadow-lg">
+                                {carouselData[currentSlide].text}
+                            </div>
+                            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
+                                {carouselData.map((_, i) => (
+                                    <div 
+                                        key={i} 
+                                        className={`h-1.5 rounded-full transition-all duration-500 ${i === currentSlide ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`}
+                                    ></div>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -134,4 +181,3 @@ export default function SignUp() {
         </div>
     );
 }
-
