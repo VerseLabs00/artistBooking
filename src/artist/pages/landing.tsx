@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import ArtistProfileLanding from "../../customer/pages/ArtistProfileLanding";
 
-// ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Artist {
     id: string | number;
     name: string;
