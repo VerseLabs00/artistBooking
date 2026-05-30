@@ -11,6 +11,7 @@ export interface ArtistCard {
   max_price: number | null
   tags: string[]
   short_bio: string | null
+  verification_status: string | null
 }
 
 export interface ArtistDetail extends ArtistCard {

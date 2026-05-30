@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { getArtistsApi, verifyArtistApi } from '../../api/artistsApi'
+import { getArtistsApi, verifyArtistApi, deleteArtistApi } from '../../api/artistsApi'
 
 const initialState = {
   list: [],        // pending artist profiles
@@ -92,7 +92,7 @@ export const rejectArtist = createAsyncThunk(
   'verification/reject',
   async (id, { rejectWithValue }) => {
     try {
-      await verifyArtistApi(id, 'rejected')
+      await deleteArtistApi(id)
       return id
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Rejection failed')

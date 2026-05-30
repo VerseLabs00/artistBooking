@@ -154,7 +154,7 @@ function mapDiscoveryArtist(a: DiscoveryArtist): Artist {
         reviews: extra.reviews_count ?? extra.rating?.total ?? 0,
         price: formatArtistPrice(a.starting_price, a.max_price),
         image: a.avatar_url || a.cover_url || FALLBACK_ARTIST_IMAGE,
-        verified: extra.verification_status ? extra.verification_status === "approved" : true,
+        verified: extra.verification_status === "verified" || extra.verification_status === "approved",
         startingPrice: a.starting_price,
         maxPrice: a.max_price,
     };
@@ -463,9 +463,7 @@ export default function HomePage() {
                     />
                 </button>
                 {artist.verified && (
-                    <div className="verified-dot">
-                        <CheckCircle size={10} fill="white" strokeWidth={0} />
-                    </div>
+                    <div className="verified-dot" />
                 )}
             </div>
             <div className="p-2.5">
@@ -565,7 +563,7 @@ export default function HomePage() {
         .dark-section { background: #111; }
         .cta-card { background: #1a1a1a; border-radius: 20px; }
         .checklist-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #ddd; margin-bottom: 8px; }
-        .verified-dot { position: absolute; bottom: 6px; left: 6px; background: #E8194B; border-radius: 100px; padding: 2px 6px; display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: #fff; }
+        .verified-dot { position: absolute; bottom: 8px; left: 8px; background: #ff0000; border-radius: 50%; width: 10px; height: 10px; border: 1.5px solid white; box-shadow: 0 0 4px rgba(255,0,0,0.5); }
         .rating-row { display: flex; align-items: center; gap: 4px; }
         .logo-strip { border-top: 1px solid #f0f0f0; }
         .section-title { font-size: clamp(22px, 3vw, 28px); font-weight: 800; color: #111; }

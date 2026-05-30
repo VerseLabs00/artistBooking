@@ -77,7 +77,7 @@ function VerificationCard({ app }) {
     const result = await dispatch(rejectArtist(app.id))
     setActionLoading(null)
     if (rejectArtist.fulfilled.match(result)) {
-      toast.error(`${app.name} rejected.`)
+      toast.success(`${app.name} rejected and profile deleted.`)
     } else {
       toast.error(result.payload || 'Rejection failed')
     }
