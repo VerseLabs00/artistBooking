@@ -11,6 +11,11 @@ const initialState = {
 
 // ── Normalise pending ArtistProfile → verification card shape ─────────────────
 function normaliseVerification(a) {
+  const media = a.user?.artist_media || []
+  const frontDoc = media.find(m => m.purpose === 'verification_front')
+  const backDoc = media.find(m => m.purpose === 'verification_back')
+  const selfieDoc = media.find(m => m.purpose === 'selfie')
+
   return {
     id: a.id,
     name:     a.stage_name || a.full_name || '—',
@@ -39,9 +44,9 @@ function normaliseVerification(a) {
       nic:         a.nic         || '—',
     },
     documents: [
-      { label: 'NIC / Passport', uploaded: !!a.nic_document_url },
-      { label: 'Profile Photo',  uploaded: !!a.avatar_url },
-      { label: 'Cover Photo',    uploaded: !!a.cover_url },
+      { label: 'Front Side', uploaded: !!frontDoc, url: frontDoc?.url },
+      { label: 'Back Side',  uploaded: !!backDoc,  url: backDoc?.url },
+      { label: 'Selfie with Document', uploaded: !!selfieDoc, url: selfieDoc?.url },
     ],
     portfolio: {
       images: a.gallery_images || [],
