@@ -87,7 +87,7 @@ export default function Artists() {
                   <th className="table-header text-left hidden md:table-cell">Bookings</th>
                   <th className="table-header text-left">Rating</th>
                   <th className="table-header text-left">Status</th>
-                  <th className="table-header text-left">Actions</th>
+                  {/*<th className="table-header text-left">Actions</th>*/}
                 </tr>
               </thead>
               <tbody>
@@ -120,21 +120,21 @@ export default function Artists() {
                       </td>
                       <td className="table-cell"><StatusBadge status={artist.status} /></td>
                       <td className="table-cell">
-                        <div className="flex items-center gap-1 md:gap-2">
-                          <button onClick={() => navigate(`/artists/${artist.id}`)} className="btn-secondary text-xs px-2 md:px-3 py-1.5">
-                            Expand
-                          </button>
-                          {artist.status !== 'verified' && (
-                            <button onClick={() => handleVerify(artist, 'approved')} className="btn-success text-xs px-2 md:px-3 py-1.5 hidden sm:inline-flex">
-                              Approve
-                            </button>
-                          )}
-                          {artist.status !== 'suspended' && (
-                            <button onClick={() => handleVerify(artist, 'rejected')} className="btn-danger text-xs px-2 md:px-3 py-1.5 hidden sm:inline-flex">
-                              Reject
-                            </button>
-                          )}
-                        </div>
+                        {/*<div className="flex items-center gap-1 md:gap-2">*/}
+                        {/*  <button onClick={() => navigate(`/artists/${artist.id}`)} className="btn-secondary text-xs px-2 md:px-3 py-1.5">*/}
+                        {/*    Expand*/}
+                        {/*  </button>*/}
+                        {/*  {artist.status !== 'verified' && (*/}
+                        {/*    <button onClick={() => handleVerify(artist, 'approved')} className="btn-success text-xs px-2 md:px-3 py-1.5 hidden sm:inline-flex">*/}
+                        {/*      Approve*/}
+                        {/*    </button>*/}
+                        {/*  )}*/}
+                        {/*  {artist.status !== 'suspended' && (*/}
+                        {/*    <button onClick={() => handleVerify(artist, 'rejected')} className="btn-danger text-xs px-2 md:px-3 py-1.5 hidden sm:inline-flex">*/}
+                        {/*      Reject*/}
+                        {/*    </button>*/}
+                        {/*  )}*/}
+                        {/*</div>*/}
                       </td>
                     </tr>
                   ))
