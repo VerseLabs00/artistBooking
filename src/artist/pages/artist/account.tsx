@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Heart, MoreHorizontal, Play, Music, MapPin, Users, Star,
-    Instagram, Facebook, Twitter, Mail,
+    Instagram, Facebook, Twitter, Mail, Youtube, Music2
 } from "lucide-react";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
@@ -253,33 +253,27 @@ export default function ArtistProfile() {
                             </h3>
                             <div className="flex justify-center gap-4">
                                 {profile?.instagram_link && (
-                                    <a
-                                        href={profile.instagram_link}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200"
-                                    >
+                                    <a href={profile.instagram_link} target="_blank" rel="noreferrer"
+                                       className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200">
                                         <Instagram size={18} />
                                     </a>
                                 )}
                                 {profile?.facebook_link && (
-                                    <a
-                                        href={profile.facebook_link}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200"
-                                    >
+                                    <a href={profile.facebook_link} target="_blank" rel="noreferrer"
+                                       className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200">
                                         <Facebook size={18} />
                                     </a>
                                 )}
                                 {profile?.youtube_link && (
-                                    <a
-                                        href={profile.youtube_link}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200"
-                                    >
-                                        <Twitter size={18} />
+                                    <a href={profile.youtube_link} target="_blank" rel="noreferrer"
+                                       className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200">
+                                        <Youtube size={18} />
+                                    </a>
+                                )}
+                                {profile?.spotify_link && (
+                                    <a href={profile.spotify_link} target="_blank" rel="noreferrer"
+                                       className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200">
+                                        <Music2 size={18} />
                                     </a>
                                 )}
                                 <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200 cursor-pointer">

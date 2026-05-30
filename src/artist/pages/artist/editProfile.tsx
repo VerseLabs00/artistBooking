@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { User, FileText, DollarSign, Image, Music, Music2, Link, Youtube, Facebook, Instagram } from "lucide-react";
 
 interface ProfileForm {
     stage_name: string;
@@ -33,12 +34,12 @@ const defaultForm: ProfileForm = {
 };
 
 const tabs = [
-    { id: "Basic Information", icon: "👤" },
-    { id: "Overview", icon: "📝" },
-    { id: "Pricing", icon: "💰" },
-    { id: "Gallery", icon: "🖼️" },
-    { id: "Audio & Video", icon: "🎵" },
-    { id: "Social & Web", icon: "🔗" },
+    { id: "Basic Information", icon: <User size={16} /> },
+    { id: "Overview", icon: <FileText size={16} /> },
+    { id: "Pricing", icon: <DollarSign size={16} /> },
+    { id: "Gallery", icon: <Image size={16} /> },
+    { id: "Audio & Video", icon: <Music size={16} /> },
+    { id: "Social & Web", icon: <Link size={16} /> },
 ];
 
 export default function EditProfile() {
@@ -556,10 +557,10 @@ export default function EditProfile() {
                         {activeTab === "Social & Web" && (
                             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                                 {[
-                                    { label: "YouTube Channel", name: "youtube_link", placeholder: "https://youtube.com/@yourhandle", icon: "▶️" },
-                                    { label: "Facebook Page", name: "facebook_link", placeholder: "https://facebook.com/yourpage", icon: "📘" },
-                                    { label: "Instagram", name: "instagram_link", placeholder: "https://instagram.com/yourhandle", icon: "📷" },
-                                    { label: "Spotify Artist", name: "spotify_link", placeholder: "https://open.spotify.com/artist/...", icon: "🎧" },
+                                    { label: "YouTube Channel", name: "youtube_link", placeholder: "https://youtube.com/@yourhandle", icon: <Youtube size={20} /> },
+                                    { label: "Facebook Page", name: "facebook_link", placeholder: "https://facebook.com/yourpage", icon: <Facebook size={20} /> },
+                                    { label: "Instagram", name: "instagram_link", placeholder: "https://instagram.com/yourhandle", icon: <Instagram size={20} /> },
+                                    { label: "Spotify Artist", name: "spotify_link", placeholder: "https://open.spotify.com/artist/...", icon: <Music2 size={20} /> },
                                 ].map(({ label, name, placeholder, icon }) => (
                                     <div key={name} style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                                         <div style={{ width: 42, height: 42, background: "#F5F5F7", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
