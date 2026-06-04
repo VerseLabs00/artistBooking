@@ -17,12 +17,14 @@ import {
   Loader2,
   X,
   CreditCard,
-  FileText
+  FileText,
+  Camera
 } from 'lucide-react'
 import { getBookings, getBooking, cancelBooking } from '../services/bookingService'
 import type { BookingSummary } from '../services/bookingService'
 import { useAuth } from '../context/AuthContext'
 import Footer from '../components/Footer'
+import api from '../lib/api'
 
 // --- Extended Booking Type for UI ---
 interface DetailedBooking extends BookingSummary {
@@ -56,11 +58,12 @@ function normalizeBooking(b: any): DetailedBooking {
 
 export default function CustomerAccount() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user, setUser, logout } = useAuth()
   const [bookings, setBookings] = useState<DetailedBooking[]>([])
   const [loading, setLoading] = useState(true)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'favorites' | 'settings'>('overview')
+  const [uploading, setUploading] = useState(false)
   
   // Details Modal State
   const [selectedBooking, setSelectedBooking] = useState<DetailedBooking | null>(null)
@@ -69,6 +72,28 @@ export default function CustomerAccount() {
   useEffect(() => {
     fetchBookings()
   }, [])
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const { data } = await api.post('/profile/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      setUser(data.user)
+    } catch (err: any) {
+      console.error("Failed to upload avatar", err)
+      const msg = err.response?.data?.message || "Failed to upload photo. Please try again."
+      alert(msg)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const fetchBookings = async () => {
     setLoading(true)
@@ -283,8 +308,29 @@ export default function CustomerAccount() {
           <aside className="w-full md:w-64 flex-shrink-0">
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sticky top-24">
               <div className="text-center mb-8">
-                <div className="w-20 h-20 rounded-full bg-pink/10 flex items-center justify-center text-pink mx-auto mb-4 border-2 border-pink/20">
-                  <User size={32} />
+                <div className="relative w-24 h-24 mx-auto mb-4 group">
+                  <div className="w-24 h-24 rounded-full bg-pink/10 overflow-hidden flex items-center justify-center text-pink border-2 border-pink/20">
+                    {user?.avatar_url ? (
+                      <img src={user.avatar_url} className="w-full h-full object-cover" alt="Profile" />
+                    ) : (
+                      <User size={40} />
+                    )}
+                    {uploading && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
+                        <Loader2 className="animate-spin text-white" size={24} />
+                      </div>
+                    )}
+                  </div>
+                  <label className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors group-hover:scale-110">
+                    <Camera size={16} className="text-pink" />
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleAvatarChange}
+                      disabled={uploading}
+                    />
+                  </label>
                 </div>
                 <h2 className="font-bold text-xl text-gray-900">{user?.name || 'Customer'}</h2>
                 <p className="text-gray-500 text-xs mt-1">{user?.email}</p>
