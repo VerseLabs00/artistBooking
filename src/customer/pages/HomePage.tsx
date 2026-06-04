@@ -871,16 +871,16 @@ export default function HomePage() {
                 </section>
 
                 {/* PARTNER LOGOS */}
-                <section className="logo-strip w-full px-6 md:px-12 lg:px-20 py-8 bg-white">
+                <section className="logo-strip w-full h-1 px-6 md:px-12 lg:px-20 py-8 bg-white">
                     <div className="max-w-7xl mx-auto">
                         <p className="text-center text-gray-400 text-sm mb-6">Trusted by event planners and companies across Sri Lanka</p>
-                        <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-                            {PARTNER_LOGOS.map(logo => (
-                                <span key={logo} className="text-gray-400 font-bold text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
-                                {logo}
-                            </span>
-                            ))}
-                        </div>
+                        {/*<div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">*/}
+                        {/*    {PARTNER_LOGOS.map(logo => (*/}
+                        {/*        <span key={logo} className="text-gray-400 font-bold text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">*/}
+                        {/*        {logo}*/}
+                        {/*    </span>*/}
+                        {/*    ))}*/}
+                        {/*</div>*/}
                     </div>
                 </section>
 

@@ -10,6 +10,7 @@ import {
     Play, RefreshCw, GitCompare, BookOpen, X, Loader2, LogOut
 } from "lucide-react";
 import ArtistProfileLanding from "../../../customer/pages/ArtistProfileLanding";
+import Footer from "../../../customer/components/Footer.tsx";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Artist {
@@ -485,6 +486,9 @@ export default function ArtistHome() {
                 .search-input { outline: none; border: none; }
                 .search-input:focus { outline: none; }
                 section[id] { scroll-margin-top: 90px; }
+                .dark-section { background: #111; }
+                .cta-card { background: #1a1a1a; border-radius: 20px; }
+                .checklist-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #ddd; margin-bottom: 8px; }
                 @keyframes slideUp {
                     from { transform: translateY(100%); }
                     to { transform: translateY(0); }
@@ -782,33 +786,95 @@ export default function ArtistHome() {
                     </div>
                 </section>
 
-                {/* ══════════════════════════════════════════════════
-                HOW IT WORKS
-            ══════════════════════════════════════════════════ */}
-                <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
-                    <div className="max-w-5xl mx-auto text-center">
-                        <h2 className="section-title mb-14">How It Works</h2>
-                        <div className="flex flex-col md:flex-row items-center gap-10">
-                            <div className="flex flex-col items-center flex-1">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
-                                    <RefreshCw size={26} className="pink-text" />
-                                </div>
-                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Search</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">Find the perfect artists for your event.</p>
+            {/*    /!* ══════════════════════════════════════════════════*/}
+            {/*    HOW IT WORKS*/}
+            {/*══════════════════════════════════════════════════ *!/*/}
+            {/*    <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">*/}
+            {/*        <div className="max-w-5xl mx-auto text-center">*/}
+            {/*            <h2 className="section-title mb-14">How It Works</h2>*/}
+            {/*            <div className="flex flex-col md:flex-row items-center gap-10">*/}
+            {/*                <div className="flex flex-col items-center flex-1">*/}
+            {/*                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">*/}
+            {/*                        <RefreshCw size={26} className="pink-text" />*/}
+            {/*                    </div>*/}
+            {/*                    <h3 className="font-800 text-gray-900 text-[17px] mb-2">Search</h3>*/}
+            {/*                    <p className="text-gray-500 text-sm leading-relaxed">Find the perfect artists for your event.</p>*/}
+            {/*                </div>*/}
+            {/*                <div className="flex flex-col items-center flex-1">*/}
+            {/*                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">*/}
+            {/*                        <GitCompare size={26} className="pink-text" />*/}
+            {/*                    </div>*/}
+            {/*                    <h3 className="font-800 text-gray-900 text-[17px] mb-2">Compare</h3>*/}
+            {/*                    <p className="text-gray-500 text-sm leading-relaxed">View profiles, reviews and prices.</p>*/}
+            {/*                </div>*/}
+            {/*                <div className="flex flex-col items-center flex-1">*/}
+            {/*                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">*/}
+            {/*                        <BookOpen size={26} className="pink-text" />*/}
+            {/*                    </div>*/}
+            {/*                    <h3 className="font-800 text-gray-900 text-[17px] mb-2">Book</h3>*/}
+            {/*                    <p className="text-gray-500 text-sm leading-relaxed">Contact and book your favourite artist.</p>*/}
+            {/*                </div>*/}
+            {/*            </div>*/}
+            {/*        </div>*/}
+            {/*    </section>*/}
+
+                {/* CTA SECTION - FOR ARTISTS */}
+                <section id="join-section" className="dark-section w-full px-6 md:px-12 lg:px-20 py-14">
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <p className="pink-text text-xs font-bold uppercase tracking-widest mb-2">
+                                For Artists
+                            </p>
+
+                            <h2 className="text-white font-black text-2xl md:text-3xl leading-tight mb-3">
+                                Turn Your Talent<br />Into Opportunities
+                            </h2>
+
+                            <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                                Showcase your skills, connect with clients, and get booked for
+                                weddings, parties, corporate events, and more.
+                            </p>
+
+                            <button
+                                onClick={() => navigate('')}
+                                className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
+                            >
+                                Join as an Artist <ArrowRight size={15} />
+                            </button>
+                        </div>
+
+                        <div className="relative flex justify-center">
+                            <div
+                                className="relative rounded-2xl overflow-hidden"
+                                style={{ height: '260px', width: '100%' }}
+                            >
+                                <img
+                                    src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=80"
+                                    className="w-full h-full object-cover object-center"
+                                    alt="Artist Performance"
+                                    style={{ filter: 'brightness(0.75)' }}
+                                />
                             </div>
-                            <div className="flex flex-col items-center flex-1">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
-                                    <GitCompare size={26} className="pink-text" />
-                                </div>
-                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Compare</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">View profiles, reviews and prices.</p>
-                            </div>
-                            <div className="flex flex-col items-center flex-1">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
-                                    <BookOpen size={26} className="pink-text" />
-                                </div>
-                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Book</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">Contact and book your favourite artist.</p>
+
+                            <div className="cta-card absolute bottom-4 right-4 p-4 min-w-[180px]">
+                                <p className="text-white font-bold text-sm mb-3">
+                                    Why Join Us
+                                </p>
+
+                                {[
+                                    'More Booking Requests',
+                                    'Verified Client Network',
+                                    'Secure Payments',
+                                    'Grow Your Audience'
+                                ].map(item => (
+                                    <div key={item} className="checklist-item">
+                                        <CheckCircle
+                                            size={15}
+                                            style={{ color: '#E8194B', flexShrink: 0 }}
+                                        />
+                                        <span>{item}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -817,19 +883,20 @@ export default function ArtistHome() {
                 {/* ══════════════════════════════════════════════════
                 PARTNER LOGOS
             ══════════════════════════════════════════════════ */}
-                <section className="w-full py-10 px-6 md:px-12 lg:px-20 bg-white border-t border-gray-100">
+                <section className="w-full h-1 py-10 px-6 md:px-12 lg:px-20 bg-white border-t border-gray-100">
                     <div className="max-w-7xl mx-auto">
                         <p className="text-center text-gray-400 text-sm mb-6 font-500">
                             Trusted by event planners and companies across Sri Lanka
                         </p>
-                        <div className="flex flex-wrap justify-center gap-10 opacity-40">
-                            {PARTNER_LOGOS.map(l => (
-                                <span key={l} className="font-black text-sm uppercase tracking-widest">{l}</span>
-                            ))}
-                        </div>
+                        {/*<div className="flex flex-wrap justify-center gap-10 opacity-40">*/}
+                        {/*    {PARTNER_LOGOS.map(l => (*/}
+                        {/*        <span key={l} className="font-black text-sm uppercase tracking-widest">{l}</span>*/}
+                        {/*    ))}*/}
+                        {/*</div>*/}
                     </div>
                 </section>
 
+                <Footer />
             </div>
         </div>
     );
