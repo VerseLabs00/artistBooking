@@ -451,8 +451,9 @@ export default function ArtistHome() {
     );
 
     return (
-        <div className="min-h-screen bg-white font-sans text-gray-900 overflow-x-hidden">
+        <div className="min-h-screen bg-white" style={{ fontFamily: "'Fraunces', serif" }}>
             <style>{`
+                 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
                 .btn-pink { background: #E8194B; color: white; transition: all 0.2s ease; }
                 .btn-pink:hover { background: #d11643; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232, 25, 75, 0.2); }
                 .nav-link { font-size: 0.875rem; font-weight: 500; color: #4b5563; transition: color 0.2s; cursor: pointer; }
@@ -531,7 +532,6 @@ export default function ArtistHome() {
 
                     <div className="hidden md:flex items-center gap-7 absolute left-1/2 transform -translate-x-1/2">
                         <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
-                        <button onClick={() => scrollToSection('artists-section')} className="nav-link">Artist</button>
                         <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
                         <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
                         <button className="nav-link">Events</button>
@@ -786,37 +786,37 @@ export default function ArtistHome() {
                     </div>
                 </section>
 
-            {/*    /!* ══════════════════════════════════════════════════*/}
-            {/*    HOW IT WORKS*/}
-            {/*══════════════════════════════════════════════════ *!/*/}
-            {/*    <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">*/}
-            {/*        <div className="max-w-5xl mx-auto text-center">*/}
-            {/*            <h2 className="section-title mb-14">How It Works</h2>*/}
-            {/*            <div className="flex flex-col md:flex-row items-center gap-10">*/}
-            {/*                <div className="flex flex-col items-center flex-1">*/}
-            {/*                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">*/}
-            {/*                        <RefreshCw size={26} className="pink-text" />*/}
-            {/*                    </div>*/}
-            {/*                    <h3 className="font-800 text-gray-900 text-[17px] mb-2">Search</h3>*/}
-            {/*                    <p className="text-gray-500 text-sm leading-relaxed">Find the perfect artists for your event.</p>*/}
-            {/*                </div>*/}
-            {/*                <div className="flex flex-col items-center flex-1">*/}
-            {/*                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">*/}
-            {/*                        <GitCompare size={26} className="pink-text" />*/}
-            {/*                    </div>*/}
-            {/*                    <h3 className="font-800 text-gray-900 text-[17px] mb-2">Compare</h3>*/}
-            {/*                    <p className="text-gray-500 text-sm leading-relaxed">View profiles, reviews and prices.</p>*/}
-            {/*                </div>*/}
-            {/*                <div className="flex flex-col items-center flex-1">*/}
-            {/*                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">*/}
-            {/*                        <BookOpen size={26} className="pink-text" />*/}
-            {/*                    </div>*/}
-            {/*                    <h3 className="font-800 text-gray-900 text-[17px] mb-2">Book</h3>*/}
-            {/*                    <p className="text-gray-500 text-sm leading-relaxed">Contact and book your favourite artist.</p>*/}
-            {/*                </div>*/}
-            {/*            </div>*/}
-            {/*        </div>*/}
-            {/*    </section>*/}
+                {/* ══════════════════════════════════════════════════
+                HOW IT WORKS
+            ══════════════════════════════════════════════════ */}
+                <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
+                    <div className="max-w-5xl mx-auto text-center">
+                        <h2 className="section-title mb-14">How It Works</h2>
+                        <div className="flex flex-col md:flex-row items-center gap-10">
+                            <div className="flex flex-col items-center flex-1">
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
+                                    <RefreshCw size={26} className="pink-text" />
+                                </div>
+                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Search</h3>
+                                <p className="text-gray-500 text-sm leading-relaxed">Find the perfect artists for your event.</p>
+                            </div>
+                            <div className="flex flex-col items-center flex-1">
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
+                                    <GitCompare size={26} className="pink-text" />
+                                </div>
+                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Compare</h3>
+                                <p className="text-gray-500 text-sm leading-relaxed">View profiles, reviews and prices.</p>
+                            </div>
+                            <div className="flex flex-col items-center flex-1">
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
+                                    <BookOpen size={26} className="pink-text" />
+                                </div>
+                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Book</h3>
+                                <p className="text-gray-500 text-sm leading-relaxed">Contact and book your favourite artist.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
                 {/* CTA SECTION - FOR ARTISTS */}
                 <section id="join-section" className="dark-section w-full px-6 md:px-12 lg:px-20 py-14">

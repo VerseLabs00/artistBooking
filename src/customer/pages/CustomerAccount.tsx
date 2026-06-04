@@ -413,7 +413,7 @@ export default function CustomerAccount() {
                       </div>
                       <h4 className="font-bold text-gray-900">No bookings yet</h4>
                       <p className="text-gray-500 text-sm mt-2 mb-6">Start exploring Sri Lanka's best artists for your next event.</p>
-                      <button onClick={() => navigate('/')} className="btn-pink px-8 py-3 rounded-2xl font-bold text-sm">Explore Artists</button>
+                      <button onClick={() => navigate('/home')} className="btn-pink px-8 py-3 rounded-2xl font-bold text-sm">Explore Artists</button>
                     </div>
                   ) : (
                     <div className="space-y-4">

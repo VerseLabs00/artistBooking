@@ -580,7 +580,6 @@ export default function HomePage() {
                         <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
                         <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
                         <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
-                        <button onClick={() => scrollToSection('join-section')} className="nav-link">Join as Artist</button>
                         <button className="nav-link">Events</button>
                     </div>
 
