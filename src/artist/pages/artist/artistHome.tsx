@@ -9,6 +9,7 @@ import {
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
     Play, RefreshCw, GitCompare, BookOpen, X, Loader2, LogOut
 } from "lucide-react";
+import ArtistProfileLanding from "../../../customer/pages/ArtistProfileLanding";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Artist {
@@ -238,11 +239,31 @@ export default function ArtistHome() {
     const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(true);
 
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
+    const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
+    const [isClosingProfile, setIsClosingProfile] = useState(false);
     const popularArtistsRef = useRef<HTMLDivElement>(null);
+
+    const handleCloseProfile = () => {
+        setIsClosingProfile(true);
+        setTimeout(() => {
+            setSelectedArtistId(null);
+            setIsClosingProfile(false);
+        }, 500); // Matches animation duration
+    };
+
+    // Prevent body scroll when overlay is open
+    useEffect(() => {
+        if (selectedArtistId) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => { document.body.style.overflow = 'unset'; };
+    }, [selectedArtistId]);
 
     useEffect(() => {
         fetchProfile();
-        
+
         getStats()
             .then(data => setStats(data))
             .catch(() => {});
@@ -367,7 +388,7 @@ export default function ArtistHome() {
     };
 
     const renderArtistCard = (artist: Artist) => (
-        <div key={artist.id} className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px] artist-card cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100" onClick={() => navigate(`/artist/${artist.id}`)}>
+        <div key={artist.id} className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px] artist-card cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100" onClick={() => setSelectedArtistId(artist.id.toString())}>
             <div className="relative" style={{ aspectRatio: "3/4" }}>
                 <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
@@ -464,324 +485,352 @@ export default function ArtistHome() {
                 .search-input { outline: none; border: none; }
                 .search-input:focus { outline: none; }
                 section[id] { scroll-margin-top: 90px; }
+                @keyframes slideUp {
+                    from { transform: translateY(100%); }
+                    to { transform: translateY(0); }
+                }
+                @keyframes slideDown {
+                    from { transform: translateY(0); }
+                    to { transform: translateY(100%); }
+                }
+                .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0, 0, 0.2, 1) forwards; }
+                .animate-slide-down { animation: slideDown 0.5s cubic-bezier(0, 0, 0.2, 1) forwards; }
+                .blur-bg { filter: blur(8px); transition: filter 0.5s ease; }
             `}</style>
 
-            {/* NAVBAR */}
-            <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
-                <div className="flex items-center cursor-pointer" onClick={() => navigate("/artistHome")}>
-                    <Link to="/" className="flex items-center">
-                        <img
-                            src="/logoBlack.svg"
-                            alt="Perfoma"
-                            className="h-10 w-auto object-contain"
-                        />
-                    </Link>
-                </div>
-
-                <div className="hidden md:flex items-center gap-7 absolute left-1/2 transform -translate-x-1/2">
-                    <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
-                    <button onClick={() => scrollToSection('artists-section')} className="nav-link">Artist</button>
-                    <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
-                    <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
-                    <button className="nav-link">Events</button>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <div
-                        onClick={() => navigate("/account")}
-                        className="w-10 h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all"
-                    >
-                        <img
-                            src={profile?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
+            {/* Profile Overlay */}
+            {selectedArtistId && (
+                <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity duration-500 ${isClosingProfile ? 'opacity-0' : 'opacity-100'}`}>
+                    <div className={`max-w-5xl w-full h-full bg-white shadow-[0_0_60px_rgba(0,0,0,0.3)] overflow-hidden ${isClosingProfile ? 'animate-slide-down' : 'animate-slide-up'}`}>
+                        <ArtistProfileLanding
+                            id={selectedArtistId}
+                            onClose={handleCloseProfile}
                         />
                     </div>
-                    <button 
-                        onClick={() => navigate("/login")}
-                        className="p-2 text-gray-400 hover:text-[#E8194B] transition-colors"
-                        title="Logout"
-                    >
-                        <LogOut size={20} />
-                    </button>
                 </div>
-            </nav>
+            )}
 
-            {/* HERO */}
-            <section className="relative w-full overflow-hidden bg-cover bg-center py-12 px-6 md:px-12 lg:px-20"
-                     style={{ backgroundImage: "url('/Cover7.jpg')" }}>
-                <div className="absolute inset-0 bg-black/40 z-0" />
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10">
-                    <div>
-                        <p className="text-gray-200 text-base font-600 mb-1">Welcome Back</p>
-                        <h1 className="font-black leading-tight text-white mb-2" style={{ fontSize: "clamp(28px, 3vw, 42px)" }}>
-                            Hey, <span className="text-[#E8194B]">{profile?.stage_name || profile?.full_name || "Artist"}</span>
-                        </h1>
-                        <p className="text-gray-300 text-base">Explore the community and see what's trending.</p>
-                        <div className="flex items-center gap-3 mt-7">
-                            <div className="flex -space-x-2">
-                                {(stats.sample_avatars.length > 0 ? stats.sample_avatars : [
-                                    // "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
-                                    // "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
-                                    // "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80",
-                                    // "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
-                                    // "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
-                                ]).slice(0, 5).map((src, i) => (
-                                    <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
-                                ))}
-                            </div>
-                            <p className="text-sm text-gray-300 font-500">
-                                {stats.total_artists > 100 ? "100+" : stats.total_artists} artists already joined
-                            </p>
+            {/* Main Content */}
+            <div className={`transition-all duration-500 ${selectedArtistId ? 'blur-bg scale-[0.98]' : ''}`}>
+
+                {/* NAVBAR */}
+                <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
+                    <div className="flex items-center cursor-pointer" onClick={() => navigate("/artistHome")}>
+                        <Link to="/" className="flex items-center">
+                            <img
+                                src="/logoBlack.svg"
+                                alt="Perfoma"
+                                className="h-10 w-auto object-contain"
+                            />
+                        </Link>
+                    </div>
+
+                    <div className="hidden md:flex items-center gap-7 absolute left-1/2 transform -translate-x-1/2">
+                        <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
+                        <button onClick={() => scrollToSection('artists-section')} className="nav-link">Artist</button>
+                        <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
+                        <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
+                        <button className="nav-link">Events</button>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <div
+                            onClick={() => navigate("/account")}
+                            className="w-10 h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all"
+                        >
+                            <img
+                                src={profile?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                            />
                         </div>
+                        <button
+                            onClick={() => navigate("/login")}
+                            className="p-2 text-gray-400 hover:text-[#E8194B] transition-colors"
+                            title="Logout"
+                        >
+                            <LogOut size={20} />
+                        </button>
                     </div>
-                    <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end" />
-                </div>
-            </section>
+                </nav>
 
-            {/* ══════════════════════════════════════════════════
+                {/* HERO */}
+                <section className="relative w-full overflow-hidden bg-cover bg-center py-12 px-6 md:px-12 lg:px-20"
+                         style={{ backgroundImage: "url('/Cover7.jpg')" }}>
+                    <div className="absolute inset-0 bg-black/40 z-0" />
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10">
+                        <div>
+                            <p className="text-gray-200 text-base font-600 mb-1">Welcome Back</p>
+                            <h1 className="font-black leading-tight text-white mb-2" style={{ fontSize: "clamp(28px, 3vw, 42px)" }}>
+                                Hey, <span className="text-[#E8194B]">{profile?.stage_name || profile?.full_name || "Artist"}</span>
+                            </h1>
+                            <p className="text-gray-300 text-base">Explore the community and see what's trending.</p>
+                            <div className="flex items-center gap-3 mt-7">
+                                <div className="flex -space-x-2">
+                                    {(stats.sample_avatars.length > 0 ? stats.sample_avatars : [
+                                        // "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
+                                        // "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
+                                        // "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80",
+                                        // "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
+                                        // "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
+                                    ]).slice(0, 5).map((src, i) => (
+                                        <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
+                                    ))}
+                                </div>
+                                <p className="text-sm text-gray-300 font-500">
+                                    {stats.total_artists > 100 ? "100+" : stats.total_artists} artists already joined
+                                </p>
+                            </div>
+                        </div>
+                        <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end" />
+                    </div>
+                </section>
+
+                {/* ══════════════════════════════════════════════════
                 BROWSE CATEGORIES
             ══════════════════════════════════════════════════ */}
-            <section id="categories-section" className="w-full px-6 md:px-12 lg:px-20 mt-16">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="section-title">Browse Categories</h2>
-                    </div>
-
-                    {browseCategoriesLoading ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            {Array.from({ length: ALL_CATEGORIES_DATA.length }).map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="w-full aspect-[3/4] rounded-2xl bg-gray-100 animate-pulse"
-                                />
-                            ))}
+                <section id="categories-section" className="w-full px-6 md:px-12 lg:px-20 mt-16">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="section-title">Browse Categories</h2>
                         </div>
-                    ) : (
-                        // ── FIX: Now iterates CategoryData objects — cat.name, cat.image, cat.description all work ──
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            {browseCategories.map(cat => (
-                                <div
-                                    key={cat.name}
-                                    className="cat-card-modern group w-full"
-                                    onClick={() => filterBrowseArtistsByCategory(cat.name)}
-                                >
-                                    <img
-                                        src={cat.image}
-                                        className="cat-img"
-                                        alt={cat.name}
+
+                        {browseCategoriesLoading ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                {Array.from({ length: ALL_CATEGORIES_DATA.length }).map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className="w-full aspect-[3/4] rounded-2xl bg-gray-100 animate-pulse"
                                     />
-                                    <div className="cat-overlay">
-                                        <h3 className="text-white font-900 text-lg leading-tight">{cat.name}</h3>
-                                        <p className="text-white/80 text-[10px] mt-1 line-clamp-2 leading-relaxed">{cat.description}</p>
+                                ))}
+                            </div>
+                        ) : (
+                            // ── FIX: Now iterates CategoryData objects — cat.name, cat.image, cat.description all work ──
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                {browseCategories.map(cat => (
+                                    <div
+                                        key={cat.name}
+                                        className="cat-card-modern group w-full"
+                                        onClick={() => filterBrowseArtistsByCategory(cat.name)}
+                                    >
+                                        <img
+                                            src={cat.image}
+                                            className="cat-img"
+                                            alt={cat.name}
+                                        />
+                                        <div className="cat-overlay">
+                                            <h3 className="text-white font-900 text-lg leading-tight">{cat.name}</h3>
+                                            <p className="text-white/80 text-[10px] mt-1 line-clamp-2 leading-relaxed">{cat.description}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </section>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </section>
 
-            {/* ══════════════════════════════════════════════════
+                {/* ══════════════════════════════════════════════════
                 ARTISTS / SEARCH
             ══════════════════════════════════════════════════ */}
-            <section id="artists-section" className="w-full px-6 md:px-12 lg:px-20 mt-14 overflow-hidden">
-                <div className="max-w-7xl mx-auto relative group">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="section-title">
-                            {hasActiveSearch ? "Search Results" : "Artists"}
-                        </h2>
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => scrollPopular('left')} className="carousel-btn" aria-label="Previous">
-                                <ChevronLeft size={20} />
-                            </button>
-                            <button onClick={() => scrollPopular('right')} className="carousel-btn" aria-label="Next">
-                                <ChevronRight size={20} />
-                            </button>
-                        </div>
-                    </div>
-
-                    <form
-                        className="search-bar-wrap p-5 mb-10"
-                        onSubmit={e => {
-                            e.preventDefault();
-                            runSearch();
-                        }}
-                    >
-                        {/* Inputs row */}
-                        <div className="flex flex-col md:flex-row items-stretch gap-0 bg-white rounded-xl overflow-hidden">
-                            {/* What */}
-                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
-                                <Search size={18} className="text-gray-400 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-400 font-600">What are you looking for?</p>
-                                    <input
-                                        type="text"
-                                        placeholder="DJs, Singers, Bands..."
-                                        value={searchQuery}
-                                        onChange={e => setSearchQuery(e.target.value)}
-                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
-                                    />
-                                </div>
+                <section id="artists-section" className="w-full px-6 md:px-12 lg:px-20 mt-14 overflow-hidden">
+                    <div className="max-w-7xl mx-auto relative group">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="section-title">
+                                {hasActiveSearch ? "Search Results" : "Artists"}
+                            </h2>
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => scrollPopular('left')} className="carousel-btn" aria-label="Previous">
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <button onClick={() => scrollPopular('right')} className="carousel-btn" aria-label="Next">
+                                    <ChevronRight size={20} />
+                                </button>
                             </div>
-
-                            {/* Location */}
-                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
-                                <MapPin size={18} className="text-gray-400 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-400 font-600">Location</p>
-                                    <input
-                                        type="text"
-                                        placeholder="All Sri Lanka"
-                                        value={location}
-                                        onChange={e => setLocation(e.target.value)}
-                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Date */}
-                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
-                                <Calendar size={18} className="text-gray-400 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-400 font-600">Event Date</p>
-                                    <input
-                                        type="date"
-                                        value={eventDate}
-                                        min={new Date().toISOString().split("T")[0]}
-                                        onChange={e => setEventDate(e.target.value)}
-                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Budget */}
-                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5">
-                                <DollarSign size={18} className="text-gray-400 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-400 font-600">Budget</p>
-                                    <input
-                                        type="text"
-                                        placeholder="Any Budget"
-                                        value={budget}
-                                        onChange={e => setBudget(e.target.value)}
-                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Search Button */}
-                            <button
-                                type="submit"
-                                className="btn-pink font-bold text-sm px-8 py-4 flex-shrink-0 md:rounded-r-xl"
-                            >
-                                Search
-                            </button>
                         </div>
 
-                        {/* Category tag pills */}
-                        <div className="flex flex-wrap gap-2 mt-4 px-1">
-                            {browseCategoriesLoading ? (
-                                <div className="flex flex-wrap gap-2 animate-pulse">
-                                    {[1, 2, 3, 4, 5, 6].map(i => (
-                                        <div key={i} className="h-8 w-20 bg-gray-100 rounded-full" />
-                                    ))}
+                        <form
+                            className="search-bar-wrap p-5 mb-10"
+                            onSubmit={e => {
+                                e.preventDefault();
+                                runSearch();
+                            }}
+                        >
+                            {/* Inputs row */}
+                            <div className="flex flex-col md:flex-row items-stretch gap-0 bg-white rounded-xl overflow-hidden">
+                                {/* What */}
+                                <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
+                                    <Search size={18} className="text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 font-600">What are you looking for?</p>
+                                        <input
+                                            type="text"
+                                            placeholder="DJs, Singers, Bands..."
+                                            value={searchQuery}
+                                            onChange={e => setSearchQuery(e.target.value)}
+                                            className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
+                                        />
+                                    </div>
                                 </div>
-                            ) : (
-                                <>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSearchCategoryClick(null)}
-                                        className={`tag-pill${selectedSearchCategory === null ? " tag-pill-active" : ""}`}
-                                    >
-                                        <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
-                                        All
-                                    </button>
-                                    {/* ── FIX: use cat.name for key, onClick, and label ── */}
-                                    {browseCategories.map(cat => (
+
+                                {/* Location */}
+                                <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
+                                    <MapPin size={18} className="text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 font-600">Location</p>
+                                        <input
+                                            type="text"
+                                            placeholder="All Sri Lanka"
+                                            value={location}
+                                            onChange={e => setLocation(e.target.value)}
+                                            className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Date */}
+                                <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
+                                    <Calendar size={18} className="text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 font-600">Event Date</p>
+                                        <input
+                                            type="date"
+                                            value={eventDate}
+                                            min={new Date().toISOString().split("T")[0]}
+                                            onChange={e => setEventDate(e.target.value)}
+                                            className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Budget */}
+                                <div className="flex items-center gap-3 flex-1 px-5 py-3.5">
+                                    <DollarSign size={18} className="text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 font-600">Budget</p>
+                                        <input
+                                            type="text"
+                                            placeholder="Any Budget"
+                                            value={budget}
+                                            onChange={e => setBudget(e.target.value)}
+                                            className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Search Button */}
+                                <button
+                                    type="submit"
+                                    className="btn-pink font-bold text-sm px-8 py-4 flex-shrink-0 md:rounded-r-xl"
+                                >
+                                    Search
+                                </button>
+                            </div>
+
+                            {/* Category tag pills */}
+                            <div className="flex flex-wrap gap-2 mt-4 px-1">
+                                {browseCategoriesLoading ? (
+                                    <div className="flex flex-wrap gap-2 animate-pulse">
+                                        {[1, 2, 3, 4, 5, 6].map(i => (
+                                            <div key={i} className="h-8 w-20 bg-gray-100 rounded-full" />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <>
                                         <button
-                                            key={cat.name}
                                             type="button"
-                                            onClick={() => handleSearchCategoryClick(cat.name)}
-                                            className={`tag-pill${selectedSearchCategory === cat.name ? " tag-pill-active" : ""}`}
+                                            onClick={() => handleSearchCategoryClick(null)}
+                                            className={`tag-pill${selectedSearchCategory === null ? " tag-pill-active" : ""}`}
                                         >
                                             <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
-                                            {cat.name}
+                                            All
                                         </button>
-                                    ))}
-                                </>
-                            )}
-                        </div>
-                    </form>
+                                        {/* ── FIX: use cat.name for key, onClick, and label ── */}
+                                        {browseCategories.map(cat => (
+                                            <button
+                                                key={cat.name}
+                                                type="button"
+                                                onClick={() => handleSearchCategoryClick(cat.name)}
+                                                className={`tag-pill${selectedSearchCategory === cat.name ? " tag-pill-active" : ""}`}
+                                            >
+                                                <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
+                                                {cat.name}
+                                            </button>
+                                        ))}
+                                    </>
+                                )}
+                            </div>
+                        </form>
 
-                    {popularArtistsLoading ? (
-                        <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2">
-                            {[1, 2, 3, 4, 5, 6].map(i => renderArtistSkeleton(i))}
-                        </div>
-                    ) : popularArtists.length === 0 ? (
-                        <p className="text-sm text-gray-400 py-6 text-center">
-                            {hasActiveSearch
-                                ? "No artists match your search. Try different filters."
-                                : "No artists found."}
-                        </p>
-                    ) : (
-                        <div
-                            ref={popularArtistsRef}
-                            className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2"
-                        >
-                            {popularArtists.map(renderArtistCard)}
-                        </div>
-                    )}
-                </div>
-            </section>
+                        {popularArtistsLoading ? (
+                            <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2">
+                                {[1, 2, 3, 4, 5, 6].map(i => renderArtistSkeleton(i))}
+                            </div>
+                        ) : popularArtists.length === 0 ? (
+                            <p className="text-sm text-gray-400 py-6 text-center">
+                                {hasActiveSearch
+                                    ? "No artists match your search. Try different filters."
+                                    : "No artists found."}
+                            </p>
+                        ) : (
+                            <div
+                                ref={popularArtistsRef}
+                                className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2"
+                            >
+                                {popularArtists.map(renderArtistCard)}
+                            </div>
+                        )}
+                    </div>
+                </section>
 
-            {/* ══════════════════════════════════════════════════
+                {/* ══════════════════════════════════════════════════
                 HOW IT WORKS
             ══════════════════════════════════════════════════ */}
-            <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
-                <div className="max-w-5xl mx-auto text-center">
-                    <h2 className="section-title mb-14">How It Works</h2>
-                    <div className="flex flex-col md:flex-row items-center gap-10">
-                        <div className="flex flex-col items-center flex-1">
-                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
-                                <RefreshCw size={26} className="pink-text" />
+                <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
+                    <div className="max-w-5xl mx-auto text-center">
+                        <h2 className="section-title mb-14">How It Works</h2>
+                        <div className="flex flex-col md:flex-row items-center gap-10">
+                            <div className="flex flex-col items-center flex-1">
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
+                                    <RefreshCw size={26} className="pink-text" />
+                                </div>
+                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Search</h3>
+                                <p className="text-gray-500 text-sm leading-relaxed">Find the perfect artists for your event.</p>
                             </div>
-                            <h3 className="font-800 text-gray-900 text-[17px] mb-2">Search</h3>
-                            <p className="text-gray-500 text-sm leading-relaxed">Find the perfect artists for your event.</p>
-                        </div>
-                        <div className="flex flex-col items-center flex-1">
-                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
-                                <GitCompare size={26} className="pink-text" />
+                            <div className="flex flex-col items-center flex-1">
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
+                                    <GitCompare size={26} className="pink-text" />
+                                </div>
+                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Compare</h3>
+                                <p className="text-gray-500 text-sm leading-relaxed">View profiles, reviews and prices.</p>
                             </div>
-                            <h3 className="font-800 text-gray-900 text-[17px] mb-2">Compare</h3>
-                            <p className="text-gray-500 text-sm leading-relaxed">View profiles, reviews and prices.</p>
-                        </div>
-                        <div className="flex flex-col items-center flex-1">
-                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
-                                <BookOpen size={26} className="pink-text" />
+                            <div className="flex flex-col items-center flex-1">
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
+                                    <BookOpen size={26} className="pink-text" />
+                                </div>
+                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Book</h3>
+                                <p className="text-gray-500 text-sm leading-relaxed">Contact and book your favourite artist.</p>
                             </div>
-                            <h3 className="font-800 text-gray-900 text-[17px] mb-2">Book</h3>
-                            <p className="text-gray-500 text-sm leading-relaxed">Contact and book your favourite artist.</p>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* ══════════════════════════════════════════════════
+                {/* ══════════════════════════════════════════════════
                 PARTNER LOGOS
             ══════════════════════════════════════════════════ */}
-            <section className="w-full py-10 px-6 md:px-12 lg:px-20 bg-white border-t border-gray-100">
-                <div className="max-w-7xl mx-auto">
-                    <p className="text-center text-gray-400 text-sm mb-6 font-500">
-                        Trusted by event planners and companies across Sri Lanka
-                    </p>
-                    <div className="flex flex-wrap justify-center gap-10 opacity-40">
-                        {PARTNER_LOGOS.map(l => (
-                            <span key={l} className="font-black text-sm uppercase tracking-widest">{l}</span>
-                        ))}
+                <section className="w-full py-10 px-6 md:px-12 lg:px-20 bg-white border-t border-gray-100">
+                    <div className="max-w-7xl mx-auto">
+                        <p className="text-center text-gray-400 text-sm mb-6 font-500">
+                            Trusted by event planners and companies across Sri Lanka
+                        </p>
+                        <div className="flex flex-wrap justify-center gap-10 opacity-40">
+                            {PARTNER_LOGOS.map(l => (
+                                <span key={l} className="font-black text-sm uppercase tracking-widest">{l}</span>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+
+            </div>
         </div>
     );
 }
