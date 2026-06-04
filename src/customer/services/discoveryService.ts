@@ -61,6 +61,9 @@ export interface PaginatedMeta {
 export const getCategories = (): Promise<string[]> =>
   api.get('/discovery/categories').then(r => r.data.categories)
 
+export const getStats = (): Promise<{ total_artists: number; sample_avatars: string[] }> =>
+  api.get('/discovery/stats').then(r => r.data)
+
 export interface ArtistSearchParams {
   category?: string
   search?: string

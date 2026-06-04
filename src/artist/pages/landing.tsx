@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getArtists, getCategories, getNearYou } from "../../customer/services/discoveryService";
+import { getArtists, getCategories, getNearYou, getStats } from "../../customer/services/discoveryService";
 import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../../customer/services/discoveryService";
 import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
@@ -261,6 +261,10 @@ const DEFAULT_CAT_IMAGE = "https://images.unsplash.com/photo-1459749411177-04218
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 export default function HomePage() {
     const navigate = useNavigate();
+    const [stats, setStats] = useState<{ total_artists: number; sample_avatars: string[] }>({
+        total_artists: 0,
+        sample_avatars: []
+    });
     const [searchQuery, setSearchQuery] = useState("");
     const [location, setLocation] = useState("");
     const [eventDate, setEventDate] = useState("");
@@ -310,6 +314,10 @@ export default function HomePage() {
     }, [selectedArtistId]);
 
     useEffect(() => {
+        getStats()
+            .then(data => setStats(data))
+            .catch(() => {});
+            
         getArtists({ per_page: 50 })
             .then(({ data }) => {
                 const artists = data.map(mapDiscoveryArtist);
@@ -736,17 +744,19 @@ export default function HomePage() {
                                 {/* Social proof */}
                                 <div className="flex items-center gap-3 mt-7">
                                     <div className="flex -space-x-2">
-                                        {[
+                                        {(stats.sample_avatars.length > 0 ? stats.sample_avatars : [
                                             "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
                                             "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
                                             "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=80",
                                             "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
                                             "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
-                                        ].map((src, i) => (
+                                        ]).slice(0, 5).map((src, i) => (
                                             <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
                                         ))}
                                     </div>
-                                    <p className="text-sm text-gray-300 font-500">1,200+ artists already joined</p>
+                                    <p className="text-sm text-gray-300 font-500">
+                                        {stats.total_artists > 0 ? `${stats.total_artists.toLocaleString()}+` : "1,200+"} artists already joined
+                                    </p>
                                 </div>
                             </div>
 
