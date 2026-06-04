@@ -658,18 +658,20 @@ export default function HomePage() {
                 {/* ══════════════════════════════════════════════════
           NAVBAR
       ══════════════════════════════════════════════════ */}
-                <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
+                <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
                     {/* Logo */}
-                    <Link to="/" className="flex items-center">
-                        <img
-                            src="/logoBlack.svg"
-                            alt="Perfoma"
-                            className="h-10 w-auto object-contain"
-                        />
-                    </Link>
+                    <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
+                        <Link to="/" className="flex items-center">
+                            <img
+                                src="/logoBlack.svg"
+                                alt="Perfoma"
+                                className="h-10 w-auto object-contain"
+                            />
+                        </Link>
+                    </div>
 
                     {/* Nav Links */}
-                    <div className="hidden md:flex items-center gap-7">
+                    <div className="hidden md:flex items-center gap-7 absolute left-1/2 transform -translate-x-1/2">
                         <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
                         <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
                         <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
@@ -677,21 +679,14 @@ export default function HomePage() {
                         <button className="nav-link">Events</button>
                     </div>
 
-                    {/* Auth */}
-                    <div className="flex items-center gap-3">
-                        <Link
-                            to="/loginCustomer"
-                            className="nav-link font-semibold text-sm px-3 py-1.5"
+                    {/* Action */}
+                    <div className="flex items-center">
+                        <button 
+                            onClick={() => scrollToSection('artists-section')}
+                            className="btn-pink text-sm font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-pink-100"
                         >
-                            Log in
-                        </Link>
-
-                        <Link
-                            to="/signupCustomer"
-                            className="btn-pink text-sm font-bold px-5 py-2.5 rounded-xl"
-                        >
-                            Sign up
-                        </Link>
+                            Explore Talent
+                        </button>
                     </div>
                 </nav>
 

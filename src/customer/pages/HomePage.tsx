@@ -4,9 +4,10 @@ import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
     ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, Shield, TrendingUp,
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
-    Play, RefreshCw, GitCompare, BookOpen, X, Loader2
+    Play, RefreshCw, GitCompare, BookOpen, X, Loader2, LogOut
 } from "lucide-react";
 import Footer from "../components/Footer";
+import api from "../lib/api";
 import { getArtists, getCategories, getNearYou } from "../services/discoveryService";
 import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../services/discoveryService";
 import ArtistProfile from "./ArtistProfile";
@@ -222,6 +223,7 @@ function getCategoryIcon(label: string): React.ReactNode {
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 export default function HomePage() {
     const navigate = useNavigate();
+    const [profile, setProfile] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [location, setLocation] = useState("");
     const [eventDate, setEventDate] = useState("");
@@ -237,6 +239,19 @@ export default function HomePage() {
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
     const [isClosingProfile, setIsClosingProfile] = useState(false);
     const popularArtistsRef = useRef<HTMLDivElement>(null);
+
+    const fetchProfile = async () => {
+        try {
+            const { data } = await api.get("/profile");
+            setProfile(data.profile);
+        } catch (err) {
+            console.error("Failed to load profile", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchProfile();
+    }, []);
 
     const handleCloseProfile = () => {
         setIsClosingProfile(true);
@@ -534,14 +549,16 @@ export default function HomePage() {
 
             <div className={`transition-all duration-500 ${selectedArtistId ? 'blur-bg scale-[0.98]' : ''}`}>
                 {/* NAVBAR */}
-                <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
+                <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
                     {/* Logo */}
-                    <Link to="/" className="flex items-center">
-                        <img src="/logoBlack.svg" alt="Perfoma" className="h-10 w-auto object-contain" />
-                    </Link>
+                    <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
+                        <Link to="/" className="flex items-center">
+                            <img src="/logoBlack.svg" alt="Perfoma" className="h-10 w-auto object-contain" />
+                        </Link>
+                    </div>
 
                     {/* Nav Links */}
-                    <div className="hidden md:flex items-center gap-7">
+                    <div className="hidden md:flex items-center gap-7 absolute left-1/2 transform -translate-x-1/2">
                         <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
                         <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
                         <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
@@ -550,9 +567,24 @@ export default function HomePage() {
                     </div>
 
                     {/* Auth / Account */}
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => navigate('/customerAccount')} className="nav-link font-semibold text-sm px-3 py-1.5">Account</button>
-                        <button onClick={() => navigate('/loginCustomer')} className="btn-pink text-sm font-bold px-5 py-2.5 rounded-xl">Sign out</button>
+                    <div className="flex items-center gap-4">
+                        <div
+                            onClick={() => navigate("/customerAccount")}
+                            className="w-10 h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all"
+                        >
+                            <img
+                                src={profile?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <button 
+                            onClick={() => navigate("/loginCustomer")}
+                            className="p-2 text-gray-400 hover:text-[#E8194B] transition-colors"
+                            title="Sign out"
+                        >
+                            <LogOut size={20} />
+                        </button>
                     </div>
                 </nav>
 

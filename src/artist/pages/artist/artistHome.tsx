@@ -7,7 +7,7 @@ import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
     ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, Shield, TrendingUp,
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
-    Play, RefreshCw, GitCompare, BookOpen, X, Loader2
+    Play, RefreshCw, GitCompare, BookOpen, X, Loader2, LogOut
 } from "lucide-react";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
@@ -459,8 +459,8 @@ export default function ArtistHome() {
             `}</style>
 
             {/* NAVBAR */}
-            <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
-                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/artistHome")}>
+            <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
+                <div className="flex items-center cursor-pointer" onClick={() => navigate("/artistHome")}>
                     <Link to="/" className="flex items-center">
                         <img
                             src="/logoBlack.svg"
@@ -470,7 +470,7 @@ export default function ArtistHome() {
                     </Link>
                 </div>
 
-                <div className="hidden md:flex items-center gap-7">
+                <div className="hidden md:flex items-center gap-7 absolute left-1/2 transform -translate-x-1/2">
                     <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
                     <button onClick={() => scrollToSection('artists-section')} className="nav-link">Artist</button>
                     <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
@@ -478,7 +478,7 @@ export default function ArtistHome() {
                     <button className="nav-link">Events</button>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                     <div
                         onClick={() => navigate("/account")}
                         className="w-10 h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all"
@@ -489,6 +489,13 @@ export default function ArtistHome() {
                             className="w-full h-full object-cover"
                         />
                     </div>
+                    <button 
+                        onClick={() => navigate("/login")}
+                        className="p-2 text-gray-400 hover:text-[#E8194B] transition-colors"
+                        title="Logout"
+                    >
+                        <LogOut size={20} />
+                    </button>
                 </div>
             </nav>
 
