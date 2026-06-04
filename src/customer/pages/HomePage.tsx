@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import Footer from "../components/Footer";
 import api from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { getArtists, getCategories, getNearYou } from "../services/discoveryService";
 import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../services/discoveryService";
 import ArtistProfile from "./ArtistProfile";
@@ -223,6 +224,7 @@ function getCategoryIcon(label: string): React.ReactNode {
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 export default function HomePage() {
     const navigate = useNavigate();
+    const { user: authUser } = useAuth();
     const [profile, setProfile] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [location, setLocation] = useState("");
@@ -243,7 +245,8 @@ export default function HomePage() {
     const fetchProfile = async () => {
         try {
             const { data } = await api.get("/profile");
-            setProfile(data.profile);
+            // The backend returns { user: {...} }
+            setProfile(data.user);
         } catch (err) {
             console.error("Failed to load profile", err);
         }
@@ -252,6 +255,9 @@ export default function HomePage() {
     useEffect(() => {
         fetchProfile();
     }, []);
+
+    // Use current user from AuthContext if available, otherwise fall back to locally fetched profile
+    const displayUser = authUser || profile;
 
     const handleCloseProfile = () => {
         setIsClosingProfile(true);
@@ -573,7 +579,7 @@ export default function HomePage() {
                             className="w-10 h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all"
                         >
                             <img
-                                src={profile?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"}
+                                src={displayUser?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"}
                                 alt="Profile"
                                 className="w-full h-full object-cover"
                             />

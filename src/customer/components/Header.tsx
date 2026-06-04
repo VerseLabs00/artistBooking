@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function Header() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [showDropdown, setShowDropdown] = useState(false)
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-[0_1px_6px_rgba(0,0,0,0.08)]">
@@ -29,7 +31,11 @@ export default function Header() {
               onClick={() => setShowDropdown(!showDropdown)}
               className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-gray-200 hover:ring-gray-400 transition-all"
             >
-              <img src="/person.png" alt="Profile" className="w-full h-full object-cover" />
+              <img 
+                src={user?.avatar_url || "/person.png"} 
+                alt="Profile" 
+                className="w-full h-full object-cover" 
+              />
             </button>
             {showDropdown && (
               <>

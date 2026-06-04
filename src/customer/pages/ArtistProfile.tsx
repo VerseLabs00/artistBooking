@@ -553,8 +553,12 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                     <div key={r.id} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
                                         <div className="flex justify-between">
                                             <div className="flex gap-3 items-center">
-                                                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-400">
-                                                    {r.reviewer_name.charAt(0).toUpperCase()}
+                                                <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-bold text-gray-400 border border-gray-200">
+                                                    {r.reviewer_avatar ? (
+                                                        <img src={r.reviewer_avatar} className="w-full h-full object-cover" alt={r.reviewer_name} />
+                                                    ) : (
+                                                        r.reviewer_name.charAt(0).toUpperCase()
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <p className="text-xs font-bold uppercase text-gray-900">{r.reviewer_name}</p>
