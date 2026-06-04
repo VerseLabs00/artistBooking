@@ -525,6 +525,11 @@ export default function HomePage() {
         
         .nav-link { color: #444; font-weight: 500; font-size: 15px; transition: color 0.15s; cursor: pointer; }
         .nav-link:hover { color: #E8194B; }
+        
+        /* Offset for sticky navbar */
+        section[id] {
+            scroll-margin-top: 90px;
+        }
 
         /* Carousel Styles */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
