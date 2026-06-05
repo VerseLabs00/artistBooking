@@ -847,7 +847,7 @@ export default function HomePage() {
                             <p className="text-gray-400 text-sm leading-relaxed mb-6">
                                 Book the best local talent for weddings, parties, corporate events and more.
                             </p>
-                            <button onClick={() => navigate('/home')} className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm">
+                            <button onClick={() => scrollToSection('categories-section')} className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm">
                                 Find Artists <ArrowRight size={15} />
                             </button>
                         </div>

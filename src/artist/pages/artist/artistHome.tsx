@@ -836,10 +836,10 @@ export default function ArtistHome() {
                             </p>
 
                             <button
-                                onClick={() => navigate('')}
+                                onClick={() => navigate('/account')}
                                 className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
                             >
-                                Join as an Artist <ArrowRight size={15} />
+                                Complete making your Account <ArrowRight size={15} />
                             </button>
                         </div>
 
