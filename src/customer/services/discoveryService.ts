@@ -48,6 +48,7 @@ export interface Review {
   title: string | null
   body: string | null
   reviewer_name: string
+  reviewer_avatar?: string | null
   created_at: string
 }
 
