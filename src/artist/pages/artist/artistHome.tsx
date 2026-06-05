@@ -456,9 +456,9 @@ export default function ArtistHome() {
                  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
                 .btn-pink { background: #E8194B; color: white; transition: all 0.2s ease; }
                 .btn-pink:hover { background: #d11643; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232, 25, 75, 0.2); }
-                .nav-link { font-size: 0.875rem; font-weight: 500; color: #4b5563; transition: color 0.2s; cursor: pointer; }
+                .nav-link { color: #444; font-weight: 500; font-size: 15px; transition: color 0.15s; cursor: pointer; }
                 .nav-link:hover { color: #E8194B; }
-                .section-title { font-size: 24px; font-weight: 900; color: #111827; letter-spacing: -0.02em; }
+                .section-title { font-size: clamp(22px, 3vw, 28px); font-weight: 800; color: #111; }
                 .cat-card-modern { 
                     position: relative; 
                     aspect-ratio: 3/4; 
@@ -559,13 +559,13 @@ export default function ArtistHome() {
                 </nav>
 
                 {/* HERO */}
-                <section className="relative w-full overflow-hidden bg-cover bg-center py-12 px-6 md:px-12 lg:px-20"
+                <section className="relative w-full overflow-hidden bg-cover bg-center py-6 px-6 md:px-12 lg:px-20"
                          style={{ backgroundImage: "url('/Cover7.jpg')" }}>
                     <div className="absolute inset-0 bg-black/40 z-0" />
                     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10">
                         <div>
                             <p className="text-gray-200 text-base font-600 mb-1">Welcome Back</p>
-                            <h1 className="font-black leading-tight text-white mb-2" style={{ fontSize: "clamp(28px, 3vw, 42px)" }}>
+                            <h1 className="font-black leading-tight text-white mb-2" style={{ fontSize: "clamp(38px, 5vw, 62px)", lineHeight: 1.1 }}>
                                 Hey, <span className="text-[#E8194B]">{profile?.stage_name || profile?.full_name || "Artist"}</span>
                             </h1>
                             <p className="text-gray-300 text-base">Explore the community and see what's trending.</p>
@@ -586,7 +586,7 @@ export default function ArtistHome() {
                                 </p>
                             </div>
                         </div>
-                        <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end" />
+                        <div className="relative h-[350px] lg:h-[420px] flex items-center justify-end" />
                     </div>
                 </section>
 
@@ -857,7 +857,7 @@ export default function ArtistHome() {
                             </div>
 
                             <div className="cta-card absolute bottom-4 right-4 p-4 min-w-[180px]">
-                                <p className="text-white font-bold text-sm mb-3">
+                                <p className="text-white font-800 text-sm mb-3">
                                     Why Join Us
                                 </p>
 

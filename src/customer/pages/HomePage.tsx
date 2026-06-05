@@ -826,7 +826,7 @@ export default function HomePage() {
                                         <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: 'rgba(232,25,75,0.10)', border: '2px solid rgba(232,25,75,0.2)' }}>
                                             {step.icon}
                                         </div>
-                                        <h3 className="font-bold text-gray-900 text-[17px] mb-2">{step.title}</h3>
+                                        <h3 className="font-800 text-gray-900 text-[17px] mb-2">{step.title}</h3>
                                         <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
                                     </div>
                                     {i < 2 && <div className="step-connector hidden md:block" />}
@@ -862,7 +862,7 @@ export default function HomePage() {
                                 />
                             </div>
                             <div className="cta-card absolute bottom-4 right-4 p-4 min-w-[180px]">
-                                <p className="text-white font-bold text-sm mb-3">Why Book With Us</p>
+                                <p className="text-white font-800 text-sm mb-3">Why Book With Us</p>
                                 {['Verified Artists', 'Secure Payments', 'Easy Booking', '24/7 Support'].map(item => (
                                     <div key={item} className="checklist-item">
                                         <CheckCircle size={15} style={{ color: '#E8194B', flexShrink: 0 }} />
