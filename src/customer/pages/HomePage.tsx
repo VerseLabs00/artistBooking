@@ -571,7 +571,7 @@ export default function HomePage() {
                     {/* Logo */}
                     <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
                         <Link to="/" className="flex items-center">
-                            <img src="/logoBlack.svg" alt="Perfoma" className="h-10 w-auto object-contain" />
+                            <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-10 w-auto object-contain" />
                         </Link>
                     </div>
 

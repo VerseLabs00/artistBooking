@@ -523,7 +523,7 @@ export default function ArtistHome() {
                     <div className="flex items-center cursor-pointer" onClick={() => navigate("/artistHome")}>
                         <Link to="/" className="flex items-center">
                             <img
-                                src="/logoBlack.svg"
+                                src="/assets/logo/logo-navbar-light@3x.png"
                                 alt="Perfoma"
                                 className="h-10 w-auto object-contain"
                             />

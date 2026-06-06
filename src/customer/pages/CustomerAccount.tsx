@@ -291,7 +291,7 @@ export default function CustomerAccount() {
       {/* NAVBAR */}
       <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
         <Link to="/" className="flex items-center">
-          <img src="/logoBlack.svg" alt="Perfoma" className="h-10 w-auto object-contain" />
+          <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-10 w-auto object-contain" />
         </Link>
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/home')} className="text-gray-600 hover:text-black transition-colors text-sm font-semibold">Back to Discovery</button>
