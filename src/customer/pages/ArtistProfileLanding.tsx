@@ -664,7 +664,7 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                 </div>
             </div>
 
-            <Footer />
+            {/*<Footer />*/}
 
             {showBooking && (
                 <BookingModal

@@ -290,7 +290,7 @@ export default function CustomerAccount() {
 
       {/* NAVBAR */}
       <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
-        <Link to="/" className="flex items-center">
+        <Link to="/" className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-10 w-auto object-contain" />
         </Link>
         <div className="flex items-center gap-4">

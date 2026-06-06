@@ -6,7 +6,7 @@ const categories = ['Musician', 'DJ', 'Solo Singer', 'Rapper', 'Live Band', 'Vid
 const cities = ['Colombo', 'Kandy', 'Galle', 'Negombo', 'Trincomalee']
 
 const quickLinks = [
-  { label: 'About Us',       sectionId: 'join-section' },
+  { label: 'About Us',       sectionId: 'hero-section' },
   { label: 'Join as Artist', sectionId: 'join-section' },
   { label: 'How It Works',   sectionId: 'how-it-works' },
   { label: 'Contact',        sectionId: 'contact-section' },

@@ -670,7 +670,7 @@ export default function HomePage() {
                 <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
                     {/* Logo */}
                     <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
-                        <Link to="/" className="flex items-center">
+                        <Link to="/" className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                             <img
                                 src="/assets/logo/logo-navbar-light@3x.png"
                                 alt="Perfoma"
@@ -685,6 +685,7 @@ export default function HomePage() {
                         <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
                         <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
                         <button onClick={() => scrollToSection('join-section')} className="nav-link">Join as Artist</button>
+                        <button onClick={() => scrollToSection('contact-section')} className="nav-link">Contact Us</button>
                         <button className="nav-link">Events</button>
                     </div>
 
@@ -702,7 +703,7 @@ export default function HomePage() {
                 {/* ══════════════════════════════════════════════════
           HERO SECTION
       ══════════════════════════════════════════════════ */}
-                <section
+                <section id="hero-section"
                     className="relative w-full overflow-hidden bg-cover bg-center py-12 px-6 md:px-12 lg:px-20"
                     style={{ backgroundImage: "url('/Cover7.jpg')" }}
                 >

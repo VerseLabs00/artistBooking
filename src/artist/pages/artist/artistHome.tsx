@@ -521,7 +521,7 @@ export default function ArtistHome() {
                 {/* NAVBAR */}
                 <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
                     <div className="flex items-center cursor-pointer" onClick={() => navigate("/artistHome")}>
-                        <Link to="/" className="flex items-center">
+                        <Link to="/" className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                             <img
                                 src="/assets/logo/logo-navbar-light@3x.png"
                                 alt="Perfoma"
@@ -534,6 +534,7 @@ export default function ArtistHome() {
                         <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
                         <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
                         <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
+                        <button onClick={() => scrollToSection('contact-section')} className="nav-link">Contact Us</button>
                         <button className="nav-link">Events</button>
                     </div>
 

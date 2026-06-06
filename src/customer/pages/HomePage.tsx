@@ -569,8 +569,8 @@ export default function HomePage() {
                 {/* NAVBAR */}
                 <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
                     {/* Logo */}
-                    <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
-                        <Link to="/" className="flex items-center">
+                    <div className="flex items-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                        <Link className="flex items-center">
                             <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-10 w-auto object-contain" />
                         </Link>
                     </div>
@@ -580,6 +580,7 @@ export default function HomePage() {
                         <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
                         <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
                         <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
+                        <button onClick={() => scrollToSection('contact-section')} className="nav-link">Contact Us</button>
                         <button className="nav-link">Events</button>
                     </div>
 
