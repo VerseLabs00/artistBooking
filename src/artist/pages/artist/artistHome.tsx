@@ -787,40 +787,86 @@ export default function ArtistHome() {
                     </div>
                 </section>
 
-                {/* ══════════════════════════════════════════════════
-                HOW IT WORKS
-            ══════════════════════════════════════════════════ */}
-                <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
-                    <div className="max-w-5xl mx-auto text-center">
-                        <h2 className="section-title mb-14">How It Works</h2>
-                        <div className="flex flex-col md:flex-row items-center gap-10">
-                            <div className="flex flex-col items-center flex-1">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
-                                    <RefreshCw size={26} className="pink-text" />
+                {/* HOW IT WORKS */}
+                <section
+                    id="how-it-works"
+                    className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14"
+                    style={{ background: '#111' }}
+                >
+                    <div className="max-w-5xl mx-auto">
+                        <h2
+                            className="text-center text-white font-bold text-4xl md:text-5xl mb-3"
+                            style={{ fontFamily: 'Georgia, serif' }}
+                        >
+                            Manage Bookings in 4 Simple Steps
+                        </h2>
+
+                        <p className="text-center text-gray-400 text-sm mb-16">
+                            Receive requests, connect with clients, and grow your bookings.
+                        </p>
+
+                        <div className="relative flex flex-col md:flex-row items-start justify-between">
+                            {/* Dashed connector line */}
+                            <div
+                                className="hidden md:block absolute top-8 left-0 right-0 h-px"
+                                style={{
+                                    backgroundImage:
+                                        'repeating-linear-gradient(to right, #E8194B 0, #E8194B 8px, transparent 8px, transparent 18px)',
+                                    zIndex: 0,
+                                    marginLeft: '10%',
+                                    marginRight: '10%',
+                                }}
+                            />
+
+                            {[
+                                {
+                                    num: 1,
+                                    title: 'Receive Request',
+                                    desc: 'Get booking inquiries from customers interested in your services.',
+                                },
+                                {
+                                    num: 2,
+                                    title: 'Review Details',
+                                    desc: 'Check event date, location, budget, and customer requirements.',
+                                },
+                                {
+                                    num: 3,
+                                    title: 'Contact Client',
+                                    desc: 'Chat directly with the customer to discuss availability and expectations.',
+                                },
+                                {
+                                    num: 4,
+                                    title: 'Accept Booking',
+                                    desc: 'Confirm the booking and prepare to deliver an amazing performance.',
+                                },
+                            ].map((step) => (
+                                <div
+                                    key={step.num}
+                                    className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0 relative"
+                                    style={{ zIndex: 1 }}
+                                >
+                                    <div
+                                        className="w-16 h-16 rounded-full flex items-center justify-center mb-5 text-white text-xl font-bold"
+                                        style={{ background: '#E8194B' }}
+                                    >
+                                        {step.num}
+                                    </div>
+
+                                    <h3 className="font-bold text-white text-base mb-2">
+                                        {step.title}
+                                    </h3>
+
+                                    <p className="text-gray-400 text-sm leading-relaxed">
+                                        {step.desc}
+                                    </p>
                                 </div>
-                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Search</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">Find the perfect artists for your event.</p>
-                            </div>
-                            <div className="flex flex-col items-center flex-1">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
-                                    <GitCompare size={26} className="pink-text" />
-                                </div>
-                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Compare</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">View profiles, reviews and prices.</p>
-                            </div>
-                            <div className="flex flex-col items-center flex-1">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
-                                    <BookOpen size={26} className="pink-text" />
-                                </div>
-                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Book</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">Contact and book your favourite artist.</p>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </section>
 
                 {/* CTA SECTION - FOR ARTISTS */}
-                <section id="join-section" className="dark-section w-full px-6 md:px-12 lg:px-20 py-14">
+                <section id="join-section" className="dark-section w-full px-6 md:px-12 lg:px-20 py-14" style={{ background: '#0a0a0a' }}>
                     <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                         <div>
                             <p className="pink-text text-xs font-bold uppercase tracking-widest mb-2">
@@ -881,21 +927,21 @@ export default function ArtistHome() {
                     </div>
                 </section>
 
-                {/* ══════════════════════════════════════════════════
-                PARTNER LOGOS
-            ══════════════════════════════════════════════════ */}
-                <section className="w-full h-1 py-10 px-6 md:px-12 lg:px-20 bg-white border-t border-gray-100">
-                    <div className="max-w-7xl mx-auto">
-                        <p className="text-center text-gray-400 text-sm mb-6 font-500">
-                            Trusted by event planners and companies across Sri Lanka
-                        </p>
-                        {/*<div className="flex flex-wrap justify-center gap-10 opacity-40">*/}
-                        {/*    {PARTNER_LOGOS.map(l => (*/}
-                        {/*        <span key={l} className="font-black text-sm uppercase tracking-widest">{l}</span>*/}
-                        {/*    ))}*/}
-                        {/*</div>*/}
-                    </div>
-                </section>
+            {/*    /!* ══════════════════════════════════════════════════*/}
+            {/*    PARTNER LOGOS*/}
+            {/*══════════════════════════════════════════════════ *!/*/}
+            {/*    <section className="w-full h-1 py-10 px-6 md:px-12 lg:px-20 bg-white border-t border-gray-100">*/}
+            {/*        <div className="max-w-7xl mx-auto">*/}
+            {/*            <p className="text-center text-gray-400 text-sm mb-6 font-500">*/}
+            {/*                Trusted by event planners and companies across Sri Lanka*/}
+            {/*            </p>*/}
+            {/*            /!*<div className="flex flex-wrap justify-center gap-10 opacity-40">*!/*/}
+            {/*            /!*    {PARTNER_LOGOS.map(l => (*!/*/}
+            {/*            /!*        <span key={l} className="font-black text-sm uppercase tracking-widest">{l}</span>*!/*/}
+            {/*            /!*    ))}*!/*/}
+            {/*            /!*</div>*!/*/}
+            {/*        </div>*/}
+            {/*    </section>*/}
 
                 <Footer />
             </div>

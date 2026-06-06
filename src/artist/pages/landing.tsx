@@ -975,44 +975,55 @@ export default function HomePage() {
 
 
                 {/* ══════════════════════════════════════════════════
-          HOW IT WORKS
-      ══════════════════════════════════════════════════ */}
-                <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
-                    <div className="max-w-5xl mx-auto">
-                        <h2 className="text-center section-title mb-14">How It Works</h2>
+    HOW IT WORKS
+══════════════════════════════════════════════════ */}
+                <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14" style={{ background: "#f5f3ef" }}>
+                    <div className="max-w-4xl mx-auto">
+                        <h2 className="text-center mb-3" style={{ fontFamily: "Georgia, serif", fontSize: "38px", fontWeight: 800, color: "#111" }}>
+                            How It Works
+                        </h2>
+                        <p className="text-center mb-14 text-sm leading-relaxed" style={{ color: "#999" }}>
+                            Booking your perfect artist takes just three steps. No agents, no<br className="hidden md:block" /> hidden fees, no hassle.
+                        </p>
 
-                        <div className="flex flex-col md:flex-row items-center gap-0">
+                        <div className="flex flex-col md:flex-row items-start justify-center">
                             {/* Step 1 */}
-                            <div className="flex flex-col items-center text-center flex-1 px-4">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: "rgba(232,25,75,0.10)", border: "2px solid rgba(232,25,75,0.2)" }}>
-                                    <RefreshCw size={26} style={{ color: "#E8194B" }} />
+                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-4">
+                                <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5 text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
+                                    🔍
                                 </div>
-                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Search</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">Find the perfect artists for your event.</p>
+                                <h3 className="font-bold text-gray-900 text-base mb-2">Search</h3>
+                                <p className="text-sm leading-relaxed" style={{ color: "#999" }}>
+                                    Browse hundreds of verified artists by category, location, and budget. Read real reviews from real clients.
+                                </p>
                             </div>
 
                             {/* Connector */}
-                            <div className="step-connector hidden md:block" />
+                            <div className="hidden md:block flex-1 max-w-[120px] mt-9 border-t-2 border-dashed" style={{ borderColor: "#f0a0b8" }} />
 
                             {/* Step 2 */}
-                            <div className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: "rgba(232,25,75,0.10)", border: "2px solid rgba(232,25,75,0.2)" }}>
-                                    <GitCompare size={26} style={{ color: "#E8194B" }} />
+                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-4 mt-8 md:mt-0">
+                                <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5 text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
+                                    ⚖️
                                 </div>
-                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Compare</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">View profiles, reviews and prices.</p>
+                                <h3 className="font-bold text-gray-900 text-base mb-2">Compare</h3>
+                                <p className="text-sm leading-relaxed" style={{ color: "#999" }}>
+                                    View detailed profiles, watch performance videos, compare prices and availability all in one place.
+                                </p>
                             </div>
 
                             {/* Connector */}
-                            <div className="step-connector hidden md:block" />
+                            <div className="hidden md:block flex-1 max-w-[120px] mt-9 border-t-2 border-dashed" style={{ borderColor: "#f0a0b8" }} />
 
                             {/* Step 3 */}
-                            <div className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: "rgba(232,25,75,0.10)", border: "2px solid rgba(232,25,75,0.2)" }}>
-                                    <BookOpen size={26} style={{ color: "#E8194B" }} />
+                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-4 mt-8 md:mt-0">
+                                <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5 text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
+                                    📅
                                 </div>
-                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Book</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">Contact and book your favourite artist.</p>
+                                <h3 className="font-bold text-gray-900 text-base mb-2">Book</h3>
+                                <p className="text-sm leading-relaxed" style={{ color: "#999" }}>
+                                    Contact and book your favourite artist directly. Secure payment and confirmation in minutes.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -1081,23 +1092,23 @@ export default function HomePage() {
                     </div>
                 </section>
 
-                {/* ══════════════════════════════════════════════════
-          PARTNER LOGOS
-      ══════════════════════════════════════════════════ */}
-                <section className="logo-strip w-full h-1 px-6 md:px-12 lg:px-20 py-8 bg-white">
-                    <div className="max-w-7xl mx-auto">
-                        <p className="text-center text-gray-400 text-sm mb-6 font-500">
-                            Trusted by event planners and companies across Sri Lanka
-                        </p>
-              {/*          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">*/}
-              {/*              {PARTNER_LOGOS.map(logo => (*/}
-              {/*                  <span key={logo} className="text-gray-400 font-800 text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">*/}
-              {/*  {logo}*/}
-              {/*</span>*/}
-              {/*              ))}*/}
-              {/*          </div>*/}
-                    </div>
-                </section>
+      {/*          /!* ══════════════════════════════════════════════════*/}
+      {/*    PARTNER LOGOS*/}
+      {/*══════════════════════════════════════════════════ *!/*/}
+      {/*          <section className="logo-strip w-full h-1 px-6 md:px-12 lg:px-20 py-8 bg-white">*/}
+      {/*              <div className="max-w-7xl mx-auto">*/}
+      {/*                  <p className="text-center text-gray-400 text-sm mb-6 font-500">*/}
+      {/*                      Trusted by event planners and companies across Sri Lanka*/}
+      {/*                  </p>*/}
+      {/*        /!*          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">*!/*/}
+      {/*        /!*              {PARTNER_LOGOS.map(logo => (*!/*/}
+      {/*        /!*                  <span key={logo} className="text-gray-400 font-800 text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">*!/*/}
+      {/*        /!*  {logo}*!/*/}
+      {/*        /!*</span>*!/*/}
+      {/*        /!*              ))}*!/*/}
+      {/*        /!*          </div>*!/*/}
+      {/*              </div>*/}
+      {/*          </section>*/}
 
                 <Footer />
             </div>
