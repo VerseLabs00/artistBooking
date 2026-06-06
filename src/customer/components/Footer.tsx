@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 const LOGO_PATH = "/assets/logo/logo-footer@3x.png"
 
@@ -11,6 +11,33 @@ const quickLinks = [
   { label: 'How It Works',   sectionId: 'how-it-works' },
   { label: 'Contact',        sectionId: 'contact-section' },
   { label: 'Privacy Policy', sectionId: 'contact-section' },
+]
+
+const faqs = [
+  {
+    q: 'How do I book an artist on Performa?',
+    a: 'Browse our verified artist listings, filter by category and city, then send a booking request. The artist will confirm availability and you wil receive a booking confirmation via email.',
+  },
+  {
+    q: 'Are all artists on Performa verified?',
+    a: 'Yes. Every artist goes through an identity and portfolio verification process before being listed on the platform. You can book with confidence.',
+  },
+  {
+    q: 'What if the artist cancels last minute?',
+    a: 'In the rare event of a cancellation, our team will assist you in finding a replacement artist. We also have a fair refund policy in place to protect customers.',
+  },
+  {
+    q: 'What types of events can I book artists for?',
+    a: 'You can book artists for weddings, corporate events, private parties, concerts, festivals, product launches and more across Sri Lanka.',
+  },
+  {
+    q: 'Is there a booking fee for customers?',
+    a: 'Performa charges a small service fee which is included transparently in the quoted price. There are no hidden charges.',
+  },
+  {
+    q: 'Can I book artists outside of Colombo?',
+    a: 'Absolutely. We have artists available across Sri Lanka including Kandy, Galle, Negombo, Trincomalee and many other cities.',
+  },
 ]
 
 type SocialLink = {
@@ -68,100 +95,222 @@ const handleScrollTo = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: strin
   }
 }
 
+// ─── Icons ────────────────────────────────────────────────────────────────────
+
+const IconMail = () => (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+      <polyline points="22,6 12,13 2,6"/>
+    </svg>
+)
+
+const IconPhone = () => (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012.18 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.15a16 16 0 006.29 6.29l1.51-1.51a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+    </svg>
+)
+
+const IconLocation = () => (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+      <circle cx="12" cy="10" r="3"/>
+    </svg>
+)
+
+const IconArrowRight = () => (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14M12 5l7 7-7 7"/>
+    </svg>
+)
+
+const IconArrowLeft = () => (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+)
+
+// ─── FAQ Item ─────────────────────────────────────────────────────────────────
+
+function FAQItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+      <div className="border-b border-gray-200">
+        <button
+            onClick={() => setOpen(!open)}
+            className="w-full flex justify-between items-center py-5 text-left text-gray-900 font-semibold text-[15px] hover:text-black transition-colors"
+        >
+          <span>{q}</span>
+          <span
+              className="text-[#E8194B] text-xl font-light flex-shrink-0 ml-4 transition-transform duration-300"
+              style={{ transform: open ? 'rotate(45deg)' : 'rotate(0deg)', display: 'inline-block' }}
+          >
+          +
+        </span>
+        </button>
+        <div
+            className="overflow-hidden transition-all duration-300 ease-in-out text-gray-500 text-sm leading-relaxed"
+            style={{ maxHeight: open ? '200px' : '0px', paddingBottom: open ? '16px' : '0px' }}
+        >
+          {a}
+        </div>
+      </div>
+  )
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export default function Footer() {
+  const [showContact, setShowContact] = useState(false)
+
+  const handleContactClick = () => {
+    setShowContact(true)
+    // Small delay so the slide animation completes, then scroll into view
+    setTimeout(() => {
+      document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }
+
   return (
       <>
         {/* ══════════════════════════════════════════════════
-          CONTACT US SECTION
+        FAQ + CONTACT SLIDING SECTION
       ══════════════════════════════════════════════════ */}
-        <section id="contact-section" className="w-full bg-[#111] px-16 py-16">
-          <div className="w-full max-w-none">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-              {/* Left */}
-              <div>
-                <p className="text-[#E8194B] text-xs font-bold uppercase tracking-widest mb-3">Get In Touch</p>
-                <h2 className="text-white text-3xl font-black leading-tight mb-4">
-                  We'd Love To<br />Hear From You
-                </h2>
-                <p className="text-gray-400 text-sm leading-relaxed mb-8 max-w-sm">
-                  Have a question, want to partner with us, or need help finding the right artist? Reach out and we'll get back to you shortly.
-                </p>
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-3 text-gray-400 text-sm">
-                    <div className="w-9 h-9 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-                      </svg>
-                    </div>
-                    <span>hello@performa.lk</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-gray-400 text-sm">
-                    <div className="w-9 h-9 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012.18 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.15a16 16 0 006.29 6.29l1.51-1.51a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
-                      </svg>
-                    </div>
-                    <span>+94 77 123 4567</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-gray-400 text-sm">
-                    <div className="w-9 h-9 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
-                      </svg>
-                    </div>
-                    <span>Colombo, Sri Lanka</span>
-                  </div>
-                </div>
-              </div>
+        <section id="contact-section" className="w-full overflow-hidden">
+          <div
+              className="flex"
+              style={{
+                width: '200%',
+                transform: showContact ? 'translateX(-50%)' : 'translateX(0)',
+                transition: 'transform 0.55s cubic-bezier(0.77, 0, 0.175, 1)',
+              }}
+          >
 
-              {/* Right: Form */}
-              <div className="bg-[#1a1a1a] rounded-2xl p-8 border border-[#2a2a2a]">
-                <div className="flex flex-col gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">First Name</label>
-                      <input
-                          type="text"
-                          placeholder="John"
-                          className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">Last Name</label>
-                      <input
-                          type="text"
-                          placeholder="Doe"
-                          className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">Email</label>
-                    <input
-                        type="email"
-                        placeholder="john@example.com"
-                        className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">Message</label>
-                    <textarea
-                        rows={4}
-                        placeholder="How can we help you?"
-                        className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors resize-none"
-                    />
-                  </div>
-                  <button className="w-full bg-[#E8194B] hover:bg-[#c8133b] text-white font-bold text-sm py-3.5 rounded-xl transition-colors">
-                    Send Message
+            {/* ── Panel 1: FAQ ─────────────────────────────── */}
+            <div className="w-1/2 bg-white px-16 py-20" style={{ flexShrink: 0 }}>
+              <div className="max-w-3xl mx-auto">
+                <h2 className="text-[42px] font-black text-gray-900 text-center leading-tight mb-3" style={{ letterSpacing: '-0.5px' }}>
+                  Frequently Asked Questions
+                </h2>
+                <p className="text-center text-gray-400 text-sm mb-14">Got questions? We have answers.</p>
+
+                <div className="border-t border-gray-200">
+                  {faqs.map((f, i) => (
+                      <FAQItem key={i} q={f.q} a={f.a} />
+                  ))}
+                </div>
+
+                {/* CTA to slide to Contact */}
+                <div className="flex justify-center mt-12">
+                  <button
+                      onClick={handleContactClick}
+                      className="inline-flex items-center gap-3 bg-[#E8194B] hover:bg-[#c8133b] text-white font-bold text-sm px-7 py-4 rounded-xl transition-colors duration-200"
+                  >
+                    Still have a question? Contact us
+                    <IconArrowRight />
                   </button>
                 </div>
               </div>
             </div>
+
+            {/* ── Panel 2: Contact ─────────────────────────── */}
+            <div className="w-1/2 bg-[#111] px-16 py-16" style={{ flexShrink: 0 }}>
+              <div className="max-w-none w-full">
+
+                {/* Back button */}
+                <button
+                    onClick={() => setShowContact(false)}
+                    className="inline-flex items-center gap-2 text-gray-400 hover:text-white border border-[#2a2a2a] hover:border-[#555] rounded-xl px-5 py-2.5 text-sm font-semibold mb-10 transition-all duration-200"
+                >
+                  <IconArrowLeft />
+                  Back to FAQ
+                </button>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+
+                  {/* Left: Info */}
+                  <div>
+                    <p className="text-[#E8194B] text-xs font-bold uppercase tracking-widest mb-3">Get In Touch</p>
+                    <h2 className="text-white text-3xl font-black leading-tight mb-4">
+                      We'd Love To<br />Hear From You
+                    </h2>
+                    <p className="text-gray-400 text-sm leading-relaxed mb-8 max-w-sm">
+                      Have a question, want to partner with us, or need help finding the right artist? Reach out and we'll get back to you shortly.
+                    </p>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-3 text-gray-400 text-sm">
+                        <div className="w-9 h-9 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">
+                          <IconMail />
+                        </div>
+                        <span>hello@performa.lk</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-400 text-sm">
+                        <div className="w-9 h-9 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">
+                          <IconPhone />
+                        </div>
+                        <span>+94 77 123 4567</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-400 text-sm">
+                        <div className="w-9 h-9 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">
+                          <IconLocation />
+                        </div>
+                        <span>Colombo, Sri Lanka</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Form */}
+                  <div className="bg-[#1a1a1a] rounded-2xl p-8 border border-[#2a2a2a]">
+                    <div className="flex flex-col gap-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">First Name</label>
+                          <input
+                              type="text"
+                              placeholder="John"
+                              className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">Last Name</label>
+                          <input
+                              type="text"
+                              placeholder="Doe"
+                              className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">Email</label>
+                        <input
+                            type="email"
+                            placeholder="john@example.com"
+                            className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">Message</label>
+                        <textarea
+                            rows={4}
+                            placeholder="How can we help you?"
+                            className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors resize-none"
+                        />
+                      </div>
+                      <button className="w-full bg-[#E8194B] hover:bg-[#c8133b] text-white font-bold text-sm py-3.5 rounded-xl transition-colors">
+                        Send Message
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
           </div>
         </section>
 
         {/* ══════════════════════════════════════════════════
-          FOOTER
+        FOOTER
       ══════════════════════════════════════════════════ */}
         <footer className="bg-[#0a0a0a] text-white pt-16 pb-8">
           <div className="w-full px-16">
@@ -177,15 +326,15 @@ export default function Footer() {
                 </p>
                 <div className="flex gap-2.5">
                   {socialLinks.map((s) => (
-<a
-                      key={s.label}
-                    href={s.href}
-                    aria-label={s.label}
-                    className="w-9 h-9 rounded-full border border-[#2a2a2a] flex items-center justify-center text-[#888] hover:border-[#555] hover:text-white transition-colors"
-                    >
-                  {s.icon}
-                    </a>
-                    ))}
+                      <a
+                          key={s.label}
+                          href={s.href}
+                          aria-label={s.label}
+                          className="w-9 h-9 rounded-full border border-[#2a2a2a] flex items-center justify-center text-[#888] hover:border-[#555] hover:text-white transition-colors"
+                      >
+                        {s.icon}
+                      </a>
+                  ))}
                 </div>
               </div>
 
@@ -195,15 +344,15 @@ export default function Footer() {
                 <ul className="space-y-3.5">
                   {categories.map(item => (
                       <li key={item}>
-<a
-                        href="#categories-section"
-                        onClick={(e) => handleScrollTo(e as React.MouseEvent<HTMLAnchorElement>, 'categories-section')}
-                        className="text-[#6b6b6b] text-sm hover:text-white transition-colors"
+                        <a
+                            href="#categories-section"
+                            onClick={(e) => handleScrollTo(e as React.MouseEvent<HTMLAnchorElement>, 'categories-section')}
+                            className="text-[#6b6b6b] text-sm hover:text-white transition-colors"
                         >
-                        {item}
-                      </a>
-                    </li>
-                    ))}
+                          {item}
+                        </a>
+                      </li>
+                  ))}
                 </ul>
               </div>
 
@@ -213,15 +362,15 @@ export default function Footer() {
                 <ul className="space-y-3.5">
                   {cities.map(item => (
                       <li key={item}>
-<a
-                        href="#artists-section"
-                        onClick={(e) => handleScrollTo(e as React.MouseEvent<HTMLAnchorElement>, 'artists-section')}
-                        className="text-[#6b6b6b] text-sm hover:text-white transition-colors"
+                        <a
+                            href="#artists-section"
+                            onClick={(e) => handleScrollTo(e as React.MouseEvent<HTMLAnchorElement>, 'artists-section')}
+                            className="text-[#6b6b6b] text-sm hover:text-white transition-colors"
                         >
-                        {item}
-                      </a>
-                    </li>
-                    ))}
+                          {item}
+                        </a>
+                      </li>
+                  ))}
                 </ul>
               </div>
 
@@ -231,15 +380,15 @@ export default function Footer() {
                 <ul className="space-y-3.5">
                   {quickLinks.map(({ label, sectionId }) => (
                       <li key={label}>
-<a
-                        href={`#${sectionId}`}
-                        onClick={(e) => handleScrollTo(e, sectionId)}
-                        className="text-[#6b6b6b] text-sm hover:text-white transition-colors"
+                        <a
+                            href={`#${sectionId}`}
+                            onClick={(e) => handleScrollTo(e, sectionId)}
+                            className="text-[#6b6b6b] text-sm hover:text-white transition-colors"
                         >
-                        {label}
-                      </a>
-                    </li>
-                    ))}
+                          {label}
+                        </a>
+                      </li>
+                  ))}
                 </ul>
               </div>
 
