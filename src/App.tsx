@@ -1,5 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
 import ScrollToTop from "./artist/component/ScrollToTop.tsx";
 
 import Login from "./artist/pages/auth/login.tsx";
@@ -28,7 +27,6 @@ import Category from "./artist/pages/artist/categoryLanding.tsx";
 function App() {
         return (
             <>
-                    <Toaster position="bottom-right" reverseOrder={false} />
                     <ScrollToTop />
                     <Routes>
                             <Route path="/" element={<Landing />} />
