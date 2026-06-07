@@ -1,14 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {Link, useNavigate} from "react-router-dom";
 import api from "../../api/axios";
-import { getArtists, getCategories, getNearYou } from "../../../customer/services/discoveryService";
+import { getArtists, getCategories, getNearYou, getStats } from "../../../customer/services/discoveryService";
 import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../../../customer/services/discoveryService";
 import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
     ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, Shield, TrendingUp,
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
-    Play, RefreshCw, GitCompare, BookOpen, X, Loader2
+    Play, RefreshCw, GitCompare, BookOpen, X, Loader2, LogOut
 } from "lucide-react";
+import ArtistProfileLanding from "../../../customer/pages/ArtistProfileLanding";
+import Footer from "../../../customer/components/Footer.tsx";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Artist {
@@ -121,7 +123,7 @@ function mapDiscoveryArtist(a: DiscoveryArtist): Artist {
         reviews: extra.reviews_count ?? extra.rating?.total ?? 0,
         price: formatArtistPrice(a.starting_price, a.max_price),
         image: a.avatar_url || a.cover_url || FALLBACK_ARTIST_IMAGE,
-        verified: extra.verification_status ? extra.verification_status === "approved" : true,
+        verified: extra.verification_status === "verified" || extra.verification_status === "approved",
         startingPrice: a.starting_price,
         maxPrice: a.max_price,
     };
@@ -218,6 +220,10 @@ export default function ArtistHome() {
     const navigate = useNavigate();
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
+    const [stats, setStats] = useState<{ total_artists: number; sample_avatars: string[] }>({
+        total_artists: 0,
+        sample_avatars: []
+    });
 
     const [searchQuery, setSearchQuery] = useState("");
     const [location, setLocation] = useState("");
@@ -234,10 +240,34 @@ export default function ArtistHome() {
     const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(true);
 
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
+    const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
+    const [isClosingProfile, setIsClosingProfile] = useState(false);
     const popularArtistsRef = useRef<HTMLDivElement>(null);
+
+    const handleCloseProfile = () => {
+        setIsClosingProfile(true);
+        setTimeout(() => {
+            setSelectedArtistId(null);
+            setIsClosingProfile(false);
+        }, 500); // Matches animation duration
+    };
+
+    // Prevent body scroll when overlay is open
+    useEffect(() => {
+        if (selectedArtistId) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => { document.body.style.overflow = 'unset'; };
+    }, [selectedArtistId]);
 
     useEffect(() => {
         fetchProfile();
+
+        getStats()
+            .then(data => setStats(data))
+            .catch(() => {});
 
         // Load Discovery Data
         getArtists({ per_page: 50 })
@@ -359,7 +389,7 @@ export default function ArtistHome() {
     };
 
     const renderArtistCard = (artist: Artist) => (
-        <div key={artist.id} className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px] artist-card cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100" onClick={() => navigate(`/artist/${artist.id}`)}>
+        <div key={artist.id} className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px] artist-card cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100" onClick={() => setSelectedArtistId(artist.id.toString())}>
             <div className="relative" style={{ aspectRatio: "3/4" }}>
                 <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
@@ -377,9 +407,7 @@ export default function ArtistHome() {
                     />
                 </button>
                 {artist.verified && (
-                    <div className="verified-dot">
-                        <CheckCircle size={10} fill="white" strokeWidth={0} />
-                    </div>
+                    <div className="verified-dot" />
                 )}
             </div>
             <div className="p-2.5">
@@ -423,13 +451,14 @@ export default function ArtistHome() {
     );
 
     return (
-        <div className="min-h-screen bg-white font-sans text-gray-900 overflow-x-hidden">
+        <div className="min-h-screen bg-white" style={{ fontFamily: "'Fraunces', serif" }}>
             <style>{`
+                 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
                 .btn-pink { background: #E8194B; color: white; transition: all 0.2s ease; }
                 .btn-pink:hover { background: #d11643; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232, 25, 75, 0.2); }
-                .nav-link { font-size: 0.875rem; font-weight: 500; color: #4b5563; transition: color 0.2s; cursor: pointer; }
+                .nav-link { color: #444; font-weight: 500; font-size: 15px; transition: color 0.15s; cursor: pointer; }
                 .nav-link:hover { color: #E8194B; }
-                .section-title { font-size: 24px; font-weight: 900; color: #111827; letter-spacing: -0.02em; }
+                .section-title { font-size: clamp(22px, 3vw, 28px); font-weight: 800; color: #111; }
                 .cat-card-modern { 
                     position: relative; 
                     aspect-ratio: 3/4; 
@@ -451,322 +480,471 @@ export default function ArtistHome() {
                 .hide-scrollbar::-webkit-scrollbar { display: none; }
                 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
                 .pink-text { color: #E8194B; }
-                .verified-dot { position: absolute; bottom: 6px; left: 6px; background: #E8194B; border-radius: 100px; padding: 2px 6px; display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: #fff; }
+                .verified-dot { position: absolute; bottom: 8px; left: 8px; background: #ff0000; border-radius: 50%; width: 10px; height: 10px; border: 1.5px solid white; box-shadow: 0 0 4px rgba(255,0,0,0.5); }
                 .rating-row { display: flex; align-items: center; gap: 4px; }
                 .artist-card { transition: transform 0.2s, box-shadow 0.2s; }
                 .artist-card:hover { transform: translateY(-4px); }
                 .search-input { outline: none; border: none; }
                 .search-input:focus { outline: none; }
                 section[id] { scroll-margin-top: 90px; }
+                .dark-section { background: #111; }
+                .cta-card { background: #1a1a1a; border-radius: 20px; }
+                .checklist-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #ddd; margin-bottom: 8px; }
+                @keyframes slideUp {
+                    from { transform: translateY(100%); }
+                    to { transform: translateY(0); }
+                }
+                @keyframes slideDown {
+                    from { transform: translateY(0); }
+                    to { transform: translateY(100%); }
+                }
+                .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0, 0, 0.2, 1) forwards; }
+                .animate-slide-down { animation: slideDown 0.5s cubic-bezier(0, 0, 0.2, 1) forwards; }
+                .blur-bg { filter: blur(8px); transition: filter 0.5s ease; }
             `}</style>
 
-            {/* NAVBAR */}
-            <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
-                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/artistHome")}>
-                    <Link to="/" className="flex items-center">
-                        <img
-                            src="/logoBlack.svg"
-                            alt="Perfoma"
-                            className="h-10 w-auto object-contain"
-                        />
-                    </Link>
-                </div>
-
-                <div className="hidden md:flex items-center gap-7">
-                    <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
-                    <button onClick={() => scrollToSection('artists-section')} className="nav-link">Artist</button>
-                    <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
-                    <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
-                    <button className="nav-link">Events</button>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <div
-                        onClick={() => navigate("/account")}
-                        className="w-10 h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all"
-                    >
-                        <img
-                            src={profile?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
+            {/* Profile Overlay */}
+            {selectedArtistId && (
+                <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity duration-500 ${isClosingProfile ? 'opacity-0' : 'opacity-100'}`}>
+                    <div className={`max-w-5xl w-full h-full bg-white shadow-[0_0_60px_rgba(0,0,0,0.3)] overflow-hidden ${isClosingProfile ? 'animate-slide-down' : 'animate-slide-up'}`}>
+                        <ArtistProfileLanding
+                            id={selectedArtistId}
+                            onClose={handleCloseProfile}
                         />
                     </div>
                 </div>
-            </nav>
+            )}
 
-            {/* HERO */}
-            <section className="relative w-full overflow-hidden bg-cover bg-center py-12 px-6 md:px-12 lg:px-20"
-                     style={{ backgroundImage: "url('/Cover7.jpg')" }}>
-                <div className="absolute inset-0 bg-black/40 z-0" />
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10">
-                    <div>
-                        <p className="text-gray-200 text-base font-600 mb-1">Welcome Back</p>
-                        <h1 className="font-black leading-tight text-white mb-2" style={{ fontSize: "clamp(28px, 3vw, 42px)" }}>
-                            Hey, <span className="text-[#E8194B]">{profile?.stage_name || profile?.full_name || "Artist"}</span>
-                        </h1>
-                        <p className="text-gray-300 text-base">Explore the community and see what's trending.</p>
-                        <div className="flex items-center gap-3 mt-7">
-                            <div className="flex -space-x-2">
-                                {[
-                                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
-                                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
-                                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80",
-                                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
-                                    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
-                                ].map((src, i) => (
-                                    <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
-                                ))}
-                            </div>
-                            <p className="text-sm text-gray-300 font-500">1,200+ artists already joined</p>
+            {/* Main Content */}
+            <div className={`transition-all duration-500 ${selectedArtistId ? 'blur-bg scale-[0.98]' : ''}`}>
+
+                {/* NAVBAR */}
+                <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
+                    <div className="flex items-center cursor-pointer" onClick={() => navigate("/artistHome")}>
+                        <Link to="/" className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                            <img
+                                src="/assets/logo/logo-navbar-light@3x.png"
+                                alt="Perfoma"
+                                className="h-10 w-auto object-contain"
+                            />
+                        </Link>
+                    </div>
+
+                    <div className="hidden md:flex items-center gap-7 absolute left-1/2 transform -translate-x-1/2">
+                        <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
+                        <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
+                        <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
+                        <button onClick={() => scrollToSection('contact-section')} className="nav-link">Contact Us</button>
+                        <button className="nav-link">Events</button>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <div
+                            onClick={() => navigate("/account")}
+                            className="w-10 h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all"
+                        >
+                            <img
+                                src={profile?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                            />
                         </div>
+                        <button
+                            onClick={() => navigate("/login")}
+                            className="p-2 text-gray-400 hover:text-[#E8194B] transition-colors"
+                            title="Logout"
+                        >
+                            <LogOut size={20} />
+                        </button>
                     </div>
-                    <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end" />
-                </div>
-            </section>
+                </nav>
 
-            {/* ══════════════════════════════════════════════════
+                {/* HERO */}
+                <section className="relative w-full overflow-hidden bg-cover bg-center py-6 px-6 md:px-12 lg:px-20"
+                         style={{ backgroundImage: "url('/Cover7.jpg')" }}>
+                    <div className="absolute inset-0 bg-black/40 z-0" />
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10">
+                        <div>
+                            <p className="text-gray-200 text-base font-600 mb-1">Welcome Back</p>
+                            <h1 className="font-black leading-tight text-white mb-2" style={{ fontSize: "clamp(38px, 5vw, 62px)", lineHeight: 1.1 }}>
+                                Hey, <span className="text-[#E8194B]">{profile?.stage_name || profile?.full_name || "Artist"}</span>
+                            </h1>
+                            <p className="text-gray-300 text-base">Explore the community and see what's trending.</p>
+                            <div className="flex items-center gap-3 mt-7">
+                                <div className="flex -space-x-2">
+                                    {(stats.sample_avatars.length > 0 ? stats.sample_avatars : [
+                                        // "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
+                                        // "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
+                                        // "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80",
+                                        // "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
+                                        // "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
+                                    ]).slice(0, 5).map((src, i) => (
+                                        <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
+                                    ))}
+                                </div>
+                                <p className="text-sm text-gray-300 font-500">
+                                    {stats.total_artists > 100 ? "100+" : stats.total_artists} artists already joined
+                                </p>
+                            </div>
+                        </div>
+                        <div className="relative h-[350px] lg:h-[420px] flex items-center justify-end" />
+                    </div>
+                </section>
+
+                {/* ══════════════════════════════════════════════════
                 BROWSE CATEGORIES
             ══════════════════════════════════════════════════ */}
-            <section id="categories-section" className="w-full px-6 md:px-12 lg:px-20 mt-16">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="section-title">Browse Categories</h2>
-                    </div>
-
-                    {browseCategoriesLoading ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            {Array.from({ length: ALL_CATEGORIES_DATA.length }).map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="w-full aspect-[3/4] rounded-2xl bg-gray-100 animate-pulse"
-                                />
-                            ))}
+                <section id="categories-section" className="w-full px-6 md:px-12 lg:px-20 mt-16">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="section-title">Browse Categories</h2>
                         </div>
-                    ) : (
-                        // ── FIX: Now iterates CategoryData objects — cat.name, cat.image, cat.description all work ──
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            {browseCategories.map(cat => (
-                                <div
-                                    key={cat.name}
-                                    className="cat-card-modern group w-full"
-                                    onClick={() => filterBrowseArtistsByCategory(cat.name)}
-                                >
-                                    <img
-                                        src={cat.image}
-                                        className="cat-img"
-                                        alt={cat.name}
+
+                        {browseCategoriesLoading ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                {Array.from({ length: ALL_CATEGORIES_DATA.length }).map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className="w-full aspect-[3/4] rounded-2xl bg-gray-100 animate-pulse"
                                     />
-                                    <div className="cat-overlay">
-                                        <h3 className="text-white font-900 text-lg leading-tight">{cat.name}</h3>
-                                        <p className="text-white/80 text-[10px] mt-1 line-clamp-2 leading-relaxed">{cat.description}</p>
+                                ))}
+                            </div>
+                        ) : (
+                            // ── FIX: Now iterates CategoryData objects — cat.name, cat.image, cat.description all work ──
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                {browseCategories.map(cat => (
+                                    <div
+                                        key={cat.name}
+                                        className="cat-card-modern group w-full"
+                                        onClick={() => filterBrowseArtistsByCategory(cat.name)}
+                                    >
+                                        <img
+                                            src={cat.image}
+                                            className="cat-img"
+                                            alt={cat.name}
+                                        />
+                                        <div className="cat-overlay">
+                                            <h3 className="text-white font-900 text-lg leading-tight">{cat.name}</h3>
+                                            <p className="text-white/80 text-[10px] mt-1 line-clamp-2 leading-relaxed">{cat.description}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </section>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </section>
 
-            {/* ══════════════════════════════════════════════════
+                {/* ══════════════════════════════════════════════════
                 ARTISTS / SEARCH
             ══════════════════════════════════════════════════ */}
-            <section id="artists-section" className="w-full px-6 md:px-12 lg:px-20 mt-14 overflow-hidden">
-                <div className="max-w-7xl mx-auto relative group">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="section-title">
-                            {hasActiveSearch ? "Search Results" : "Artists"}
-                        </h2>
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => scrollPopular('left')} className="carousel-btn" aria-label="Previous">
-                                <ChevronLeft size={20} />
-                            </button>
-                            <button onClick={() => scrollPopular('right')} className="carousel-btn" aria-label="Next">
-                                <ChevronRight size={20} />
-                            </button>
-                        </div>
-                    </div>
-
-                    <form
-                        className="search-bar-wrap p-5 mb-10"
-                        onSubmit={e => {
-                            e.preventDefault();
-                            runSearch();
-                        }}
-                    >
-                        {/* Inputs row */}
-                        <div className="flex flex-col md:flex-row items-stretch gap-0 bg-white rounded-xl overflow-hidden">
-                            {/* What */}
-                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
-                                <Search size={18} className="text-gray-400 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-400 font-600">What are you looking for?</p>
-                                    <input
-                                        type="text"
-                                        placeholder="DJs, Singers, Bands..."
-                                        value={searchQuery}
-                                        onChange={e => setSearchQuery(e.target.value)}
-                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
-                                    />
-                                </div>
+                <section id="artists-section" className="w-full px-6 md:px-12 lg:px-20 mt-14 overflow-hidden">
+                    <div className="max-w-7xl mx-auto relative group">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="section-title">
+                                {hasActiveSearch ? "Search Results" : "Artists"}
+                            </h2>
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => scrollPopular('left')} className="carousel-btn" aria-label="Previous">
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <button onClick={() => scrollPopular('right')} className="carousel-btn" aria-label="Next">
+                                    <ChevronRight size={20} />
+                                </button>
                             </div>
-
-                            {/* Location */}
-                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
-                                <MapPin size={18} className="text-gray-400 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-400 font-600">Location</p>
-                                    <input
-                                        type="text"
-                                        placeholder="All Sri Lanka"
-                                        value={location}
-                                        onChange={e => setLocation(e.target.value)}
-                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Date */}
-                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
-                                <Calendar size={18} className="text-gray-400 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-400 font-600">Event Date</p>
-                                    <input
-                                        type="date"
-                                        value={eventDate}
-                                        min={new Date().toISOString().split("T")[0]}
-                                        onChange={e => setEventDate(e.target.value)}
-                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Budget */}
-                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5">
-                                <DollarSign size={18} className="text-gray-400 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-400 font-600">Budget</p>
-                                    <input
-                                        type="text"
-                                        placeholder="Any Budget"
-                                        value={budget}
-                                        onChange={e => setBudget(e.target.value)}
-                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Search Button */}
-                            <button
-                                type="submit"
-                                className="btn-pink font-bold text-sm px-8 py-4 flex-shrink-0 md:rounded-r-xl"
-                            >
-                                Search
-                            </button>
                         </div>
 
-                        {/* Category tag pills */}
-                        <div className="flex flex-wrap gap-2 mt-4 px-1">
-                            {browseCategoriesLoading ? (
-                                <div className="flex flex-wrap gap-2 animate-pulse">
-                                    {[1, 2, 3, 4, 5, 6].map(i => (
-                                        <div key={i} className="h-8 w-20 bg-gray-100 rounded-full" />
-                                    ))}
+                        <form
+                            className="search-bar-wrap p-5 mb-10"
+                            onSubmit={e => {
+                                e.preventDefault();
+                                runSearch();
+                            }}
+                        >
+                            {/* Inputs row */}
+                            <div className="flex flex-col md:flex-row items-stretch gap-0 bg-white rounded-xl overflow-hidden">
+                                {/* What */}
+                                <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
+                                    <Search size={18} className="text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 font-600">What are you looking for?</p>
+                                        <input
+                                            type="text"
+                                            placeholder="DJs, Singers, Bands..."
+                                            value={searchQuery}
+                                            onChange={e => setSearchQuery(e.target.value)}
+                                            className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
+                                        />
+                                    </div>
                                 </div>
-                            ) : (
-                                <>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSearchCategoryClick(null)}
-                                        className={`tag-pill${selectedSearchCategory === null ? " tag-pill-active" : ""}`}
-                                    >
-                                        <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
-                                        All
-                                    </button>
-                                    {/* ── FIX: use cat.name for key, onClick, and label ── */}
-                                    {browseCategories.map(cat => (
+
+                                {/* Location */}
+                                <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
+                                    <MapPin size={18} className="text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 font-600">Location</p>
+                                        <input
+                                            type="text"
+                                            placeholder="All Sri Lanka"
+                                            value={location}
+                                            onChange={e => setLocation(e.target.value)}
+                                            className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Date */}
+                                <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
+                                    <Calendar size={18} className="text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 font-600">Event Date</p>
+                                        <input
+                                            type="date"
+                                            value={eventDate}
+                                            min={new Date().toISOString().split("T")[0]}
+                                            onChange={e => setEventDate(e.target.value)}
+                                            className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Budget */}
+                                <div className="flex items-center gap-3 flex-1 px-5 py-3.5">
+                                    <DollarSign size={18} className="text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 font-600">Budget</p>
+                                        <input
+                                            type="text"
+                                            placeholder="Any Budget"
+                                            value={budget}
+                                            onChange={e => setBudget(e.target.value)}
+                                            className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Search Button */}
+                                <button
+                                    type="submit"
+                                    className="btn-pink font-bold text-sm px-8 py-4 flex-shrink-0 md:rounded-r-xl"
+                                >
+                                    Search
+                                </button>
+                            </div>
+
+                            {/* Category tag pills */}
+                            <div className="flex flex-wrap gap-2 mt-4 px-1">
+                                {browseCategoriesLoading ? (
+                                    <div className="flex flex-wrap gap-2 animate-pulse">
+                                        {[1, 2, 3, 4, 5, 6].map(i => (
+                                            <div key={i} className="h-8 w-20 bg-gray-100 rounded-full" />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <>
                                         <button
-                                            key={cat.name}
                                             type="button"
-                                            onClick={() => handleSearchCategoryClick(cat.name)}
-                                            className={`tag-pill${selectedSearchCategory === cat.name ? " tag-pill-active" : ""}`}
+                                            onClick={() => handleSearchCategoryClick(null)}
+                                            className={`tag-pill${selectedSearchCategory === null ? " tag-pill-active" : ""}`}
                                         >
                                             <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
-                                            {cat.name}
+                                            All
                                         </button>
-                                    ))}
-                                </>
-                            )}
-                        </div>
-                    </form>
+                                        {/* ── FIX: use cat.name for key, onClick, and label ── */}
+                                        {browseCategories.map(cat => (
+                                            <button
+                                                key={cat.name}
+                                                type="button"
+                                                onClick={() => handleSearchCategoryClick(cat.name)}
+                                                className={`tag-pill${selectedSearchCategory === cat.name ? " tag-pill-active" : ""}`}
+                                            >
+                                                <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
+                                                {cat.name}
+                                            </button>
+                                        ))}
+                                    </>
+                                )}
+                            </div>
+                        </form>
 
-                    {popularArtistsLoading ? (
-                        <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2">
-                            {[1, 2, 3, 4, 5, 6].map(i => renderArtistSkeleton(i))}
-                        </div>
-                    ) : popularArtists.length === 0 ? (
-                        <p className="text-sm text-gray-400 py-6 text-center">
-                            {hasActiveSearch
-                                ? "No artists match your search. Try different filters."
-                                : "No artists found."}
-                        </p>
-                    ) : (
-                        <div
-                            ref={popularArtistsRef}
-                            className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2"
+                        {popularArtistsLoading ? (
+                            <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2">
+                                {[1, 2, 3, 4, 5, 6].map(i => renderArtistSkeleton(i))}
+                            </div>
+                        ) : popularArtists.length === 0 ? (
+                            <p className="text-sm text-gray-400 py-6 text-center">
+                                {hasActiveSearch
+                                    ? "No artists match your search. Try different filters."
+                                    : "No artists found."}
+                            </p>
+                        ) : (
+                            <div
+                                ref={popularArtistsRef}
+                                className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2"
+                            >
+                                {popularArtists.map(renderArtistCard)}
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+                {/* HOW IT WORKS */}
+                <section
+                    id="how-it-works"
+                    className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14"
+                    style={{ background: '#111' }}
+                >
+                    <div className="max-w-5xl mx-auto">
+                        <h2
+                            className="text-center text-white font-bold text-4xl md:text-5xl mb-3"
+                            style={{ fontFamily: 'Georgia, serif' }}
                         >
-                            {popularArtists.map(renderArtistCard)}
-                        </div>
-                    )}
-                </div>
-            </section>
+                            Manage Bookings in 4 Simple Steps
+                        </h2>
 
-            {/* ══════════════════════════════════════════════════
-                HOW IT WORKS
-            ══════════════════════════════════════════════════ */}
-            <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
-                <div className="max-w-5xl mx-auto text-center">
-                    <h2 className="section-title mb-14">How It Works</h2>
-                    <div className="flex flex-col md:flex-row items-center gap-10">
-                        <div className="flex flex-col items-center flex-1">
-                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
-                                <RefreshCw size={26} className="pink-text" />
-                            </div>
-                            <h3 className="font-800 text-gray-900 text-[17px] mb-2">Search</h3>
-                            <p className="text-gray-500 text-sm leading-relaxed">Find the perfect artists for your event.</p>
-                        </div>
-                        <div className="flex flex-col items-center flex-1">
-                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
-                                <GitCompare size={26} className="pink-text" />
-                            </div>
-                            <h3 className="font-800 text-gray-900 text-[17px] mb-2">Compare</h3>
-                            <p className="text-gray-500 text-sm leading-relaxed">View profiles, reviews and prices.</p>
-                        </div>
-                        <div className="flex flex-col items-center flex-1">
-                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-pink-50 border border-pink-100">
-                                <BookOpen size={26} className="pink-text" />
-                            </div>
-                            <h3 className="font-800 text-gray-900 text-[17px] mb-2">Book</h3>
-                            <p className="text-gray-500 text-sm leading-relaxed">Contact and book your favourite artist.</p>
+                        <p className="text-center text-gray-400 text-sm mb-16">
+                            Receive requests, connect with clients, and grow your bookings.
+                        </p>
+
+                        <div className="relative flex flex-col md:flex-row items-start justify-between">
+                            {/* Dashed connector line */}
+                            <div
+                                className="hidden md:block absolute top-8 left-0 right-0 h-px"
+                                style={{
+                                    backgroundImage:
+                                        'repeating-linear-gradient(to right, #E8194B 0, #E8194B 8px, transparent 8px, transparent 18px)',
+                                    zIndex: 0,
+                                    marginLeft: '10%',
+                                    marginRight: '10%',
+                                }}
+                            />
+
+                            {[
+                                {
+                                    num: 1,
+                                    title: 'Receive Request',
+                                    desc: 'Get booking inquiries from customers interested in your services.',
+                                },
+                                {
+                                    num: 2,
+                                    title: 'Review Details',
+                                    desc: 'Check event date, location, budget, and customer requirements.',
+                                },
+                                {
+                                    num: 3,
+                                    title: 'Contact Client',
+                                    desc: 'Chat directly with the customer to discuss availability and expectations.',
+                                },
+                                {
+                                    num: 4,
+                                    title: 'Accept Booking',
+                                    desc: 'Confirm the booking and prepare to deliver an amazing performance.',
+                                },
+                            ].map((step) => (
+                                <div
+                                    key={step.num}
+                                    className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0 relative"
+                                    style={{ zIndex: 1 }}
+                                >
+                                    <div
+                                        className="w-16 h-16 rounded-full flex items-center justify-center mb-5 text-white text-xl font-bold"
+                                        style={{ background: '#E8194B' }}
+                                    >
+                                        {step.num}
+                                    </div>
+
+                                    <h3 className="font-bold text-white text-base mb-2">
+                                        {step.title}
+                                    </h3>
+
+                                    <p className="text-gray-400 text-sm leading-relaxed">
+                                        {step.desc}
+                                    </p>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* ══════════════════════════════════════════════════
-                PARTNER LOGOS
-            ══════════════════════════════════════════════════ */}
-            <section className="w-full py-10 px-6 md:px-12 lg:px-20 bg-white border-t border-gray-100">
-                <div className="max-w-7xl mx-auto">
-                    <p className="text-center text-gray-400 text-sm mb-6 font-500">
-                        Trusted by event planners and companies across Sri Lanka
-                    </p>
-                    <div className="flex flex-wrap justify-center gap-10 opacity-40">
-                        {PARTNER_LOGOS.map(l => (
-                            <span key={l} className="font-black text-sm uppercase tracking-widest">{l}</span>
-                        ))}
+                {/* CTA SECTION - FOR ARTISTS */}
+                <section id="join-section" className="dark-section w-full px-6 md:px-12 lg:px-20 py-14" style={{ background: '#0a0a0a' }}>
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <p className="pink-text text-xs font-bold uppercase tracking-widest mb-2">
+                                For Artists
+                            </p>
+
+                            <h2 className="text-white font-black text-2xl md:text-3xl leading-tight mb-3">
+                                Turn Your Talent<br />Into Opportunities
+                            </h2>
+
+                            <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                                Showcase your skills, connect with clients, and get booked for
+                                weddings, parties, corporate events, and more.
+                            </p>
+
+                            <button
+                                onClick={() => navigate('/account')}
+                                className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
+                            >
+                                Complete making your Account <ArrowRight size={15} />
+                            </button>
+                        </div>
+
+                        <div className="relative flex justify-center">
+                            <div
+                                className="relative rounded-2xl overflow-hidden"
+                                style={{ height: '260px', width: '100%' }}
+                            >
+                                <img
+                                    src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=80"
+                                    className="w-full h-full object-cover object-center"
+                                    alt="Artist Performance"
+                                    style={{ filter: 'brightness(0.75)' }}
+                                />
+                            </div>
+
+                            <div className="cta-card absolute bottom-4 right-4 p-4 min-w-[180px]">
+                                <p className="text-white font-800 text-sm mb-3">
+                                    Why Join Us
+                                </p>
+
+                                {[
+                                    'More Booking Requests',
+                                    'Verified Client Network',
+                                    'Secure Payments',
+                                    'Grow Your Audience'
+                                ].map(item => (
+                                    <div key={item} className="checklist-item">
+                                        <CheckCircle
+                                            size={15}
+                                            style={{ color: '#E8194B', flexShrink: 0 }}
+                                        />
+                                        <span>{item}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+
+            {/*    /!* ══════════════════════════════════════════════════*/}
+            {/*    PARTNER LOGOS*/}
+            {/*══════════════════════════════════════════════════ *!/*/}
+            {/*    <section className="w-full h-1 py-10 px-6 md:px-12 lg:px-20 bg-white border-t border-gray-100">*/}
+            {/*        <div className="max-w-7xl mx-auto">*/}
+            {/*            <p className="text-center text-gray-400 text-sm mb-6 font-500">*/}
+            {/*                Trusted by event planners and companies across Sri Lanka*/}
+            {/*            </p>*/}
+            {/*            /!*<div className="flex flex-wrap justify-center gap-10 opacity-40">*!/*/}
+            {/*            /!*    {PARTNER_LOGOS.map(l => (*!/*/}
+            {/*            /!*        <span key={l} className="font-black text-sm uppercase tracking-widest">{l}</span>*!/*/}
+            {/*            /!*    ))}*!/*/}
+            {/*            /!*</div>*!/*/}
+            {/*        </div>*/}
+            {/*    </section>*/}
+
+                <Footer />
+            </div>
         </div>
     );
 }

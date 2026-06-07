@@ -81,7 +81,7 @@ export default function DJsPage() {
                         price: a.starting_price ? `Rs. ${a.starting_price.toLocaleString()}+` : "Contact",
                         startingPrice: a.starting_price,
                         image: a.avatar_url || a.cover_url || defaultImg,
-                        verified: extra.verification_status === "approved" || true,
+                        verified: extra.verification_status === "verified" || extra.verification_status === "approved",
                     };
                 });
                 setArtists(mapped);
@@ -170,7 +170,7 @@ export default function DJsPage() {
                         price: a.starting_price ? `Rs. ${a.starting_price.toLocaleString()}+` : "Contact",
                         startingPrice: a.starting_price,
                         image: a.avatar_url || a.cover_url || defaultImg,
-                        verified: extra.verification_status === "approved" || true,
+                        verified: extra.verification_status === "verified" || extra.verification_status === "approved",
                     };
                 });
 
@@ -223,9 +223,7 @@ export default function DJsPage() {
                     />
                 </button>
                 {artist.verified && (
-                    <div className="verified-dot-simple">
-                        <CheckCircle size={10} fill="white" strokeWidth={0} />
-                    </div>
+                    <div className="verified-dot" />
                 )}
             </div>
             <div className="p-2.5">
@@ -277,6 +275,7 @@ export default function DJsPage() {
                 .text-primary { color: #E8194B; }
                 .artist-card { transition: transform 0.2s, box-shadow 0.2s; }
                 .artist-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.13); }
+                .verified-dot { position: absolute; bottom: 8px; left: 8px; background: #ff0000; border-radius: 50%; width: 10px; height: 10px; border: 1.5px solid white; box-shadow: 0 0 4px rgba(255,0,0,0.5); }
                 .verified-dot-simple { position: absolute; bottom: 6px; left: 6px; background: #E8194B; border-radius: 100px; padding: 2px; display: flex; align-items: center; justify-content: center; }
                 .rating-row-simple { display: flex; align-items: center; gap: 4px; }
                 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import toast from 'react-hot-toast'
-import { Play, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { Play, ChevronDown, ChevronUp, X, FileText } from 'lucide-react'
 import {
   fetchPendingArtists,
   approveArtist,
@@ -77,7 +77,7 @@ function VerificationCard({ app }) {
     const result = await dispatch(rejectArtist(app.id))
     setActionLoading(null)
     if (rejectArtist.fulfilled.match(result)) {
-      toast.error(`${app.name} rejected.`)
+      toast.success(`${app.name} rejected and profile deleted.`)
     } else {
       toast.error(result.payload || 'Rejection failed')
     }
@@ -165,9 +165,7 @@ function VerificationCard({ app }) {
                               className="flex flex-col items-center gap-1.5 px-3 md:px-4 py-3 rounded-2xl border-2 border-primary bg-primary-light text-left transition-transform hover:scale-[1.02] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                           >
                             <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                              <svg viewBox="0 0 24 24" className="w-5 h-5 text-primary" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                              </svg>
+                              <FileText size={20} className="text-primary" />
                             </div>
                             <span className="text-xs font-semibold text-gray-700 text-center leading-tight">{doc.label}</span>
                             <span className="text-[10px] text-green-600 font-bold">✓ Uploaded · Tap to view</span>

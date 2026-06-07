@@ -4,10 +4,12 @@ import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
     ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, Shield, TrendingUp,
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
-    Play, RefreshCw, GitCompare, BookOpen, X, Loader2
+    Play, RefreshCw, GitCompare, BookOpen, X, Loader2, LogOut
 } from "lucide-react";
 import Footer from "../components/Footer";
-import { getArtists, getCategories, getNearYou } from "../services/discoveryService";
+import api from "../lib/api";
+import { useAuth } from "../context/AuthContext";
+import { getArtists, getCategories, getNearYou, getStats } from "../services/discoveryService";
 import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../services/discoveryService";
 import ArtistProfile from "./ArtistProfile";
 
@@ -150,7 +152,7 @@ function mapDiscoveryArtist(a: DiscoveryArtist): Artist {
         reviews: extra.reviews_count ?? extra.rating?.total ?? 0,
         price: formatArtistPrice(a.starting_price, a.max_price),
         image: a.avatar_url || a.cover_url || FALLBACK_ARTIST_IMAGE,
-        verified: extra.verification_status ? extra.verification_status === "approved" : true,
+        verified: extra.verification_status === "verified" || extra.verification_status === "approved",
         startingPrice: a.starting_price,
         maxPrice: a.max_price,
     };
@@ -222,6 +224,12 @@ function getCategoryIcon(label: string): React.ReactNode {
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 export default function HomePage() {
     const navigate = useNavigate();
+    const { user: authUser } = useAuth();
+    const [profile, setProfile] = useState<any>(null);
+    const [stats, setStats] = useState<{ total_artists: number; sample_avatars: string[] }>({
+        total_artists: 0,
+        sample_avatars: []
+    });
     const [searchQuery, setSearchQuery] = useState("");
     const [location, setLocation] = useState("");
     const [eventDate, setEventDate] = useState("");
@@ -237,6 +245,26 @@ export default function HomePage() {
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
     const [isClosingProfile, setIsClosingProfile] = useState(false);
     const popularArtistsRef = useRef<HTMLDivElement>(null);
+
+    const fetchProfile = async () => {
+        try {
+            const { data } = await api.get("/profile");
+            // The backend returns { user: {...} }
+            setProfile(data.user);
+        } catch (err) {
+            console.error("Failed to load profile", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchProfile();
+        getStats()
+            .then(data => setStats(data))
+            .catch(() => {});
+    }, []);
+
+    // Use current user from AuthContext if available, otherwise fall back to locally fetched profile
+    const displayUser = authUser || profile;
 
     const handleCloseProfile = () => {
         setIsClosingProfile(true);
@@ -391,9 +419,7 @@ export default function HomePage() {
                     />
                 </button>
                 {artist.verified && (
-                    <div className="verified-dot">
-                        <CheckCircle size={10} fill="white" strokeWidth={0} />
-                    </div>
+                    <div className="verified-dot" />
                 )}
             </div>
             <div className="p-2.5">
@@ -489,7 +515,7 @@ export default function HomePage() {
         .dark-section { background: #111; }
         .cta-card { background: #1a1a1a; border-radius: 20px; }
         .checklist-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #ddd; margin-bottom: 8px; }
-        .verified-dot { position: absolute; bottom: 6px; left: 6px; background: #E8194B; border-radius: 100px; padding: 2px 6px; display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: #fff; }
+        .verified-dot { position: absolute; bottom: 8px; left: 8px; background: #ff0000; border-radius: 50%; width: 10px; height: 10px; border: 1.5px solid white; box-shadow: 0 0 4px rgba(255,0,0,0.5); }
         .rating-row { display: flex; align-items: center; gap: 4px; }
         .logo-strip { border-top: 1px solid #f0f0f0; }
         .section-title { font-size: clamp(22px, 3vw, 28px); font-weight: 800; color: #111; }
@@ -499,6 +525,11 @@ export default function HomePage() {
         
         .nav-link { color: #444; font-weight: 500; font-size: 15px; transition: color 0.15s; cursor: pointer; }
         .nav-link:hover { color: #E8194B; }
+        
+        /* Offset for sticky navbar */
+        section[id] {
+            scroll-margin-top: 90px;
+        }
 
         /* Carousel Styles */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -536,25 +567,42 @@ export default function HomePage() {
 
             <div className={`transition-all duration-500 ${selectedArtistId ? 'blur-bg scale-[0.98]' : ''}`}>
                 {/* NAVBAR */}
-                <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
+                <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
                     {/* Logo */}
-                    <Link to="/" className="flex items-center">
-                        <img src="/logoBlack.svg" alt="Perfoma" className="h-10 w-auto object-contain" />
-                    </Link>
+                    <div className="flex items-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                        <Link className="flex items-center">
+                            <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-10 w-auto object-contain" />
+                        </Link>
+                    </div>
 
                     {/* Nav Links */}
-                    <div className="hidden md:flex items-center gap-7">
+                    <div className="hidden md:flex items-center gap-7 absolute left-1/2 transform -translate-x-1/2">
                         <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
                         <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
                         <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
-                        <button onClick={() => scrollToSection('join-section')} className="nav-link">Join as Artist</button>
+                        <button onClick={() => scrollToSection('contact-section')} className="nav-link">Contact Us</button>
                         <button className="nav-link">Events</button>
                     </div>
 
                     {/* Auth / Account */}
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => navigate('/customerAccount')} className="nav-link font-semibold text-sm px-3 py-1.5">Account</button>
-                        <button onClick={() => navigate('/loginCustomer')} className="btn-pink text-sm font-bold px-5 py-2.5 rounded-xl">Sign out</button>
+                    <div className="flex items-center gap-4">
+                        <div
+                            onClick={() => navigate("/customerAccount")}
+                            className="w-10 h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all"
+                        >
+                            <img
+                                src={displayUser?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <button 
+                            onClick={() => navigate("/loginCustomer")}
+                            className="p-2 text-gray-400 hover:text-[#E8194B] transition-colors"
+                            title="Sign out"
+                        >
+                            <LogOut size={20} />
+                        </button>
                     </div>
                 </nav>
 
@@ -581,17 +629,19 @@ export default function HomePage() {
 
                                 <div className="flex items-center gap-3 mt-7">
                                     <div className="flex -space-x-2">
-                                        {[
-                                            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
-                                            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
-                                            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=80",
-                                            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
-                                            "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
-                                        ].map((src, i) => (
+                                        {(stats.sample_avatars.length > 0 ? stats.sample_avatars : [
+                                            // "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
+                                            // "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
+                                            // "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=80",
+                                            // "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
+                                            // "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
+                                        ]).slice(0, 5).map((src, i) => (
                                             <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
                                         ))}
                                     </div>
-                                    <p className="text-sm text-gray-200 font-500">1,200+ artists already joined</p>
+                                    <p className="text-sm text-gray-200 font-500">
+                                        {stats.total_artists > 100 ? "100+" : stats.total_artists} artists already joined
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -763,24 +813,36 @@ export default function HomePage() {
                 </section>
 
                 {/* HOW IT WORKS */}
-                <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
+                <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14" style={{ background: '#111' }}>
                     <div className="max-w-5xl mx-auto">
-                        <h2 className="text-center section-title mb-14">How It Works</h2>
-                        <div className="flex flex-col md:flex-row items-center">
+                        <h2 className="text-center text-white font-bold text-4xl md:text-5xl mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+                            Book an Artist in 4 Simple Steps
+                        </h2>
+                        <p className="text-center text-gray-400 text-sm mb-16">
+                            From search to confirmed booking in minutes — not days.
+                        </p>
+
+                        <div className="relative flex flex-col md:flex-row items-start justify-between">
+                            {/* Dashed connector line */}
+                            <div className="hidden md:block absolute top-8 left-0 right-0 h-px" style={{
+                                backgroundImage: 'repeating-linear-gradient(to right, #E8194B 0, #E8194B 8px, transparent 8px, transparent 18px)',
+                                zIndex: 0,
+                                marginLeft: '10%',
+                                marginRight: '10%',
+                            }} />
+
                             {[
-                                { icon: <RefreshCw size={26} style={{ color: '#E8194B' }} />, title: 'Search', desc: 'Find the perfect artists for your event.' },
-                                { icon: <GitCompare size={26} style={{ color: '#E8194B' }} />, title: 'Compare', desc: 'View profiles, reviews and prices.' },
-                                { icon: <BookOpen size={26} style={{ color: '#E8194B' }} />, title: 'Book', desc: 'Contact and book your favourite artist.' },
-                            ].map((step, i) => (
-                                <div key={step.title} className="flex flex-col md:flex-row items-center flex-1">
-                                    <div className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0">
-                                        <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: 'rgba(232,25,75,0.10)', border: '2px solid rgba(232,25,75,0.2)' }}>
-                                            {step.icon}
-                                        </div>
-                                        <h3 className="font-bold text-gray-900 text-[17px] mb-2">{step.title}</h3>
-                                        <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
+                                { num: 1, title: 'Search', desc: 'Browse by category, location, event date and budget to find the right match.' },
+                                { num: 2, title: 'Review', desc: 'Read profiles, watch videos and check ratings from verified past clients.' },
+                                { num: 3, title: 'Contact', desc: 'Message the artist directly to discuss your event details and confirm availability.' },
+                                { num: 4, title: 'Book', desc: 'Confirm your booking securely through the platform and get ready for your event.' },
+                            ].map((step) => (
+                                <div key={step.num} className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0 relative" style={{ zIndex: 1 }}>
+                                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 text-white text-xl font-bold" style={{ background: '#E8194B' }}>
+                                        {step.num}
                                     </div>
-                                    {i < 2 && <div className="step-connector hidden md:block" />}
+                                    <h3 className="font-bold text-white text-base mb-2">{step.title}</h3>
+                                    <p className="text-gray-400 text-sm leading-relaxed">{step.desc}</p>
                                 </div>
                             ))}
                         </div>
@@ -788,7 +850,7 @@ export default function HomePage() {
                 </section>
 
                 {/* CTA SECTION */}
-                <section id="join-section" className="dark-section w-full px-6 md:px-12 lg:px-20 py-14">
+                <section id="join-section" className="dark-section w-full px-6 md:px-12 lg:px-20 py-14" style={{ background: '#0a0a0a' }}>
                     <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                         <div>
                             <p className="pink-text text-xs font-bold uppercase tracking-widest mb-2">For Customers</p>
@@ -798,7 +860,7 @@ export default function HomePage() {
                             <p className="text-gray-400 text-sm leading-relaxed mb-6">
                                 Book the best local talent for weddings, parties, corporate events and more.
                             </p>
-                            <button onClick={() => navigate('/home')} className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm">
+                            <button onClick={() => scrollToSection('categories-section')} className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm">
                                 Find Artists <ArrowRight size={15} />
                             </button>
                         </div>
@@ -813,7 +875,7 @@ export default function HomePage() {
                                 />
                             </div>
                             <div className="cta-card absolute bottom-4 right-4 p-4 min-w-[180px]">
-                                <p className="text-white font-bold text-sm mb-3">Why Book With Us</p>
+                                <p className="text-white font-800 text-sm mb-3">Why Book With Us</p>
                                 {['Verified Artists', 'Secure Payments', 'Easy Booking', '24/7 Support'].map(item => (
                                     <div key={item} className="checklist-item">
                                         <CheckCircle size={15} style={{ color: '#E8194B', flexShrink: 0 }} />
@@ -825,19 +887,19 @@ export default function HomePage() {
                     </div>
                 </section>
 
-                {/* PARTNER LOGOS */}
-                <section className="logo-strip w-full px-6 md:px-12 lg:px-20 py-8 bg-white">
-                    <div className="max-w-7xl mx-auto">
-                        <p className="text-center text-gray-400 text-sm mb-6">Trusted by event planners and companies across Sri Lanka</p>
-                        <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-                            {PARTNER_LOGOS.map(logo => (
-                                <span key={logo} className="text-gray-400 font-bold text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
-                                {logo}
-                            </span>
-                            ))}
-                        </div>
-                    </div>
-                </section>
+                {/*/!* PARTNER LOGOS *!/*/}
+                {/*<section className="logo-strip w-full h-1 px-6 md:px-12 lg:px-20 py-8 bg-white">*/}
+                {/*    <div className="max-w-7xl mx-auto">*/}
+                {/*        <p className="text-center text-gray-400 text-sm mb-6">Trusted by event planners and companies across Sri Lanka</p>*/}
+                {/*        /!*<div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">*!/*/}
+                {/*        /!*    {PARTNER_LOGOS.map(logo => (*!/*/}
+                {/*        /!*        <span key={logo} className="text-gray-400 font-bold text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">*!/*/}
+                {/*        /!*        {logo}*!/*/}
+                {/*        /!*    </span>*!/*/}
+                {/*        /!*    ))}*!/*/}
+                {/*        /!*</div>*!/*/}
+                {/*    </div>*/}
+                {/*</section>*/}
 
                 <Footer />
             </div>

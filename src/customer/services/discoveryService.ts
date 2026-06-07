@@ -11,6 +11,7 @@ export interface ArtistCard {
   max_price: number | null
   tags: string[]
   short_bio: string | null
+  verification_status: string | null
 }
 
 export interface ArtistDetail extends ArtistCard {
@@ -47,6 +48,7 @@ export interface Review {
   title: string | null
   body: string | null
   reviewer_name: string
+  reviewer_avatar?: string | null
   created_at: string
 }
 
@@ -59,6 +61,9 @@ export interface PaginatedMeta {
 
 export const getCategories = (): Promise<string[]> =>
   api.get('/discovery/categories').then(r => r.data.categories)
+
+export const getStats = (): Promise<{ total_artists: number; sample_avatars: string[] }> =>
+  api.get('/discovery/stats').then(r => r.data)
 
 export interface ArtistSearchParams {
   category?: string

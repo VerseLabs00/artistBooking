@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getArtists, getCategories, getNearYou } from "../../customer/services/discoveryService";
+import { getArtists, getCategories, getNearYou, getStats } from "../../customer/services/discoveryService";
 import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../../customer/services/discoveryService";
 import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
@@ -9,6 +9,7 @@ import {
     Play, RefreshCw, GitCompare, BookOpen, X, Loader2
 } from "lucide-react";
 import ArtistProfileLanding from "../../customer/pages/ArtistProfileLanding";
+import Footer from "../../customer/components/Footer.tsx";
 
 interface Artist {
     id: string | number;
@@ -154,7 +155,7 @@ function mapDiscoveryArtist(a: DiscoveryArtist): Artist {
         reviews: extra.reviews_count ?? extra.rating?.total ?? 0,
         price: formatArtistPrice(a.starting_price, a.max_price),
         image: a.avatar_url || a.cover_url || FALLBACK_ARTIST_IMAGE,
-        verified: extra.verification_status ? extra.verification_status === "approved" : true,
+        verified: extra.verification_status === "verified" || extra.verification_status === "approved",
         startingPrice: a.starting_price,
         maxPrice: a.max_price,
     };
@@ -261,6 +262,10 @@ const DEFAULT_CAT_IMAGE = "https://images.unsplash.com/photo-1459749411177-04218
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 export default function HomePage() {
     const navigate = useNavigate();
+    const [stats, setStats] = useState<{ total_artists: number; sample_avatars: string[] }>({
+        total_artists: 0,
+        sample_avatars: []
+    });
     const [searchQuery, setSearchQuery] = useState("");
     const [location, setLocation] = useState("");
     const [eventDate, setEventDate] = useState("");
@@ -310,6 +315,10 @@ export default function HomePage() {
     }, [selectedArtistId]);
 
     useEffect(() => {
+        getStats()
+            .then(data => setStats(data))
+            .catch(() => {});
+            
         getArtists({ per_page: 50 })
             .then(({ data }) => {
                 const artists = data.map(mapDiscoveryArtist);
@@ -463,9 +472,7 @@ export default function HomePage() {
                     />
                 </button>
                 {artist.verified && (
-                    <div className="verified-dot">
-                        <CheckCircle size={10} fill="white" strokeWidth={0} />
-                    </div>
+                    <div className="verified-dot" />
                 )}
             </div>
             <div className="p-2.5">
@@ -565,7 +572,7 @@ export default function HomePage() {
         .dark-section { background: #111; }
         .cta-card { background: #1a1a1a; border-radius: 20px; }
         .checklist-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #ddd; margin-bottom: 8px; }
-        .verified-dot { position: absolute; bottom: 6px; left: 6px; background: #E8194B; border-radius: 100px; padding: 2px 6px; display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: #fff; }
+        .verified-dot { position: absolute; bottom: 8px; left: 8px; background: #ff0000; border-radius: 50%; width: 10px; height: 10px; border: 1.5px solid white; box-shadow: 0 0 4px rgba(255,0,0,0.5); }
         .rating-row { display: flex; align-items: center; gap: 4px; }
         .logo-strip { border-top: 1px solid #f0f0f0; }
         .section-title { font-size: clamp(22px, 3vw, 28px); font-weight: 800; color: #111; }
@@ -660,47 +667,43 @@ export default function HomePage() {
                 {/* ══════════════════════════════════════════════════
           NAVBAR
       ══════════════════════════════════════════════════ */}
-                <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
+                <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
                     {/* Logo */}
-                    <Link to="/" className="flex items-center">
-                        <img
-                            src="/logoBlack.svg"
-                            alt="Perfoma"
-                            className="h-10 w-auto object-contain"
-                        />
-                    </Link>
+                    <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
+                        <Link to="/" className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                            <img
+                                src="/assets/logo/logo-navbar-light@3x.png"
+                                alt="Perfoma"
+                                className="h-10 w-auto object-contain"
+                            />
+                        </Link>
+                    </div>
 
                     {/* Nav Links */}
-                    <div className="hidden md:flex items-center gap-7">
+                    <div className="hidden md:flex items-center gap-7 absolute left-1/2 transform -translate-x-1/2">
                         <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
                         <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
                         <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
                         <button onClick={() => scrollToSection('join-section')} className="nav-link">Join as Artist</button>
+                        <button onClick={() => scrollToSection('contact-section')} className="nav-link">Contact Us</button>
                         <button className="nav-link">Events</button>
                     </div>
 
-                    {/* Auth */}
-                    <div className="flex items-center gap-3">
-                        <Link
-                            to="/loginCustomer"
-                            className="nav-link font-semibold text-sm px-3 py-1.5"
+                    {/* Action */}
+                    <div className="flex items-center">
+                        <button 
+                            onClick={() => scrollToSection('artists-section')}
+                            className="btn-pink text-sm font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-pink-100"
                         >
-                            Log in
-                        </Link>
-
-                        <Link
-                            to="/signupCustomer"
-                            className="btn-pink text-sm font-bold px-5 py-2.5 rounded-xl"
-                        >
-                            Sign up
-                        </Link>
+                            Explore Talent
+                        </button>
                     </div>
                 </nav>
 
                 {/* ══════════════════════════════════════════════════
           HERO SECTION
       ══════════════════════════════════════════════════ */}
-                <section
+                <section id="hero-section"
                     className="relative w-full overflow-hidden bg-cover bg-center py-12 px-6 md:px-12 lg:px-20"
                     style={{ backgroundImage: "url('/Cover7.jpg')" }}
                 >
@@ -743,17 +746,19 @@ export default function HomePage() {
                                 {/* Social proof */}
                                 <div className="flex items-center gap-3 mt-7">
                                     <div className="flex -space-x-2">
-                                        {[
-                                            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
-                                            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
-                                            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=80",
-                                            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
-                                            "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
-                                        ].map((src, i) => (
+                                        {(stats.sample_avatars.length > 0 ? stats.sample_avatars : [
+                                            // "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
+                                            // "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
+                                            // "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=80",
+                                            // "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
+                                            // "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
+                                        ]).slice(0, 5).map((src, i) => (
                                             <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
                                         ))}
                                     </div>
-                                    <p className="text-sm text-gray-300 font-500">1,200+ artists already joined</p>
+                                    <p className="text-sm text-gray-300 font-500">
+                                        {stats.total_artists > 100 ? "100+" : stats.total_artists} artists already joined
+                                    </p>
                                 </div>
                             </div>
 
@@ -970,44 +975,55 @@ export default function HomePage() {
 
 
                 {/* ══════════════════════════════════════════════════
-          HOW IT WORKS
-      ══════════════════════════════════════════════════ */}
-                <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
-                    <div className="max-w-5xl mx-auto">
-                        <h2 className="text-center section-title mb-14">How It Works</h2>
+    HOW IT WORKS
+══════════════════════════════════════════════════ */}
+                <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14" style={{ background: "#f5f3ef" }}>
+                    <div className="max-w-4xl mx-auto">
+                        <h2 className="text-center mb-3" style={{ fontFamily: "Georgia, serif", fontSize: "38px", fontWeight: 800, color: "#111" }}>
+                            How It Works
+                        </h2>
+                        <p className="text-center mb-14 text-sm leading-relaxed" style={{ color: "#999" }}>
+                            Booking your perfect artist takes just three steps. No agents, no<br className="hidden md:block" /> hidden fees, no hassle.
+                        </p>
 
-                        <div className="flex flex-col md:flex-row items-center gap-0">
+                        <div className="flex flex-col md:flex-row items-start justify-center">
                             {/* Step 1 */}
-                            <div className="flex flex-col items-center text-center flex-1 px-4">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: "rgba(232,25,75,0.10)", border: "2px solid rgba(232,25,75,0.2)" }}>
-                                    <RefreshCw size={26} style={{ color: "#E8194B" }} />
+                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-4">
+                                <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5 text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
+                                    🔍
                                 </div>
-                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Search</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">Find the perfect artists for your event.</p>
+                                <h3 className="font-bold text-gray-900 text-base mb-2">Search</h3>
+                                <p className="text-sm leading-relaxed" style={{ color: "#999" }}>
+                                    Browse hundreds of verified artists by category, location, and budget. Read real reviews from real clients.
+                                </p>
                             </div>
 
                             {/* Connector */}
-                            <div className="step-connector hidden md:block" />
+                            <div className="hidden md:block flex-1 max-w-[120px] mt-9 border-t-2 border-dashed" style={{ borderColor: "#f0a0b8" }} />
 
                             {/* Step 2 */}
-                            <div className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: "rgba(232,25,75,0.10)", border: "2px solid rgba(232,25,75,0.2)" }}>
-                                    <GitCompare size={26} style={{ color: "#E8194B" }} />
+                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-4 mt-8 md:mt-0">
+                                <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5 text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
+                                    ⚖️
                                 </div>
-                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Compare</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">View profiles, reviews and prices.</p>
+                                <h3 className="font-bold text-gray-900 text-base mb-2">Compare</h3>
+                                <p className="text-sm leading-relaxed" style={{ color: "#999" }}>
+                                    View detailed profiles, watch performance videos, compare prices and availability all in one place.
+                                </p>
                             </div>
 
                             {/* Connector */}
-                            <div className="step-connector hidden md:block" />
+                            <div className="hidden md:block flex-1 max-w-[120px] mt-9 border-t-2 border-dashed" style={{ borderColor: "#f0a0b8" }} />
 
                             {/* Step 3 */}
-                            <div className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: "rgba(232,25,75,0.10)", border: "2px solid rgba(232,25,75,0.2)" }}>
-                                    <BookOpen size={26} style={{ color: "#E8194B" }} />
+                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-4 mt-8 md:mt-0">
+                                <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5 text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
+                                    📅
                                 </div>
-                                <h3 className="font-800 text-gray-900 text-[17px] mb-2">Book</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">Contact and book your favourite artist.</p>
+                                <h3 className="font-bold text-gray-900 text-base mb-2">Book</h3>
+                                <p className="text-sm leading-relaxed" style={{ color: "#999" }}>
+                                    Contact and book your favourite artist directly. Secure payment and confirmation in minutes.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -1076,23 +1092,25 @@ export default function HomePage() {
                     </div>
                 </section>
 
-                {/* ══════════════════════════════════════════════════
-          PARTNER LOGOS
-      ══════════════════════════════════════════════════ */}
-                <section className="logo-strip w-full px-6 md:px-12 lg:px-20 py-8 bg-white">
-                    <div className="max-w-7xl mx-auto">
-                        <p className="text-center text-gray-400 text-sm mb-6 font-500">
-                            Trusted by event planners and companies across Sri Lanka
-                        </p>
-                        <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-                            {PARTNER_LOGOS.map(logo => (
-                                <span key={logo} className="text-gray-400 font-800 text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
-                {logo}
-              </span>
-                            ))}
-                        </div>
-                    </div>
-                </section>
+      {/*          /!* ══════════════════════════════════════════════════*/}
+      {/*    PARTNER LOGOS*/}
+      {/*══════════════════════════════════════════════════ *!/*/}
+      {/*          <section className="logo-strip w-full h-1 px-6 md:px-12 lg:px-20 py-8 bg-white">*/}
+      {/*              <div className="max-w-7xl mx-auto">*/}
+      {/*                  <p className="text-center text-gray-400 text-sm mb-6 font-500">*/}
+      {/*                      Trusted by event planners and companies across Sri Lanka*/}
+      {/*                  </p>*/}
+      {/*        /!*          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">*!/*/}
+      {/*        /!*              {PARTNER_LOGOS.map(logo => (*!/*/}
+      {/*        /!*                  <span key={logo} className="text-gray-400 font-800 text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">*!/*/}
+      {/*        /!*  {logo}*!/*/}
+      {/*        /!*</span>*!/*/}
+      {/*        /!*              ))}*!/*/}
+      {/*        /!*          </div>*!/*/}
+      {/*              </div>*/}
+      {/*          </section>*/}
+
+                <Footer />
             </div>
         </div>
     );
