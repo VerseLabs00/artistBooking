@@ -302,17 +302,26 @@ export default function BookingRequests() {
 
             {/* NAVBAR */}
             <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
-                <Link className="flex items-center">
-                    <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-10 w-auto object-contain" />
-                </Link>
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => navigate('/account')}
-                        className="text-gray-600 hover:text-black transition-colors text-sm font-semibold">
-                        My Account
+                    <button 
+                        onClick={() => navigate(-1)}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-pink-600"
+                        title="Go back"
+                    >
+                        <ArrowLeft size={22} />
                     </button>
-
+                    <Link to="/artistDashboard" className="flex items-center">
+                        <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-10 w-auto object-contain" />
+                    </Link>
                 </div>
+                {/*<div className="flex items-center gap-4">*/}
+                {/*    <button*/}
+                {/*        onClick={() => navigate('/account')}*/}
+                {/*        className="text-gray-600 hover:text-black transition-colors text-sm font-semibold">*/}
+                {/*        My Account*/}
+                {/*    </button>*/}
+
+                {/*</div>*/}
             </nav>
 
             <div className="flex-grow max-w-7xl mx-auto w-full px-4 md:px-8 py-10">
