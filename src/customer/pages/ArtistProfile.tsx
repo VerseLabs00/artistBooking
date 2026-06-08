@@ -281,10 +281,10 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
     );
 
     const avgRating = artist.rating.average ?? 0;
-    const galleryImages = artist.gallery ?? [];
+    const galleryImages = artist.gallery;
     
     // Combine portfolio media with main social links if not already present
-    const mediaLinks = [...(artist.media ?? [])];
+    const mediaLinks = [...artist.media];
     if (artist.youtube_link && !mediaLinks.some(m => m.url === artist.youtube_link)) {
         mediaLinks.push({
             id: 'main-youtube',
@@ -367,9 +367,9 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                     </div>
 
                                     {/* TAGS */}
-                                    {(artist.tags ?? []).length > 0 && (
+                                    {artist.tags.length > 0 && (
                                         <div className="flex flex-wrap justify-center gap-2 mt-4 font-sans">
-                                            {(artist.tags ?? []).map((tag, i) => (
+                                            {artist.tags.map((tag, i) => (
                                                 <span
                                                     key={i}
                                                     className="bg-[#EEE8FF] text-[#7A57F2] text-[10px] px-3 py-1 rounded-full capitalize font-bold"
@@ -549,7 +549,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                             </div>
 
                             <div className="space-y-4 font-sans">
-                                {(artist.rating.recent_reviews ?? []).map((r) => (
+                                {artist.rating.recent_reviews.map((r) => (
                                     <div key={r.id} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
                                         <div className="flex justify-between">
                                             <div className="flex gap-3 items-center">
@@ -572,7 +572,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                         <p className="text-xs text-gray-500 mt-3 leading-relaxed">{r.body}</p>
                                     </div>
                                 ))}
-                                {(artist.rating.recent_reviews ?? []).length === 0 && (
+                                {artist.rating.recent_reviews.length === 0 && (
                                     <p className="text-sm text-gray-400 text-center py-6 font-sans">No reviews yet.</p>
                                 )}
                             </div>
