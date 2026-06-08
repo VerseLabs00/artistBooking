@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Heart, MoreHorizontal, Play, Music, MapPin, Users, Star,
-    Instagram, Facebook, Twitter, Mail, Youtube, Music2
+    Instagram, Facebook, Twitter, Mail, Youtube, Music2, Home, LogOut
 } from "lucide-react";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
@@ -137,18 +137,21 @@ export default function ArtistProfile() {
                 <div className="absolute inset-0 h-[220px] bg-black/20" />
 
                 {/* TOP BUTTONS */}
+                <button
+                    onClick={() => navigate("/artistHome")}
+                    className="absolute top-5 left-5 w-10 h-10 bg-white/90 backdrop-blur-sm text-black rounded-full flex items-center justify-center shadow-md hover:scale-110 transition z-20"
+                    title="Go Back"
+                >
+                    <Home size={20} />
+                </button>
+
                 <div className="absolute top-5 right-5 flex gap-3 z-20">
                     <button
-                        onClick={() => navigate("/artistHome")}
-                        className="bg-white text-black rounded-full px-4 py-2 text-sm font-semibold shadow-md hover:scale-105 transition"
-                    >
-                        View Wall
-                    </button>
-                    <button
                         onClick={handleLogout}
-                        className="bg-black text-white rounded-full px-4 py-2 text-sm font-semibold shadow-md hover:scale-105 transition"
+                        className="bg-black/80 backdrop-blur-sm text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md hover:scale-110 transition"
+                        title="Logout"
                     >
-                        Logout
+                        <LogOut size={18} />
                     </button>
                 </div>
 
