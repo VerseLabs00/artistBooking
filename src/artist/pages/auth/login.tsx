@@ -138,7 +138,10 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-cover bg-center" style={{ backgroundImage: `url(${stage})` }}>
+        <div className="min-h-screen flex flex-col bg-cover bg-center font-['Fraunces']" style={{ backgroundImage: `url(${stage})`, fontFamily: "'Fraunces', serif" }}>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
+            `}</style>
             <div className="flex-grow flex items-center justify-center p-4">
                 <div className="relative overflow-hidden bg-white/90 backdrop-blur-xl border border-white/40 w-full max-w-4xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] grid grid-cols-1 lg:grid-cols-2 p-6 md:p-10">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none"></div>
@@ -147,11 +150,11 @@ export default function LoginPage() {
                             <ArrowLeft
                                 onClick={() => navigate('/')}
                                 className="cursor-pointer text-gray-600 hover:text-black transition-colors" size={20} />
-                            <button onClick={() => navigate('/signup')} className="text-sm text-gray-500 hover:text-black transition-colors">
+                            <button onClick={() => navigate('/signup')} className="text-sm text-gray-500 hover:text-[#E8194B] transition-colors">
                                 + create an account
                             </button>
                         </div>
-                        <h1 className="text-3xl font-semibold mb-10 text-black">
+                        <h1 className="text-3xl font-bold mb-10 text-black">
                             {showForgot ? 'Reset Password' : 'Sign in'}
                         </h1>
                         {error && (
@@ -166,38 +169,38 @@ export default function LoginPage() {
                                 {forgotStep === 1 ? (
                                     <>
                                         <div>
-                                            <p className="text-sm text-black mb-1">Email</p>
+                                            <p className="text-sm text-black mb-1 font-semibold">Email</p>
                                             <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
                                                 placeholder="Enter your email"
-                                                className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-black transition-all duration-300" />
+                                                className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-[#E8194B] transition-all duration-300" />
                                         </div>
                                         <button onClick={handleForgotPassword} disabled={loading}
-                                            className="w-full bg-[#DB0000] text-white py-4 rounded-lg disabled:opacity-60">
+                                            className="w-full bg-[#E8194B] hover:bg-[#c8133b] text-white py-4 rounded-lg disabled:opacity-60 transition-colors font-bold shadow-lg shadow-pink-100">
                                             {loading ? 'Sending...' : 'Send Reset Code'}
                                         </button>
                                     </>
                                 ) : (
                                     <>
                                         <div>
-                                            <p className="text-sm text-black mb-1">Reset Code (OTP)</p>
+                                            <p className="text-sm text-black mb-1 font-semibold">Reset Code (OTP)</p>
                                             <input type="text" value={otp} onChange={e => setOtp(e.target.value)}
                                                 placeholder="Enter 6-digit code"
-                                                className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-black transition-all duration-300" />
+                                                className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-[#E8194B] transition-all duration-300" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-black mb-1">New Password</p>
+                                            <p className="text-sm text-black mb-1 font-semibold">New Password</p>
                                             <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
                                                 placeholder="Min 8 characters"
-                                                className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-black transition-all duration-300" />
+                                                className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-[#E8194B] transition-all duration-300" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-black mb-1">Confirm New Password</p>
+                                            <p className="text-sm text-black mb-1 font-semibold">Confirm New Password</p>
                                             <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
                                                 placeholder="Confirm your password"
-                                                className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-black transition-all duration-300" />
+                                                className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-[#E8194B] transition-all duration-300" />
                                         </div>
                                         <button onClick={handleResetPassword} disabled={loading}
-                                            className="w-full bg-[#DB0000] text-white py-4 rounded-lg disabled:opacity-60">
+                                            className="w-full bg-[#E8194B] hover:bg-[#c8133b] text-white py-4 rounded-lg disabled:opacity-60 transition-colors font-bold shadow-lg shadow-pink-100">
                                             {loading ? 'Resetting...' : 'Reset Password'}
                                         </button>
                                     </>
@@ -209,27 +212,27 @@ export default function LoginPage() {
                         ) : (
                             <div className="space-y-6">
                                 <div>
-                                    <p className="text-sm text-black mb-1">Email</p>
+                                    <p className="text-sm text-black mb-1 font-semibold">Email</p>
                                     <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                                         placeholder="john@gmail.com"
-                                        className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-black transition-all duration-300" />
+                                        className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-[#E8194B] transition-all duration-300" />
                                 </div>
                                 <div className="relative">
-                                    <p className="text-sm text-black mb-1">Password</p>
+                                    <p className="text-sm text-black mb-1 font-semibold">Password</p>
                                     <input type={showPassword ? 'text' : 'password'} value={password}
                                         onChange={e => setPassword(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                                        className="w-full border-b border-gray-300 bg-transparent outline-none py-2 pr-8 text-black focus:border-black transition-all duration-300" />
+                                        className="w-full border-b border-gray-300 bg-transparent outline-none py-2 pr-8 text-black focus:border-[#E8194B] transition-all duration-300" />
                                     <button type="button" onClick={() => setShowPassword(!showPassword)}
                                         className="absolute right-0 bottom-2 text-gray-400 hover:text-gray-600 transition-colors">
                                         {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                                     </button>
                                 </div>
                                 <div>
-                                    <button onClick={() => setShowForgot(true)} className="text-sm text-red-500 hover:text-red-600 transition-colors">forgot password ?</button>
+                                    <button onClick={() => setShowForgot(true)} className="text-sm text-[#E8194B] hover:text-[#c8133b] transition-colors font-semibold">forgot password ?</button>
                                 </div>
                                 <button onClick={handleLogin} disabled={loading}
-                                    className="bg-[#DB0000] text-white px-40 py-4 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed">
+                                    className="w-full bg-[#E8194B] hover:bg-[#c8133b] text-white py-4 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed transition-colors font-bold shadow-lg shadow-pink-100">
                                     {loading ? 'Signing in...' : 'Login'}
                                 </button>
                                 <p className="text-center text-xs text-gray-400">or login with</p>
@@ -263,7 +266,7 @@ export default function LoginPage() {
                             <div className="absolute top-[-40px] left-4 z-50 text-black text-xs">
                                 <img src={logo} className="w-40 h-40" alt="Logo" />
                             </div>
-                            <div className="absolute bottom-10 left-6 right-6 text-white text-xs leading-relaxed drop-shadow-lg">
+                            <div className="absolute bottom-10 left-6 right-6 text-white text-xs font-semibold leading-relaxed drop-shadow-lg">
                                 {carouselData[currentSlide].text}
                             </div>
                             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
