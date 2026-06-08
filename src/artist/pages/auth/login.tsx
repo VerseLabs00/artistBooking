@@ -1,25 +1,20 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
-import stage from '../../../../public/bg-login.png'
-import artistImage from '../../../../public/person.png'
-import cover1 from '../../../../public/Cover1.png'
-import cover7 from '../../../../public/Cover7.jpg'
-import logo from '../../../../public/logoBlack.svg'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
 
 const carouselData = [
     {
-        image: artistImage,
+        image: '/person.png',
         text: "Join our community of world-class performers and showcase your talent to a global audience."
     },
     {
-        image: cover1,
+        image: '/Cover1.png',
         text: "Manage your bookings, track your performance, and grow your artistic career with ease."
     },
     {
-        image: cover7,
+        image: '/Cover7.jpg',
         text: "Connect with event organizers and secure high-quality gigs that match your unique style."
     }
 ]
@@ -79,9 +74,9 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-cover bg-center" style={{ backgroundImage: `url(${stage})` }}>
+        <div className="min-h-screen flex flex-col bg-cover bg-center" style={{ backgroundImage: `url(/bg-login.png)` }}>
             <div className="flex-grow flex items-center justify-center p-4">
-                <div className="relative overflow-hidden bg-white/90 backdrop-blur-xl border border-white/40 w-full max-w-4xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] grid grid-cols-1 lg:grid-cols-2 p-6 md:p-10">
+                <div className="relative overflow-hidden bg-white/90 backdrop-blur-xl border border-white/40 w-full max-w-4xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 lg:p-10">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none"></div>
                     <div className="pr-0 lg:pr-10 relative z-10">
                         <div className="flex items-center justify-between mb-10">
@@ -128,7 +123,7 @@ export default function LoginPage() {
                                     'https://cdn-icons-png.flaticon.com/512/300/300221.png',
                                     'https://cdn-icons-png.flaticon.com/512/0/747.png',
                                 ].map((src, i) => (
-                                    <button key={i} className="w-11 h-11 bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.12)] flex items-center justify-center hover:scale-110 transition-transform">
+                                    <button key={i} className="w-11 h-11 bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.12)] flex items-center justify-center hover:scale-110 transition-transform" aria-label={`login-with-${i}`}>
                                         <img src={src} className="w-5 h-5" />
                                     </button>
                                 ))}
@@ -138,8 +133,7 @@ export default function LoginPage() {
                     <div className="flex items-center justify-center mt-10 lg:mt-0 relative z-10">
                         <div 
                             onMouseMove={handleMouseMove}
-                            className="relative w-full max-w-[280px] md:max-w-[320px] h-[450px] md:h-[520px] rounded-[40px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] hover:scale-105 transition-all duration-300 cursor-pointer"
-                        >
+                            className="relative w-full max-w-[280px] md:max-w-[320px] h-[450px] md:h-[520px] rounded-[40px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] hover:scale-105 transition-transform">
                             {carouselData.map((slide, index) => (
                                 <img
                                     key={index}
@@ -149,7 +143,7 @@ export default function LoginPage() {
                             ))}
                             {/*logo*/}
                             <div className="absolute top-[-40px] left-4 z-50 text-black text-xs">
-                                <img src={logo} className="w-40 h-40" alt="Logo" />
+                                <img src="/logoBlack.svg" className="w-40 h-40" alt="Logo" />
                             </div>
                             <div className="absolute bottom-10 left-6 right-6 text-white text-xs leading-relaxed drop-shadow-lg">
                                 {carouselData[currentSlide].text}
