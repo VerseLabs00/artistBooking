@@ -50,6 +50,151 @@ interface Rating {
     }[];
 }
 
+// ── Media preview helpers ──────────────────────────────────────────────────
+
+function getYouTubeId(url: string): string | null {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/))([^&?/]+)/);
+    return match ? match[1] : null;
+}
+
+function getSpotifyEmbedUrl(url: string): string | null {
+    const match = url.match(/open\.spotify\.com\/(track|album|playlist|episode)\/([^?]+)/);
+    return match ? `https://open.spotify.com/embed/${match[1]}/${match[2]}` : null;
+}
+
+function isDirectVideo(url: string): boolean {
+    return /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+}
+
+// ── Fetch YouTube title via oEmbed (no API key required) ──────────────────
+async function fetchYouTubeTitle(ytId: string): Promise<string> {
+    const res = await fetch(
+        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ytId}&format=json`
+    );
+    if (!res.ok) throw new Error("oEmbed fetch failed");
+    const data = await res.json();
+    return data.title as string;
+}
+
+function MediaPreviewCard({ item, onDelete }: { item: Media; onDelete: (id: number) => void }) {
+    const [showVideo, setShowVideo] = useState(false);
+    const [resolvedTitle, setResolvedTitle] = useState<string>(item.title || "");
+
+    const ytId = getYouTubeId(item.url);
+    const spotifyEmbed = getSpotifyEmbedUrl(item.url);
+
+    // Auto-fetch YouTube title if not provided by the backend
+    useEffect(() => {
+        if (ytId && !item.title) {
+            fetchYouTubeTitle(ytId)
+                .then(setResolvedTitle)
+                .catch(() => setResolvedTitle("YouTube Video"));
+        }
+    }, [ytId, item.title]);
+
+    // Keep resolvedTitle in sync if item.title changes
+    useEffect(() => {
+        if (item.title) setResolvedTitle(item.title);
+    }, [item.title]);
+
+    const renderFooter = () => (
+        <div className="flex items-center justify-between mt-2 px-1">
+            <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-medium text-gray-700 truncate">
+                    {resolvedTitle || (ytId ? "YouTube Video" : spotifyEmbed ? "Spotify" : "Media")}
+                </p>
+                <p className="text-[11px] text-gray-400">
+                    {ytId ? "YouTube" : spotifyEmbed ? "Spotify" : "External Link"}
+                </p>
+            </div>
+            <button
+                onClick={() => onDelete(item.id)}
+                className="ml-4 shrink-0 text-[11px] text-red-500 hover:text-red-700 font-medium transition"
+            >
+                Remove
+            </button>
+        </div>
+    );
+
+    if (ytId) {
+        return (
+            <div className="flex flex-col h-full group">
+                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div className="aspect-video w-full bg-black relative group cursor-pointer" onClick={() => setShowVideo(true)}>
+                        {!showVideo ? (
+                            <>
+                                <img
+                                    src={`https://i.ytimg.com/vi/${ytId}/maxresdefault.jpg`}
+                                    className="w-full h-full object-cover"
+                                    alt={resolvedTitle || "YouTube Video"}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src = `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
+                                        (e.target as HTMLImageElement).onerror = (ev) => {
+                                            (ev.target as HTMLImageElement).src = `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg`;
+                                        };
+                                    }}
+                                />
+                                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-lg group-hover:scale-110 transition-transform">
+                                        <Play size={24} fill="currentColor" />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <iframe
+                                width="100%"
+                                height="100%"
+                                src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+                                title="YouTube video player"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowFullScreen
+                            ></iframe>
+                        )}
+                    </div>
+                </div>
+                {renderFooter()}
+            </div>
+        );
+    }
+
+    if (spotifyEmbed) {
+        return (
+            <div className="flex flex-col h-full">
+                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div className="w-full h-[152px]">
+                        <iframe
+                            src={spotifyEmbed}
+                            width="100%"
+                            height="100%"
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                            loading="lazy"
+                            className="border-0"
+                        />
+                    </div>
+                </div>
+                {renderFooter()}
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col h-full">
+            <a
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 flex-grow"
+            >
+                <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
+                    <Play size={32} className="text-gray-400" />
+                </div>
+            </a>
+            {renderFooter()}
+        </div>
+    );
+}
+
 export default function ArtistProfile() {
     const navigate = useNavigate();
     const { clearAuth } = useAuth();
@@ -351,34 +496,13 @@ export default function ArtistProfile() {
                         {videoLinks.length > 0 && (
                             <>
                                 <h3 className="text-[24px] font-bold mt-10 mb-5">Audio & Video</h3>
-                                <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {videoLinks.map((item) => (
-                                        <div key={item.id} className="flex items-center justify-between border-b pb-4">
-                                            <a
-                                                href={item.url}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="flex items-center gap-4 hover:opacity-80 transition flex-1 min-w-0"
-                                            >
-                                                <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                                                    <Play size={16} className="text-gray-600" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-[14px] font-medium text-gray-700">
-                                                        {item.title || "Untitled"}
-                                                    </p>
-                                                    <p className="text-[12px] text-gray-400 truncate max-w-[220px]">
-                                                        {item.url}
-                                                    </p>
-                                                </div>
-                                            </a>
-                                            <button
-                                                onClick={() => handleDeleteVideo(item.id)}
-                                                className="ml-4 shrink-0 text-[12px] text-red-500 hover:text-red-700 font-medium transition"
-                                            >
-                                                Remove
-                                            </button>
-                                        </div>
+                                        <MediaPreviewCard
+                                            key={item.id}
+                                            item={item}
+                                            onDelete={handleDeleteVideo}
+                                        />
                                     ))}
                                 </div>
                             </>
