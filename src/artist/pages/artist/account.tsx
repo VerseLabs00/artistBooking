@@ -76,8 +76,12 @@ async function fetchYouTubeTitle(ytId: string): Promise<string> {
     return data.title as string;
 }
 
-function MediaPreviewCard({ item, onDelete }: { item: Media; onDelete: (id: number) => void }) {
-    const [showVideo, setShowVideo] = useState(false);
+function MediaPreviewCard({ item, onDelete, isPlaying, onPlay }: { 
+    item: Media; 
+    onDelete: (id: number) => void;
+    isPlaying: boolean;
+    onPlay: () => void;
+}) {
     const [resolvedTitle, setResolvedTitle] = useState<string>(item.title || "");
 
     const ytId = getYouTubeId(item.url);
@@ -120,17 +124,17 @@ function MediaPreviewCard({ item, onDelete }: { item: Media; onDelete: (id: numb
         return (
             <div className="flex flex-col h-full group">
                 <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
-                    <div className="aspect-video w-full bg-black relative group cursor-pointer" onClick={() => setShowVideo(true)}>
-                        {!showVideo ? (
+                    <div className="aspect-video w-full bg-black relative group cursor-pointer" onClick={onPlay}>
+                        {!isPlaying ? (
                             <>
                                 <img
                                     src={`https://i.ytimg.com/vi/${ytId}/maxresdefault.jpg`}
                                     className="w-full h-full object-cover"
                                     alt={resolvedTitle || "YouTube Video"}
                                     onError={(e) => {
-                                        (e.target as HTMLImageElement).src = `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
-                                        (e.target as HTMLImageElement).onerror = (ev) => {
-                                            (ev.target as HTMLImageElement).src = `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg`;
+                                        (e.currentTarget as HTMLImageElement).src = `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
+                                        (e.currentTarget as HTMLImageElement).onerror = (ev) => {
+                                            (ev.currentTarget as HTMLImageElement).src = `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg`;
                                         };
                                     }}
                                 />
@@ -204,6 +208,7 @@ export default function ArtistProfile() {
     const [artistStats, setArtistStats] = useState<{ total: number } | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [playingVideoId, setPlayingVideoId] = useState<number | null>(null);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -502,6 +507,8 @@ export default function ArtistProfile() {
                                             key={item.id}
                                             item={item}
                                             onDelete={handleDeleteVideo}
+                                            isPlaying={playingVideoId === item.id}
+                                            onPlay={() => setPlayingVideoId(item.id)}
                                         />
                                     ))}
                                 </div>
