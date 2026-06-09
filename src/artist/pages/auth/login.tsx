@@ -74,7 +74,7 @@ export default function LoginPage() {
 
             setAuth(data.user, data.access_token)
             window.scrollTo(0, 0)
-            navigate('/account')
+            navigate('/artistHome')
 
         } catch (err: any) {
             setError(
