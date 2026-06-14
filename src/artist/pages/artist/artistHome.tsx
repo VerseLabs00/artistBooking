@@ -266,7 +266,11 @@ export default function ArtistHome() {
         fetchProfile();
 
         getStats()
-            .then(data => setStats(data))
+            .then(data => {
+                if (data && typeof data === 'object' && Array.isArray(data.sample_avatars)) {
+                    setStats(data);
+                }
+            })
             .catch(() => {});
 
         // Load Discovery Data
@@ -572,18 +576,12 @@ export default function ArtistHome() {
                             <p className="text-gray-300 text-base">Explore the community and see what's trending.</p>
                             <div className="flex items-center gap-3 mt-7">
                                 <div className="flex -space-x-2">
-                                    {(stats.sample_avatars.length > 0 ? stats.sample_avatars : [
-                                        // "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
-                                        // "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
-                                        // "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80",
-                                        // "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
-                                        // "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
-                                    ]).slice(0, 5).map((src, i) => (
+                                    {((stats?.sample_avatars && Array.isArray(stats.sample_avatars) && stats.sample_avatars.length > 0) ? stats.sample_avatars : []).slice(0, 5).map((src, i) => (
                                         <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
                                     ))}
                                 </div>
                                 <p className="text-sm text-gray-300 font-500">
-                                    {stats.total_artists > 100 ? "100+" : stats.total_artists} artists already joined
+                                    {(stats?.total_artists ?? 0) > 100 ? "100+" : (stats?.total_artists ?? 0)} artists already joined
                                 </p>
                             </div>
                         </div>
