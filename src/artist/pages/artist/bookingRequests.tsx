@@ -10,13 +10,10 @@ import {
     ChevronRight,
     User,
     Search,
-    ArrowLeft,
     Loader2,
     X,
     CreditCard,
     FileText,
-    MessageSquare,
-    DollarSign,
     TrendingUp,
     Phone,
     Mail
@@ -310,7 +307,7 @@ export default function BookingRequests() {
                     >
                         <ArrowLeft size={22} />
                     </button>
-                    <Link to="/artistDashboard" className="flex items-center">
+                    <Link to="/artistHome" className="flex items-center">
                         <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-10 w-auto object-contain" />
                     </Link>
                 </div>
@@ -326,7 +323,6 @@ export default function BookingRequests() {
 
             <div className="flex-grow max-w-7xl mx-auto w-full px-4 md:px-8 py-10">
                 <div className="flex flex-col md:flex-row gap-8">
-
                     {/* SIDEBAR */}
                     <aside className="w-full md:w-64 flex-shrink-0">
                         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sticky top-24">

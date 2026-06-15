@@ -8,7 +8,7 @@ interface BookingModalProps {
   startingPrice: number
 }
 
-// ── Calendar helpers ──
+// ──────── Calendar helpers ────────
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 function getCalendarDays() {
   const now = new Date()
@@ -25,7 +25,7 @@ function getCalendarDays() {
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 
-// ── Step indicator ──
+// ──────── Step indicator ────────
 function StepIndicator({ current }: { current: number }) {
   return (
     <div className="flex items-end gap-10 mb-6">
@@ -39,7 +39,7 @@ function StepIndicator({ current }: { current: number }) {
   )
 }
 
-// ── Step 1: Date & Time ──
+// ──────── Step 1: Date & Time ────────
 function Step1({
   selectedDay, setSelectedDay, hour, setHour, period, setPeriod, onContinue,
 }: {
@@ -119,7 +119,7 @@ function Step1({
   )
 }
 
-// ── Step 2: Location & Event ──
+// ──────── Step 2: Location & Event ────────
 function Step2({
   venue, setVenue, eventType, setEventType, customerPhone, setCustomerPhone, specialNotes, setSpecialNotes,
   onPrev, onContinue,
@@ -195,7 +195,7 @@ function Step2({
   )
 }
 
-// ── Step 3: Confirm & Pay ──
+// ──────── Step 3: Confirm & Pay ────────
 function Step3({
   artistName, startingPrice, selectedDay, hour, period, venue, eventType,
   onPrev, onConfirm, loading, error,
@@ -254,7 +254,7 @@ function Step3({
   )
 }
 
-// ── PayHere form redirect ──
+// ──────── PayHere form redirect ────────
 function submitToPayHere(payhere: Record<string, string>) {
   const form = document.createElement('form')
   form.method = 'POST'
@@ -277,7 +277,7 @@ const stepInfo = [
   { title: 'Confirm & Pay', desc: 'Review your booking and pay the 30% advance via PayHere.' },
 ]
 
-// ── Main Modal ──
+// ──────── Main Modal ────────
 export default function BookingModal({ onClose, artistProfileId, artistName, startingPrice }: BookingModalProps) {
   const [step, setStep] = useState(1)
 
@@ -319,7 +319,6 @@ export default function BookingModal({ onClose, artistProfileId, artistName, sta
         event_start_time: timeStr,
         event_type: eventType,
         venue,
-        customer_phone: customerPhone,
         special_notes: specialNotes || undefined,
       })
 

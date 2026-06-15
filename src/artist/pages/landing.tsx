@@ -208,52 +208,52 @@ const ALL_CATEGORIES_DATA: CategoryData[] = [
     { 
         name: "Musician", 
         description: "Elegant solo instrumentalists and performers for ambient atmosphere.", 
-        image: "./assets/categories/musician.webp"
+        image: "/assets/categories/musician.webp"
     },
     { 
         name: "Solo Singer", 
         description: "Powerful vocalists covering a wide range of genres and styles.", 
-        image: "./assets/categories/solosinger.webp"
+        image: "/assets/categories/solosinger.webp"
     },
     { 
         name: "Rapper", 
         description: "Dynamic hip-hop artists and lyricists for high-energy performances.", 
-        image: "./assets/categories/rapper.webp"
+        image: "/assets/categories/rapper.webp"
     },
     { 
         name: "Live Band", 
         description: "Full musical ensembles providing an immersive live experience.", 
-        image: "./assets/categories/liveband.webp"
+        image: "/assets/categories/liveband.webp"
     },
     { 
         name: "Dance Group", 
         description: "Professional choreographies and high-energy dance routines.", 
-        image: "./assets/categories/dancegroups.webp"
+        image: "/assets/categories/dancegroups.webp"
     },
     { 
         name: "Producer", 
         description: "Creative minds behind the beats and sound engineering.", 
-        image: "./assets/categories/producer.webp"
+        image: "/assets/categories/producer.webp"
     },
     { 
         name: "DJ", 
         description: "Expert curators of energy and rhythm for every dance floor.", 
-        image: "./assets/categories/dj.webp"
+        image: "/assets/categories/dj.webp"
     },
     { 
         name: "Sound System", 
         description: "Premium audio equipment and technicians for crystal clear sound.", 
-        image: "./assets/categories/soundsystem.webp"
+        image: "/assets/categories/soundsystem.webp"
     },
     { 
         name: "Lightning System", 
         description: "Atmospheric and stage lighting to set the perfect visual mood.", 
-        image: "./assets/categories/lightningsystem.webp"
+        image: "/assets/categories/lightningsystem.webp"
     },
     { 
         name: "Videographers", 
         description: "Cinematic storytellers capturing your most precious moments.",
-        image: "./assets/categories/videographers.webp"
+        image: "/assets/categories/videographers.webp"
     }
 ];
 
@@ -316,7 +316,11 @@ export default function HomePage() {
 
     useEffect(() => {
         getStats()
-            .then(data => setStats(data))
+            .then(data => {
+                if (data && typeof data === 'object' && Array.isArray(data.sample_avatars)) {
+                    setStats(data);
+                }
+            })
             .catch(() => {});
             
         getArtists({ per_page: 50 })
@@ -752,18 +756,12 @@ export default function HomePage() {
                                 {/* Social proof */}
                                 <div className="flex items-center gap-3 mt-7">
                                     <div className="flex -space-x-2">
-                                        {(stats.sample_avatars.length > 0 ? stats.sample_avatars : [
-                                            // "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
-                                            // "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
-                                            // "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=80",
-                                            // "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
-                                            // "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
-                                        ]).slice(0, 5).map((src, i) => (
+                                        {((stats?.sample_avatars && Array.isArray(stats.sample_avatars) && stats.sample_avatars.length > 0) ? stats.sample_avatars : []).slice(0, 5).map((src, i) => (
                                             <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
                                         ))}
                                     </div>
                                     <p className="text-sm text-gray-300 font-500">
-                                        {stats.total_artists > 100 ? "100+" : stats.total_artists} artists already joined
+                                        {(stats?.total_artists ?? 0) > 100 ? "100+" : (stats?.total_artists ?? 0)} artists already joined
                                     </p>
                                 </div>
                             </div>
