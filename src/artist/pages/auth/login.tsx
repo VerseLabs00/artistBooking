@@ -1,20 +1,25 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import stage from '../../../../public/bg-login.png'
+import artistImage from '../../../../public/person.png'
+import cover1 from '../../../../public/Cover1.png'
+import cover7 from '../../../../public/Cover7.jpg'
+import logo from '../../../../public/logoBlack.svg'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
 
 const carouselData = [
     {
-        image: '/person.png',
+        image: artistImage,
         text: "Join our community of world-class performers and showcase your talent to a global audience."
     },
     {
-        image: '/Cover1.png',
+        image: cover1,
         text: "Manage your bookings, track your performance, and grow your artistic career with ease."
     },
     {
-        image: '/Cover7.jpg',
+        image: cover7,
         text: "Connect with event organizers and secure high-quality gigs that match your unique style."
     }
 ]
@@ -258,7 +263,7 @@ export default function LoginPage() {
                             ))}
                             {/*logo*/}
                             <div className="absolute top-[-40px] left-4 z-50 text-black text-xs">
-                                <img src="/logoBlack.svg" className="w-40 h-40" alt="Logo" />
+                                <img src={logo} className="w-40 h-40" alt="Logo" />
                             </div>
                             <div className="absolute bottom-10 left-6 right-6 text-white text-xs font-semibold leading-relaxed drop-shadow-lg">
                                 {carouselData[currentSlide].text}

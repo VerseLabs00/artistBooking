@@ -307,7 +307,7 @@ export default function BookingRequests() {
                     >
                         <ArrowLeft size={22} />
                     </button>
-                    <Link to="/artistDashboard" className="flex items-center">
+                    <Link to="/artistHome" className="flex items-center">
                         <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-10 w-auto object-contain" />
                     </Link>
                 </div>
