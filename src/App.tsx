@@ -21,15 +21,18 @@ import CategoryCustomer from "./artist/pages/artist/categoryCustomer.tsx";
 import CustomerAccount from "./customer/pages/CustomerAccount.tsx";
 
 import AdminRoutes from "./admin/routes/AppRouter.jsx";
-
 import Category from "./artist/pages/artist/categoryLanding.tsx";
+
+import DevGate from "./artist/component/DevGate.tsx";
 
 function App() {
         return (
             <>
+                    <DevGate>
                     <ScrollToTop />
                     <Routes>
                             <Route path="/" element={<Landing />} />
+
                             <Route path="/login" element={<Login />} />
                             <Route path="/information" element={<Information />} />
                             <Route path="/account" element={<Account />} />
@@ -53,6 +56,7 @@ function App() {
                             {/* Admin Routes */}
                             <Route path="/admin/*" element={<AdminRoutes />} />
                     </Routes>
+                    </DevGate>
             </>
         );
 }
