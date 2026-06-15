@@ -509,6 +509,12 @@ export default function HomePage() {
             justify-content: flex-end;
             padding: 20px;
         }
+        
+        #how-it-works,
+        #contact-section {
+                scroll-margin-top: 73px;
+        }
+                
         .search-input { outline: none; background: transparent; border: none; width: 100%; }
         .hero-image-card { border-radius: 16px; overflow: hidden; }
         .search-bar-wrap { background: #1a1a1a; border-radius: 20px; }

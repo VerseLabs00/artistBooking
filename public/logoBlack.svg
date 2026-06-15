@@ -1,3 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50">
-  <text x="10" y="35" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#000000">Performa</text>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="np-dark" width="100%" viewBox="0 0 1200 180" xmlns="http://www.w3.org/2000/svg" style="display:block">
+    <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&amp;display=swap');</style>
+    <text x="14" y="148" font-family="'Playfair Display',Georgia,serif" font-weight="900" font-size="152" fill="#ffffff">Performa</text>
 </svg>

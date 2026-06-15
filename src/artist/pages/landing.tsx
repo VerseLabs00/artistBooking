@@ -591,6 +591,12 @@ export default function HomePage() {
             scroll-margin-top: 90px;
         }
 
+        #how-it-works,
+        #join-section,
+        #contact-section {
+            scroll-margin-top: 73px;
+        }
+
         /* Carousel Styles */
         .hide-scrollbar::-webkit-scrollbar {
             display: none;

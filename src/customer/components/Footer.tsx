@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import api from '../lib/api'
 
 const LOGO_PATH = "/assets/logo/logo-footer@3x.png"
 
@@ -162,6 +163,14 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 export default function Footer() {
   const [showContact, setShowContact] = useState(false)
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    message: ''
+  })
+  const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null)
 
   const handleContactClick = () => {
     setShowContact(true)
@@ -169,6 +178,25 @@ export default function Footer() {
     setTimeout(() => {
       document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 100)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setStatus(null)
+
+    try {
+      const response = await api.post('/contact', formData)
+      setStatus({ type: 'success', message: response.data.message })
+      setFormData({ first_name: '', last_name: '', email: '', message: '' })
+    } catch (err: any) {
+      setStatus({ 
+        type: 'error', 
+        message: err.response?.data?.message || 'Failed to send message. Please try again later.' 
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -242,32 +270,40 @@ export default function Footer() {
                         <div className="w-9 h-9 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">
                           <IconMail />
                         </div>
-                        <span>hello@performa.lk</span>
+                        <span>infoperforma.lk@gmail.com</span>
                       </div>
                       <div className="flex items-center gap-3 text-gray-400 text-sm">
                         <div className="w-9 h-9 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">
                           <IconPhone />
                         </div>
-                        <span>+94 77 123 4567</span>
+                        <span>+94 70 403 5236</span>
                       </div>
                       <div className="flex items-center gap-3 text-gray-400 text-sm">
                         <div className="w-9 h-9 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">
                           <IconLocation />
                         </div>
-                        <span>Colombo, Sri Lanka</span>
+                        <span>Kandy, Sri Lanka</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Right: Form */}
-                  <div className="bg-[#1a1a1a] rounded-2xl p-8 border border-[#2a2a2a]">
+                  <form onSubmit={handleSubmit} className="bg-[#1a1a1a] rounded-2xl p-8 border border-[#2a2a2a]">
                     <div className="flex flex-col gap-4">
+                      {status && (
+                        <div className={`p-4 rounded-xl text-sm font-semibold ${status.type === 'success' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                          {status.message}
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">First Name</label>
                           <input
                               type="text"
+                              required
                               placeholder="John"
+                              value={formData.first_name}
+                              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                               className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors"
                           />
                         </div>
@@ -275,7 +311,10 @@ export default function Footer() {
                           <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">Last Name</label>
                           <input
                               type="text"
+                              required
                               placeholder="Doe"
+                              value={formData.last_name}
+                              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                               className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors"
                           />
                         </div>
@@ -284,7 +323,10 @@ export default function Footer() {
                         <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">Email</label>
                         <input
                             type="email"
+                            required
                             placeholder="john@example.com"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors"
                         />
                       </div>
@@ -292,15 +334,22 @@ export default function Footer() {
                         <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">Message</label>
                         <textarea
                             rows={4}
+                            required
                             placeholder="How can we help you?"
+                            value={formData.message}
+                            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                             className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors resize-none"
                         />
                       </div>
-                      <button className="w-full bg-[#E8194B] hover:bg-[#c8133b] text-white font-bold text-sm py-3.5 rounded-xl transition-colors">
-                        Send Message
+                      <button 
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-[#E8194B] hover:bg-[#c8133b] text-white font-bold text-sm py-3.5 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {loading ? 'Sending...' : 'Send Message'}
                       </button>
                     </div>
-                  </div>
+                  </form>
 
                 </div>
               </div>

@@ -471,6 +471,12 @@ export default function ArtistHome() {
                     cursor: pointer;
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 }
+                
+                #how-it-works,
+                #contact-section {
+                    scroll-margin-top: 73px;
+                }
+                
                 .cat-card-modern:hover { transform: scale(1.03); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
                 .cat-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
                 .cat-card-modern:hover .cat-img { transform: scale(1.1); }

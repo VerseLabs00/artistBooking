@@ -37,8 +37,15 @@ async function fetchYouTubeTitle(ytId: string): Promise<string> {
     return data.title as string;
 }
 
-function MediaPreviewCard({ item }: { item: { id: string; url: string; media_type: string; is_external_link: boolean; title?: string | null } }) {
-    const [showVideo, setShowVideo] = useState(false);
+function MediaPreviewCard({ 
+    item, 
+    isActive, 
+    onActivate 
+}: { 
+    item: { id: string; url: string; media_type: string; is_external_link: boolean; title?: string | null };
+    isActive: boolean;
+    onActivate: () => void;
+}) {
     const [resolvedTitle, setResolvedTitle] = useState<string>(item.title || "");
 
     const ytId = getYouTubeId(item.url);
@@ -62,8 +69,8 @@ function MediaPreviewCard({ item }: { item: { id: string; url: string; media_typ
         return (
             <div className="flex flex-col h-full">
                 <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
-                    <div className="aspect-video w-full bg-black relative group cursor-pointer" onClick={() => setShowVideo(true)}>
-                        {!showVideo ? (
+                    <div className="aspect-video w-full bg-black relative group cursor-pointer" onClick={onActivate}>
+                        {!isActive ? (
                             <>
                                 <img
                                     src={`https://i.ytimg.com/vi/${ytId}/maxresdefault.jpg`}
@@ -181,6 +188,8 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
     const [hoverStar, setHoverStar] = useState(0);
     const [selectedStar, setSelectedStar] = useState(0);
     const [review, setReview] = useState("");
+
+    const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
 
     const { token, user } = useAuth();
 
@@ -546,7 +555,12 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                                     <h3 className="text-[24px] font-bold mt-10 mb-5">Audio & Video</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {mediaLinks.map((item) => (
-                                            <MediaPreviewCard key={item.id} item={item} />
+                                            <MediaPreviewCard 
+                                                key={item.id} 
+                                                item={item} 
+                                                isActive={activeMediaId === item.id}
+                                                onActivate={() => setActiveMediaId(item.id)}
+                                            />
                                         ))}
                                     </div>
                                 </>
