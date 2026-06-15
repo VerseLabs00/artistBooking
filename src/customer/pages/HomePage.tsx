@@ -259,11 +259,7 @@ export default function HomePage() {
     useEffect(() => {
         fetchProfile();
         getStats()
-            .then(data => {
-                if (data && typeof data === 'object' && Array.isArray(data.sample_avatars)) {
-                    setStats(data);
-                }
-            })
+            .then(data => setStats(data))
             .catch(() => {});
     }, []);
 
@@ -639,7 +635,7 @@ export default function HomePage() {
 
                                 <div className="flex items-center gap-3 mt-7">
                                     <div className="flex -space-x-2">
-                                        {((stats?.sample_avatars && Array.isArray(stats.sample_avatars) && stats.sample_avatars.length > 0) ? stats.sample_avatars : [
+                                        {(stats.sample_avatars.length > 0 ? stats.sample_avatars : [
                                             // "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
                                             // "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
                                             // "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=80",
@@ -650,7 +646,7 @@ export default function HomePage() {
                                         ))}
                                     </div>
                                     <p className="text-sm text-gray-200 font-500">
-                                        {(stats?.total_artists ?? 0) > 100 ? "100+" : (stats?.total_artists ?? 0)} artists already joined
+                                        {stats.total_artists > 100 ? "100+" : stats.total_artists} artists already joined
                                     </p>
                                 </div>
                             </div>

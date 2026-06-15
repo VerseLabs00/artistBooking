@@ -1,20 +1,25 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import stage from '../../../../public/bg-login.png'
+import artistImage from '../../../../public/person.png'
+import cover1 from '../../../../public/Cover1.png'
+import cover7 from '../../../../public/Cover7.jpg'
+import logo from '../../../../public/logoBlack.svg'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
 
 const carouselData = [
     {
-        image: '/person.png',
+        image: artistImage,
         text: "Join our community of world-class performers and showcase your talent to a global audience."
     },
     {
-        image: '/Cover1.png',
+        image: cover1,
         text: "Manage your bookings, track your performance, and grow your artistic career with ease."
     },
     {
-        image: '/Cover7.jpg',
+        image: cover7,
         text: "Connect with event organizers and secure high-quality gigs that match your unique style."
     }
 ]
@@ -138,7 +143,7 @@ export default function LoginPage() {
                 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
             `}</style>
             <div className="flex-grow flex items-center justify-center p-4">
-                <div className="relative overflow-hidden bg-white/90 backdrop-blur-xl border border-white/40 w-full max-w-4xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 lg:p-10">
+                <div className="relative overflow-hidden bg-white/90 backdrop-blur-xl border border-white/40 w-full max-w-4xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] grid grid-cols-1 lg:grid-cols-2 p-6 md:p-10">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none"></div>
                     <div className="pr-0 lg:pr-10 relative z-10">
                         <div className="flex items-center justify-between mb-10">
@@ -248,7 +253,8 @@ export default function LoginPage() {
                     <div className="flex items-center justify-center mt-10 lg:mt-0 relative z-10">
                         <div 
                             onMouseMove={handleMouseMove}
-                            className="relative w-full max-w-[280px] md:max-w-[320px] h-[450px] md:h-[520px] rounded-[40px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] hover:scale-105 transition-transform">
+                            className="relative w-full max-w-[280px] md:max-w-[320px] h-[450px] md:h-[520px] rounded-[40px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] hover:scale-105 transition-all duration-300 cursor-pointer"
+                        >
                             {carouselData.map((slide, index) => (
                                 <img
                                     key={index}
@@ -258,7 +264,7 @@ export default function LoginPage() {
                             ))}
                             {/*logo*/}
                             <div className="absolute top-[-40px] left-4 z-50 text-black text-xs">
-                                <img src="/logoBlack.svg" className="w-40 h-40" alt="Logo" />
+                                <img src={logo} className="w-40 h-40" alt="Logo" />
                             </div>
                             <div className="absolute bottom-10 left-6 right-6 text-white text-xs font-semibold leading-relaxed drop-shadow-lg">
                                 {carouselData[currentSlide].text}

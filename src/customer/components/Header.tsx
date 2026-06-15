@@ -32,7 +32,7 @@ export default function Header() {
               className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-gray-200 hover:ring-gray-400 transition-all"
             >
               <img 
-                src={(user as any)?.avatar_url || "/person.png"} 
+                src={user?.avatar_url || "/person.png"} 
                 alt="Profile" 
                 className="w-full h-full object-cover" 
               />
