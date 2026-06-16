@@ -1,10 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { Trash2, Check, X } from 'lucide-react'
 import {
   fetchArtists,
   verifyArtist,
+  deleteArtist,
   setFilter,
   setSearchQuery,
   selectFilteredArtists,
@@ -22,6 +24,22 @@ const filterTabs = [
   { label: 'Suspended', value: 'suspended' },
 ]
 
+function ConfirmModal({ open, title, message, confirmLabel, confirmClass, onConfirm, onCancel }) {
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-2xl shadow-2xl p-7 w-full max-w-sm mx-4 border border-gray-100">
+        <h3 className="text-base font-bold text-gray-900 mb-2">{title}</h3>
+        <p className="text-sm text-gray-500 mb-6">{message}</p>
+        <div className="flex gap-3 justify-end">
+          <button onClick={onCancel} className="btn-secondary px-5 py-2 text-sm">Cancel</button>
+          <button onClick={onConfirm} className={`${confirmClass} px-5 py-2 text-sm rounded-full font-semibold transition-all active:scale-95`}>{confirmLabel}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Artists() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -30,6 +48,9 @@ export default function Artists() {
   const searchQuery = useSelector(s => s.artists.searchQuery)
   const filtered = useSelector(selectFilteredArtists)
   const { loading, error } = useSelector(s => s.artists)
+
+  const [modal, setModal] = useState(null)
+  const [selectedArtist, setSelectedArtist] = useState(null)
 
   useEffect(() => {
     dispatch(fetchArtists())
@@ -48,6 +69,28 @@ export default function Artists() {
     } else {
       toast.error(result.payload || 'Action failed')
     }
+  }
+
+  const handleDelete = async () => {
+    if (!selectedArtist) return
+    const result = await dispatch(deleteArtist(selectedArtist.id))
+    if (deleteArtist.fulfilled.match(result)) {
+      toast.success(`${selectedArtist.name} deleted successfully.`)
+    } else {
+      toast.error(result.payload || 'Delete failed')
+    }
+    setModal(null)
+    setSelectedArtist(null)
+  }
+
+  const modalConfig = {
+    delete: { 
+      title: 'Delete Artist', 
+      message: `Are you sure you want to permanently delete ${selectedArtist?.name}? This will remove all their data and access to the platform.`, 
+      confirmLabel: 'Delete', 
+      confirmClass: 'bg-red-600 text-white hover:bg-red-700', 
+      onConfirm: handleDelete 
+    },
   }
 
   return (
@@ -87,7 +130,7 @@ export default function Artists() {
                   <th className="table-header text-left hidden md:table-cell">Bookings</th>
                   <th className="table-header text-left">Rating</th>
                   <th className="table-header text-left">Status</th>
-                  {/*<th className="table-header text-left">Actions</th>*/}
+                  <th className="table-header text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,21 +163,35 @@ export default function Artists() {
                       </td>
                       <td className="table-cell"><StatusBadge status={artist.status} /></td>
                       <td className="table-cell">
-                        {/*<div className="flex items-center gap-1 md:gap-2">*/}
-                        {/*  <button onClick={() => navigate(`/artists/${artist.id}`)} className="btn-secondary text-xs px-2 md:px-3 py-1.5">*/}
-                        {/*    Expand*/}
-                        {/*  </button>*/}
-                        {/*  {artist.status !== 'verified' && (*/}
-                        {/*    <button onClick={() => handleVerify(artist, 'approved')} className="btn-success text-xs px-2 md:px-3 py-1.5 hidden sm:inline-flex">*/}
-                        {/*      Approve*/}
-                        {/*    </button>*/}
-                        {/*  )}*/}
-                        {/*  {artist.status !== 'suspended' && (*/}
-                        {/*    <button onClick={() => handleVerify(artist, 'rejected')} className="btn-danger text-xs px-2 md:px-3 py-1.5 hidden sm:inline-flex">*/}
-                        {/*      Reject*/}
-                        {/*    </button>*/}
-                        {/*  )}*/}
-                        {/*</div>*/}
+                        <div className="flex items-center gap-1 md:gap-2">
+                          {artist.status !== 'verified' && (
+                            <button 
+                              onClick={() => handleVerify(artist, 'approved')} 
+                              className="p-1.5 text-gray-400 hover:text-green-600 transition-colors rounded-lg hover:bg-green-50"
+                              title="Approve Artist"
+                            >
+                              <Check size={16} />
+                            </button>
+                          )}
+                          
+                          {artist.status !== 'suspended' && (
+                            <button 
+                              onClick={() => handleVerify(artist, 'rejected')} 
+                              className="p-1.5 text-gray-400 hover:text-orange-600 transition-colors rounded-lg hover:bg-orange-50"
+                              title="Reject Artist"
+                            >
+                              <X size={16} />
+                            </button>
+                          )}
+
+                          <button 
+                            onClick={() => { setSelectedArtist(artist); setModal('delete'); }} 
+                            className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
+                            title="Delete Artist"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -150,6 +207,14 @@ export default function Artists() {
           </div>
         )}
       </div>
+
+      {modal && modalConfig[modal] && (
+        <ConfirmModal 
+          open={true} 
+          {...modalConfig[modal]} 
+          onCancel={() => { setModal(null); setSelectedArtist(null); }} 
+        />
+      )}
     </div>
   )
 }
