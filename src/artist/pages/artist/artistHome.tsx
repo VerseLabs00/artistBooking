@@ -41,6 +41,61 @@ interface Profile {
     full_name?: string;
 }
 
+interface Notification {
+    id: number;
+    title: string;
+    message: string;
+    type: string;
+    read: boolean;
+    time?: string;
+}
+
+// ── Status Notification Modal Component ─────────────────────────────────────
+function StatusNotificationModal({ 
+    notification, 
+    onClose 
+}: { 
+    notification: Notification; 
+    onClose: () => void 
+}) {
+    return (
+        <div 
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-6"
+            onClick={onClose}
+        >
+            <div 
+                className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 relative animate-slide-up"
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="flex flex-col items-center text-center">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 ${
+                        notification.title.includes('Approved') || notification.title.includes('Re-activated')
+                            ? 'bg-green-100 text-green-600'
+                            : 'bg-red-100 text-red-600'
+                    }`}>
+                        {notification.title.includes('Approved') || notification.title.includes('Re-activated') 
+                            ? <CheckCircle size={32} /> 
+                            : <Shield size={32} />
+                        }
+                    </div>
+                    
+                    <h3 className="text-2xl font-black text-gray-900 mb-3">{notification.title}</h3>
+                    <p className="text-gray-500 leading-relaxed mb-8">
+                        {notification.message}
+                    </p>
+                    
+                    <button 
+                        onClick={onClose}
+                        className="w-full btn-pink py-4 rounded-2xl font-bold text-lg"
+                    >
+                        Got it, thanks!
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ── FIX: Added CategoryData interface (was missing in ArtistHome) ─────────────
 interface CategoryData {
     name: string;
@@ -239,6 +294,9 @@ export default function ArtistHome() {
     const [browseCategories, setBrowseCategories] = useState<CategoryData[]>(ALL_CATEGORIES_DATA);
     const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(true);
 
+    const [unreadNotifications, setUnreadNotifications] = useState<Notification[]>([]);
+    const [activeNotification, setActiveNotification] = useState<Notification | null>(null);
+
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
     const [isClosingProfile, setIsClosingProfile] = useState(false);
@@ -254,16 +312,17 @@ export default function ArtistHome() {
 
     // Prevent body scroll when overlay is open
     useEffect(() => {
-        if (selectedArtistId) {
+        if (selectedArtistId || activeNotification) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
         }
         return () => { document.body.style.overflow = 'unset'; };
-    }, [selectedArtistId]);
+    }, [selectedArtistId, activeNotification]);
 
     useEffect(() => {
         fetchProfile();
+        fetchNotifications();
 
         getStats()
             .then(data => {
@@ -302,6 +361,34 @@ export default function ArtistHome() {
             .catch(() => setBrowseCategories(ALL_CATEGORIES_DATA))
             .finally(() => setBrowseCategoriesLoading(false));
     }, []);
+
+    const fetchNotifications = async () => {
+        try {
+            const { data } = await api.get("/notifications");
+            const unread = data.filter((n: any) => !n.read);
+            setUnreadNotifications(unread);
+            
+            // Show the first unread status_change notification as a popup
+            const statusChange = unread.find((n: any) => n.type === 'status_change');
+            if (statusChange) {
+                setActiveNotification(statusChange);
+            }
+        } catch (err) {
+            console.error("Failed to load notifications", err);
+        }
+    };
+
+    const handleDismissNotification = async () => {
+        if (!activeNotification) return;
+        try {
+            await api.put(`/notifications/${activeNotification.id}/read`);
+            setActiveNotification(null);
+            setUnreadNotifications(prev => prev.filter(n => n.id !== activeNotification.id));
+        } catch (err) {
+            console.error("Failed to mark notification as read", err);
+            setActiveNotification(null);
+        }
+    };
 
     const fetchProfile = async () => {
         try {
@@ -949,6 +1036,14 @@ export default function ArtistHome() {
 
                 <Footer />
             </div>
+
+            {/* Status Change Notification Popup */}
+            {activeNotification && (
+                <StatusNotificationModal 
+                    notification={activeNotification} 
+                    onClose={handleDismissNotification} 
+                />
+            )}
         </div>
     );
 }
