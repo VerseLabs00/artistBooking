@@ -12,6 +12,28 @@ const Talent: React.FC = () => {
     const [error, setError] = useState("");
     const fileRef = useRef<HTMLInputElement>(null);
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] || null;
+        if (file) {
+            if (file.size > 50 * 1024 * 1024) {
+                setError(`File "${file.name}" exceeds the maximum size of 50MB.`);
+                setMediaFile(null);
+                if (fileRef.current) fileRef.current.value = "";
+                return;
+            }
+            const allowedExtensions = ['mp4', 'mov', 'avi', 'jpg', 'jpeg', 'png'];
+            const extension = file.name.split('.').pop()?.toLowerCase();
+            if (!extension || !allowedExtensions.includes(extension)) {
+                setError(`File "${file.name}" has an unsupported format. Allowed formats: MP4, MOV, AVI, JPG, PNG`);
+                setMediaFile(null);
+                if (fileRef.current) fileRef.current.value = "";
+                return;
+            }
+        }
+        setMediaFile(file);
+        setError("");
+    };
+
     const updateLink = (i: number, val: string) => {
         const copy = [...links];
         copy[i] = val;
@@ -116,7 +138,7 @@ const Talent: React.FC = () => {
                             <p className="text-xs text-gray-400">MP4, MOV, AVI Max 50MB</p>
                         </div>
                         <input ref={fileRef} type="file" accept=".mp4,.mov,.avi,.jpg,.jpeg,.png" className="hidden"
-                            onChange={e => setMediaFile(e.target.files?.[0] || null)} />
+                            onChange={handleFileChange} />
 
                         <div className="text-center text-xs text-gray-400 mb-4">OR PASTE A LINK</div>
 

@@ -21,6 +21,74 @@ const Verification: React.FC = () => {
     const backRef = useRef<HTMLInputElement>(null);
     const selfieRef = useRef<HTMLInputElement>(null);
 
+    const validateFile = (file: File | null, maxSizeMB: number, allowedTypes: string[]): string | null => {
+        if (!file) return null;
+        
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        const mimeType = file.type;
+        
+        const isAllowedType = allowedTypes.some(type => {
+            if (type.startsWith('.')) {
+                return extension === type.slice(1);
+            }
+            return mimeType === type || mimeType.startsWith(type.replace('*', ''));
+        });
+
+        if (!isAllowedType) {
+            return `File "${file.name}" has an unsupported format. Allowed formats: ${allowedTypes.join(', ').toUpperCase().replace(/\./g, '')}`;
+        }
+        
+        if (file.size > maxSizeMB * 1024 * 1024) {
+            return `File "${file.name}" exceeds the maximum size of ${maxSizeMB}MB.`;
+        }
+        return null;
+    };
+
+    const handleFrontChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] || null;
+        if (file) {
+            const err = validateFile(file, 10, ['.jpg', '.jpeg', '.png', '.pdf']);
+            if (err) {
+                setError(err);
+                setFrontFile(null);
+                if (frontRef.current) frontRef.current.value = "";
+                return;
+            }
+        }
+        setFrontFile(file);
+        setError("");
+    };
+
+    const handleBackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] || null;
+        if (file) {
+            const err = validateFile(file, 10, ['.jpg', '.jpeg', '.png', '.pdf']);
+            if (err) {
+                setError(err);
+                setBackFile(null);
+                if (backRef.current) backRef.current.value = "";
+                return;
+            }
+        }
+        setBackFile(file);
+        setError("");
+    };
+
+    const handleSelfieChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] || null;
+        if (file) {
+            const err = validateFile(file, 10, ['.jpg', '.jpeg', '.png']);
+            if (err) {
+                setError(err);
+                setSelfieFile(null);
+                if (selfieRef.current) selfieRef.current.value = "";
+                return;
+            }
+        }
+        setSelfieFile(file);
+        setError("");
+    };
+
     const handleContinue = async () => {
         setError("");
         if (!frontFile) { setError("Please upload the front side of your document."); return; }
@@ -127,7 +195,7 @@ const Verification: React.FC = () => {
                                     <p className="text-sm">{frontFile ? "Change front" : "Upload front"}</p>
                                     <p className="text-xs text-gray-400">JPG, PNG or PDF</p>
                                 </div>
-                                <input ref={frontRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={e => setFrontFile(e.target.files?.[0] || null)} />
+                                <input ref={frontRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={handleFrontChange} />
                                 <FileLabel file={frontFile} />
                             </div>
                             <div>
@@ -138,7 +206,7 @@ const Verification: React.FC = () => {
                                     <p className="text-sm">{backFile ? "Change back" : "Upload back"}</p>
                                     <p className="text-xs text-gray-400">JPG, PNG or PDF</p>
                                 </div>
-                                <input ref={backRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={e => setBackFile(e.target.files?.[0] || null)} />
+                                <input ref={backRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={handleBackChange} />
                                 <FileLabel file={backFile} />
                             </div>
                         </div>
@@ -157,7 +225,7 @@ const Verification: React.FC = () => {
                                 </div>
                                 <Upload className="w-5 h-5 text-red-500" />
                             </div>
-                            <input ref={selfieRef} type="file" accept=".jpg,.jpeg,.png" className="hidden" onChange={e => setSelfieFile(e.target.files?.[0] || null)} />
+                            <input ref={selfieRef} type="file" accept=".jpg,.jpeg,.png" className="hidden" onChange={handleSelfieChange} />
                         </div>
 
                         {/* Agreement */}
