@@ -232,9 +232,10 @@ export default function Footer() {
                 <div className="flex justify-center mt-12">
                   <button
                       onClick={handleContactClick}
-                      className="inline-flex items-center gap-3 bg-[#E8194B] hover:bg-[#c8133b] text-white font-bold text-sm px-7 py-4 rounded-xl transition-colors duration-200"
+                      className="inline-flex items-center justify-center gap-2 sm:gap-3 bg-[#E8194B] hover:bg-[#c8133b] text-white font-bold text-xs sm:text-sm px-5 sm:px-7 py-3.5 sm:py-4 rounded-xl transition-colors duration-200 w-full sm:w-auto"
                   >
-                    Still have a question? Contact us
+                    <span className="sm:hidden">Contact us</span>
+                    <span className="hidden sm:inline">Still have a question? Contact us</span>
                     <IconArrowRight />
                   </button>
                 </div>

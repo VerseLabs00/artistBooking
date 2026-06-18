@@ -289,24 +289,27 @@ export default function CustomerAccount() {
       )}
 
       {/* NAVBAR */}
-      <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
-        <Link to="/" className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-10 w-auto object-contain" />
+      <nav className="w-full flex items-center justify-between px-4 sm:px-6 md:px-12 py-3 sm:py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
+        <Link to="/" className="flex items-center shrink-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-8 sm:h-10 w-auto object-contain" />
         </Link>
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/home')} className="text-gray-600 hover:text-black transition-colors text-sm font-semibold">Back to Discovery</button>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <button onClick={() => navigate('/home')} className="text-gray-600 hover:text-black transition-colors text-xs sm:text-sm font-semibold whitespace-nowrap">
+            <span className="hidden sm:inline">Back to Discovery</span>
+            <span className="sm:hidden">Back</span>
+          </button>
           {/*<div className="w-10 h-10 rounded-full bg-pink flex items-center justify-center text-white font-bold">*/}
           {/*  {user?.name?.[0] || 'C'}*/}
           {/*</div>*/}
         </div>
       </nav>
 
-      <div className="flex-grow max-w-7xl mx-auto w-full px-4 md:px-8 py-10">
-        <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex-grow max-w-7xl mx-auto w-full px-3 sm:px-4 md:px-8 py-6 sm:py-10">
+        <div className="flex flex-col md:flex-row gap-6 sm:gap-8">
           
           {/* SIDEBAR */}
           <aside className="w-full md:w-64 flex-shrink-0">
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sticky top-24">
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 p-4 sm:p-6 md:sticky md:top-24">
               <div className="text-center mb-8">
                 <div className="relative w-24 h-24 mx-auto mb-4 group">
                   <div className="w-24 h-24 rounded-full bg-pink/10 overflow-hidden flex items-center justify-center text-pink border-2 border-pink/20">

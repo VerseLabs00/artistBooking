@@ -336,27 +336,37 @@ export default function BookingModal({ onClose, artistProfileId, artistName, sta
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-red-900/20 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative bg-[#f2f2f2] rounded-2xl flex flex-col md:flex-row w-full max-w-[95vw] md:max-w-[880px] overflow-hidden shadow-2xl min-h-0 md:min-h-[500px] max-h-[95vh]">
+      <div className="relative bg-[#f2f2f2] rounded-2xl flex flex-col md:flex-row w-full max-w-[95vw] md:max-w-[880px] mx-2 sm:mx-0 overflow-hidden shadow-2xl min-h-0 md:min-h-[500px] max-h-[95vh]">
 
-        {/* Left panel */}
-        <div className="w-full md:w-64 flex-shrink-0 bg-[#ebebeb] px-4 sm:px-6 py-4 sm:py-6 flex flex-col">
-          <StepIndicator current={step} />
-
-          <div className="flex flex-col items-center text-center flex-1 justify-center">
-            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-              <span className="text-2xl font-bold text-red-600">{step}</span>
-            </div>
-            <h3 className="text-base font-bold text-gray-900 mt-3">{info.title}</h3>
-            <p className="text-xs text-gray-500 mt-2 leading-relaxed">{info.desc}</p>
+        {/* Left panel — compact on mobile */}
+        <div className="w-full md:w-64 flex-shrink-0 bg-[#ebebeb] px-4 sm:px-6 py-3 sm:py-6 flex flex-row md:flex-col items-center md:items-stretch gap-4 md:gap-0">
+          <div className="hidden md:block">
+            <StepIndicator current={step} />
           </div>
 
-          <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-700 mt-6 text-center w-full transition-colors">
+          <div className="flex flex-row md:flex-col items-center text-center flex-1 justify-center gap-3 md:gap-0 min-w-0">
+            <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-red-100 flex items-center justify-center md:mb-4 shrink-0">
+              <span className="text-lg md:text-2xl font-bold text-red-600">{step}</span>
+            </div>
+            <div className="text-left md:text-center min-w-0">
+              <h3 className="text-sm md:text-base font-bold text-gray-900 md:mt-3 truncate">{info.title}</h3>
+              <p className="text-[11px] md:text-xs text-gray-500 mt-1 md:mt-2 leading-relaxed line-clamp-2 md:line-clamp-none">{info.desc}</p>
+            </div>
+          </div>
+
+          <button onClick={onClose} className="hidden md:block text-sm text-gray-500 hover:text-gray-700 mt-6 text-center w-full transition-colors">
             Cancel
           </button>
         </div>
 
         {/* Right panel */}
-        <div className="flex-1 bg-white px-4 sm:px-8 py-4 sm:py-6 overflow-y-auto">
+        <div className="flex-1 bg-white px-4 sm:px-8 py-4 sm:py-6 overflow-y-auto relative">
+          <button
+            onClick={onClose}
+            className="md:hidden absolute top-3 right-3 text-xs text-gray-500 hover:text-gray-700 font-semibold z-10"
+          >
+            Cancel
+          </button>
           {step === 1 && (
             <Step1
               selectedDay={selectedDay} setSelectedDay={setSelectedDay}

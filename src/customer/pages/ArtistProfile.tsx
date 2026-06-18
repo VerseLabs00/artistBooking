@@ -325,7 +325,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
             {onClose && (
                 <button
                     onClick={onClose}
-                    className="absolute top-6 right-6 z-[110] w-10 h-10 bg-black/10 hover:bg-black/20 backdrop-blur-xl rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
+                    className="absolute top-4 right-4 sm:top-6 sm:right-6 z-[110] w-9 h-9 sm:w-10 sm:h-10 bg-black/10 hover:bg-black/20 backdrop-blur-xl rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
                 >
                     <X size={20} className="text-white group-hover:rotate-90 transition-transform duration-300" />
                 </button>
@@ -334,33 +334,33 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
 
             <div>
                 {/* HERO */}
-                <div className="relative h-[220px] w-full overflow-visible">
+                <div className="relative h-[160px] sm:h-[200px] md:h-[220px] w-full overflow-visible">
                     <img
                         src={artist.cover_url || "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e"}
-                        className="w-full h-[220px] object-cover"
+                        className="w-full h-full object-cover"
                         alt="cover"
                     />
-                    <div className="absolute inset-0 h-[220px] bg-black/20" />
+                    <div className="absolute inset-0 bg-black/20" />
 
                     {/* AVATAR */}
-                    <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+200px)] lg:translate-x-0 z-30">
+                    <div className="absolute -bottom-12 sm:-bottom-16 left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+200px)] lg:translate-x-0 z-30">
                         <img
                             src={artist.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"}
-                            className="w-32 h-32 rounded-full border-[5px] border-white object-cover shadow-lg"
+                            className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[4px] sm:border-[5px] border-white object-cover shadow-lg"
                             alt="avatar"
                         />
                     </div>
                 </div>
 
                 {/* MAIN WRAPPER */}
-                <div className="max-w-6xl mx-auto px-4 mt-4 relative z-20 pb-20">
+                <div className="max-w-6xl mx-auto px-3 sm:px-4 mt-2 sm:mt-4 relative z-20 pb-12 sm:pb-20">
                     <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
 
                         {/* LEFT PANEL */}
                         <div className="space-y-5">
                             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                                <div className="px-6 pb-7 text-center pt-20">
-                                    <h1 className="text-[42px] font-bold text-black leading-none mt-4">
+                                <div className="px-4 sm:px-6 pb-5 sm:pb-7 text-center pt-16 sm:pt-20">
+                                    <h1 className="text-2xl sm:text-3xl md:text-[42px] font-bold text-black leading-none mt-2 sm:mt-4">
                                         {artist.stage_name}
                                     </h1>
 
@@ -456,11 +456,11 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                         </div>
 
                         {/* RIGHT PANEL */}
-                        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+                        <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm">
                             {/* TOP SECTION */}
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <h2 className="text-[26px] font-bold text-gray-900">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                <div className="min-w-0">
+                                    <h2 className="text-xl sm:text-2xl md:text-[26px] font-bold text-gray-900">
                                         Overview
                                     </h2>
                                     <div className="flex flex-wrap gap-5 mt-2 text-[13px] text-gray-500 font-sans">

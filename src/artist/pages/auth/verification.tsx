@@ -56,18 +56,18 @@ const Verification: React.FC = () => {
         file ? <p className="text-xs text-green-600 mt-1 truncate">{file.name}</p> : null;
 
     return (
-        <div className="h-screen flex items-center justify-center p-6 overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${stage})` }}>
-            <div className="relative w-full max-w-6xl h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden">
-                <div onClick={() => navigate("/information")} className="absolute top-6 right-8 text-sm font-medium cursor-pointer flex items-center gap-2 z-20">
+        <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 overflow-x-hidden overflow-y-auto bg-cover bg-center" style={{ backgroundImage: `url(${stage})` }}>
+            <div className="relative w-full max-w-6xl min-h-0 max-h-none lg:max-h-[90vh] lg:h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden my-4 lg:my-0">
+                <div onClick={() => navigate("/information")} className="absolute top-4 right-4 sm:top-6 sm:right-8 text-xs sm:text-sm font-medium cursor-pointer flex items-center gap-2 z-20">
                     ← Back
                 </div>
-                <div className="grid grid-cols-2 h-full">
+                <div className="grid grid-cols-1 lg:grid-cols-2 h-full overflow-y-auto lg:overflow-hidden">
                     {/* LEFT */}
-                    <div className="relative p-16 flex flex-col justify-center h-full">
+                    <div className="relative p-6 sm:p-10 lg:p-16 flex flex-col justify-center lg:h-full">
                         <div className="absolute inset-0 bg-white"></div>
                         <div className="relative z-10">
-                            <h1 className="text-5xl font-semibold leading-tight">Verify your<br />Identity</h1>
-                            <p className="mt-6 max-w-md leading-relaxed">We verify all artists to keep the platform safe and trusted. Your documents are fully encrypted and never shared with third parties.</p>
+                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight">Verify your<br />Identity</h1>
+                            <p className="mt-4 sm:mt-6 max-w-md text-sm sm:text-base leading-relaxed">We verify all artists to keep the platform safe and trusted. Your documents are fully encrypted and never shared with third parties.</p>
                             <div className="flex items-center gap-4 mt-8">
                                 <div className="flex -space-x-3">
                                     <img src="https://randomuser.me/api/portraits/men/32.jpg" className="w-10 h-10 rounded-full border-2 border-white" />
@@ -83,7 +83,7 @@ const Verification: React.FC = () => {
                     </div>
 
                     {/* RIGHT */}
-                    <div className="p-16 h-full overflow-y-auto scroll-smooth">
+                    <div className="p-4 sm:p-8 lg:p-16 h-full overflow-y-auto scroll-smooth">
                         <div className="flex items-center gap-6 text-sm mb-8">
                             <div className="flex items-center gap-2 text-gray-400 font-medium">
                                 <div className="w-5 h-5 rounded-full border border-gray-400 flex items-center justify-center text-xs">✓</div>

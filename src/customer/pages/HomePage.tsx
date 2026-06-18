@@ -566,12 +566,25 @@ export default function HomePage() {
         .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0, 0, 0.2, 1) forwards; }
         .animate-slide-down { animation: slideDown 0.5s cubic-bezier(0, 0, 0.2, 1) forwards; }
         .blur-bg { filter: blur(8px); transition: filter 0.5s ease; }
+
+        @media (max-width: 640px) {
+            .cat-overlay { padding: 12px; }
+            .cat-overlay h3 { font-size: 14px; }
+            section[id] { scroll-margin-top: 72px; }
+            .tag-pill { padding: 5px 10px; font-size: 11px; gap: 4px; }
+            .search-bar-wrap { padding: 12px !important; border-radius: 16px; }
+            .carousel-btn { width: 34px; height: 34px; }
+            .checklist-item { font-size: 12px; margin-bottom: 6px; }
+        }
+        @media (max-width: 768px) {
+            .section-title { font-size: 20px; }
+        }
       `}</style>
 
             {/* Profile Overlay */}
             {selectedArtistId && (
                 <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity duration-500 ${isClosingProfile ? 'opacity-0' : 'opacity-100'}`}>
-                    <div className={`max-w-5xl w-full h-full bg-white shadow-[0_0_60px_rgba(0,0,0,0.3)] overflow-hidden ${isClosingProfile ? 'animate-slide-down' : 'animate-slide-up'}`}>
+                    <div className={`max-w-5xl w-full h-full md:h-[95vh] md:max-h-[900px] md:rounded-2xl md:my-4 bg-white shadow-[0_0_60px_rgba(0,0,0,0.3)] overflow-hidden ${isClosingProfile ? 'animate-slide-down' : 'animate-slide-up'}`}>
                         <ArtistProfile id={selectedArtistId} onClose={handleCloseProfile} />
                     </div>
                 </div>
@@ -638,7 +651,7 @@ export default function HomePage() {
 
                 {/* HERO SECTION */}
                 <section
-                    className="relative w-full overflow-hidden bg-cover bg-center py-24 px-6 md:px-12 lg:px-20"
+                    className="relative w-full overflow-hidden bg-cover bg-center py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 lg:px-20"
                     style={{ backgroundImage: "url('/Cover7.jpg')" }}
                 >
                     <div className="absolute inset-0 bg-black/40 z-0" />
@@ -669,8 +682,8 @@ export default function HomePage() {
                                             <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
                                         ))}
                                     </div>
-                                    <p className="text-sm text-gray-200 font-500">
-                                        {(stats?.total_artists ?? 0) > 100 ? "100+" : (stats?.total_artists ?? 0)} artists already joined
+                                    <p className="text-xs sm:text-sm text-gray-200 font-500 truncate max-w-[200px] sm:max-w-none">
+                                        {(stats?.total_artists ?? 0) > 100 ? "100+" : (stats?.total_artists ?? 0)} artists joined
                                     </p>
                                 </div>
                             </div>
@@ -681,7 +694,7 @@ export default function HomePage() {
                 {/* ══════════════════════════════════════════════════
           BROWSE CATEGORIES
       ══════════════════════════════════════════════════ */}
-                <section id="categories-section" className="w-full px-6 md:px-12 lg:px-20 mt-16">
+                <section id="categories-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 mt-10 sm:mt-16">
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="section-title">Browse Categories</h2>
@@ -722,7 +735,7 @@ export default function HomePage() {
                 </section>
 
                 {/* POPULAR ARTISTS */}
-                <section id="artists-section" className="w-full px-6 md:px-12 lg:px-20 mt-14 overflow-hidden">
+                <section id="artists-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 mt-10 sm:mt-14 overflow-hidden">
                     <div className="max-w-7xl mx-auto relative group">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="section-title">
@@ -735,7 +748,7 @@ export default function HomePage() {
                         </div>
 
                         <form
-                            className="search-bar-wrap p-5 mb-10"
+                            className="search-bar-wrap p-3 sm:p-5 mb-6 sm:mb-10"
                             onSubmit={e => {
                                 e.preventDefault();
                                 runSearch();
@@ -794,7 +807,7 @@ export default function HomePage() {
                                         />
                                     </div>
                                 </div>
-                                <button type="submit" className="btn-pink font-bold text-sm px-8 py-4">Search</button>
+                                <button type="submit" className="btn-pink font-bold text-sm px-6 sm:px-8 py-3 sm:py-4 w-full md:w-auto flex-shrink-0 md:rounded-r-xl">Search</button>
                             </div>
 
                             <div className="flex flex-wrap gap-2 mt-4 px-1">
@@ -843,12 +856,12 @@ export default function HomePage() {
                 </section>
 
                 {/* HOW IT WORKS */}
-                <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14" style={{ background: '#111' }}>
+                <section id="how-it-works" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 mt-10 sm:mt-16 py-10 sm:py-14" style={{ background: '#111' }}>
                     <div className="max-w-5xl mx-auto">
-                        <h2 className="text-center text-white font-bold text-4xl md:text-5xl mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+                        <h2 className="text-center text-white font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3" style={{ fontFamily: 'Georgia, serif' }}>
                             Book an Artist in 4 Simple Steps
                         </h2>
-                        <p className="text-center text-gray-400 text-sm mb-16">
+                        <p className="text-center text-gray-400 text-xs sm:text-sm mb-10 sm:mb-16 px-2">
                             From search to confirmed booking in minutes — not days.
                         </p>
 
@@ -880,7 +893,7 @@ export default function HomePage() {
                 </section>
 
                 {/* CTA SECTION */}
-                <section id="join-section" className="dark-section w-full px-6 md:px-12 lg:px-20 py-14" style={{ background: '#0a0a0a' }}>
+                <section id="join-section" className="dark-section w-full px-4 sm:px-6 md:px-12 lg:px-20 py-10 sm:py-14" style={{ background: '#0a0a0a' }}>
                     <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                         <div>
                             <p className="pink-text text-xs font-bold uppercase tracking-widest mb-2">For Customers</p>
@@ -890,13 +903,13 @@ export default function HomePage() {
                             <p className="text-gray-400 text-sm leading-relaxed mb-6">
                                 Book the best local talent for weddings, parties, corporate events and more.
                             </p>
-                            <button onClick={() => scrollToSection('categories-section')} className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm">
+                            <button onClick={() => scrollToSection('categories-section')} className="btn-pink flex items-center justify-center gap-2 px-5 sm:px-6 py-3 rounded-xl font-bold text-sm w-full sm:w-auto">
                                 Find Artists <ArrowRight size={15} />
                             </button>
                         </div>
 
-                        <div className="relative flex justify-center">
-                            <div className="relative rounded-2xl overflow-hidden" style={{ height: '260px', width: '100%' }}>
+                        <div className="relative flex flex-col items-stretch sm:block">
+                            <div className="relative rounded-2xl overflow-hidden w-full" style={{ height: '220px' }}>
                                 <img
                                     src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80"
                                     className="w-full h-full object-cover object-top"
@@ -904,8 +917,8 @@ export default function HomePage() {
                                     style={{ filter: 'brightness(0.75)' }}
                                 />
                             </div>
-                            <div className="cta-card absolute bottom-4 right-4 p-4 min-w-[180px]">
-                                <p className="text-white font-800 text-sm mb-3">Why Book With Us</p>
+                            <div className="cta-card static sm:absolute sm:bottom-4 sm:right-4 p-3 sm:p-4 w-full sm:min-w-[180px] sm:w-auto mt-3 sm:mt-0">
+                                <p className="text-white font-800 text-sm mb-2 sm:mb-3">Why Book With Us</p>
                                 {['Verified Artists', 'Secure Payments', 'Easy Booking', '24/7 Support'].map(item => (
                                     <div key={item} className="checklist-item">
                                         <CheckCircle size={15} style={{ color: '#E8194B', flexShrink: 0 }} />

@@ -71,7 +71,7 @@ export default function SignUpPage() {
           @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
       `}</style>
       <div className="flex-grow flex items-center justify-center p-4">
-        <div className="relative overflow-hidden bg-white/90 backdrop-blur-xl border border-white/40 w-full max-w-4xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] grid grid-cols-1 lg:grid-cols-2 p-6 md:p-10">
+        <div className="relative overflow-hidden bg-white/90 backdrop-blur-xl border border-white/40 w-full max-w-4xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] grid grid-cols-1 lg:grid-cols-2 p-4 sm:p-6 md:p-10">
           <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none"></div>
           <div className="pr-0 lg:pr-10 relative z-10">
             <div className="flex items-center justify-between mb-10">
@@ -145,7 +145,7 @@ export default function SignUpPage() {
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-center mt-10 lg:mt-0 relative z-10">
+          <div className="hidden lg:flex items-center justify-center mt-10 lg:mt-0 relative z-10">
             <div 
               onMouseMove={handleMouseMove}
               className="relative w-full max-w-[280px] md:max-w-[320px] h-[450px] md:h-[520px] rounded-[40px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] hover:scale-105 transition-all duration-300 cursor-pointer"
