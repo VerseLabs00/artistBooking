@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
-const DEV_USERNAME = "performa";
-const DEV_PASSWORD = "20000720";
+const DEV_USERNAME = "sangeeth";
+const DEV_PASSWORD = "12348765";
 const SESSION_KEY = "performa_dev_auth";
 
 interface DevGateProps {
