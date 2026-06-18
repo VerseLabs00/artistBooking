@@ -215,12 +215,12 @@ export default function Footer() {
           >
 
             {/* ── Panel 1: FAQ ─────────────────────────────── */}
-            <div className="w-1/2 bg-white px-16 py-20" style={{ flexShrink: 0 }}>
+            <div className="w-1/2 bg-white px-4 sm:px-8 md:px-12 lg:px-16 py-12 sm:py-16 md:py-20" style={{ flexShrink: 0 }}>
               <div className="max-w-3xl mx-auto">
-                <h2 className="text-[42px] font-black text-gray-900 text-center leading-tight mb-3" style={{ letterSpacing: '-0.5px' }}>
+                <h2 className="text-2xl sm:text-3xl md:text-[42px] font-black text-gray-900 text-center leading-tight mb-3" style={{ letterSpacing: '-0.5px' }}>
                   Frequently Asked Questions
                 </h2>
-                <p className="text-center text-gray-400 text-sm mb-14">Got questions? We have answers.</p>
+                <p className="text-center text-gray-400 text-sm mb-8 sm:mb-14">Got questions? We have answers.</p>
 
                 <div className="border-t border-gray-200">
                   {faqs.map((f, i) => (
@@ -242,7 +242,7 @@ export default function Footer() {
             </div>
 
             {/* ── Panel 2: Contact ─────────────────────────── */}
-            <div className="w-1/2 bg-[#111] px-16 py-16" style={{ flexShrink: 0 }}>
+            <div className="w-1/2 bg-[#111] px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16" style={{ flexShrink: 0 }}>
               <div className="max-w-none w-full">
 
                 {/* Back button */}
@@ -254,7 +254,7 @@ export default function Footer() {
                   Back to FAQ
                 </button>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
 
                   {/* Left: Info */}
                   <div>
@@ -288,14 +288,14 @@ export default function Footer() {
                   </div>
 
                   {/* Right: Form */}
-                  <form onSubmit={handleSubmit} className="bg-[#1a1a1a] rounded-2xl p-8 border border-[#2a2a2a]">
+                  <form onSubmit={handleSubmit} className="bg-[#1a1a1a] rounded-2xl p-4 sm:p-6 md:p-8 border border-[#2a2a2a]">
                     <div className="flex flex-col gap-4">
                       {status && (
                         <div className={`p-4 rounded-xl text-sm font-semibold ${status.type === 'success' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
                           {status.message}
                         </div>
                       )}
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 block">First Name</label>
                           <input
@@ -361,9 +361,9 @@ export default function Footer() {
         {/* ══════════════════════════════════════════════════
         FOOTER
       ══════════════════════════════════════════════════ */}
-        <footer className="bg-[#0a0a0a] text-white pt-16 pb-8">
-          <div className="w-full px-16">
-            <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr] gap-10 pb-14">
+        <footer className="bg-[#0a0a0a] text-white pt-10 sm:pt-16 pb-8">
+          <div className="w-full px-4 sm:px-8 md:px-12 lg:px-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 pb-10 sm:pb-14">
 
               {/* Brand */}
               <div>
@@ -444,9 +444,9 @@ export default function Footer() {
             </div>
 
             {/* Bottom bar */}
-            <div className="border-t border-[#1e1e1e] pt-6 flex items-center justify-between">
-              <p className="text-[#4a4a4a] text-xs">© 2025 Performa. All rights reserved.</p>
-              <div className="flex gap-7">
+            <div className="border-t border-[#1e1e1e] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-[#4a4a4a] text-xs text-center sm:text-left">© 2025 Performa. All rights reserved.</p>
+              <div className="flex flex-wrap justify-center gap-4 sm:gap-7">
                 {['Terms', 'Privacy Policy', 'Contact'].map(l => (
                     <a key={l} href="#" className="text-[#5a5a5a] text-sm hover:text-white transition-colors">{l}</a>
                 ))}

@@ -336,10 +336,10 @@ export default function BookingModal({ onClose, artistProfileId, artistName, sta
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-red-900/20 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative bg-[#f2f2f2] rounded-2xl flex w-[880px] max-w-[95vw] overflow-hidden shadow-2xl min-h-[500px]">
+      <div className="relative bg-[#f2f2f2] rounded-2xl flex flex-col md:flex-row w-full max-w-[95vw] md:max-w-[880px] overflow-hidden shadow-2xl min-h-0 md:min-h-[500px] max-h-[95vh]">
 
         {/* Left panel */}
-        <div className="w-64 flex-shrink-0 bg-[#ebebeb] px-6 py-6 flex flex-col">
+        <div className="w-full md:w-64 flex-shrink-0 bg-[#ebebeb] px-4 sm:px-6 py-4 sm:py-6 flex flex-col">
           <StepIndicator current={step} />
 
           <div className="flex flex-col items-center text-center flex-1 justify-center">
@@ -356,7 +356,7 @@ export default function BookingModal({ onClose, artistProfileId, artistName, sta
         </div>
 
         {/* Right panel */}
-        <div className="flex-1 bg-white px-8 py-6">
+        <div className="flex-1 bg-white px-4 sm:px-8 py-4 sm:py-6 overflow-y-auto">
           {step === 1 && (
             <Step1
               selectedDay={selectedDay} setSelectedDay={setSelectedDay}

@@ -239,57 +239,67 @@ export default function EditProfile() {
                     transition: all 0.2s; outline: none; background: #fff;
                 }
                 .input-field:focus { border-color: #DB0000; box-shadow: 0 0 0 4px rgba(219,0,0,0.1); }
-                .section-card { background: #fff; border-radius: 24px; padding: 40px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01); }
+                .section-card { background: #fff; border-radius: 24px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01); }
+                @media (min-width: 640px) {
+                    .section-card { padding: 32px; }
+                }
+                @media (min-width: 1024px) {
+                    .section-card { padding: 40px; }
+                }
                 .sidebar-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
                 .sidebar-btn:hover { background: #F1F5F9; transform: translateX(4px); }
                 .sidebar-active { background: #fff !important; color: #DB0000 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-                .sticky-save-bar { position: fixed; bottom: 32px; left: 50%; transform: translateX(-15%); z-index: 50; width: auto; min-width: 400px; }
+                .sticky-save-bar { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 50; width: calc(100% - 32px); max-width: 400px; }
+                @media (min-width: 640px) {
+                    .sticky-save-bar { bottom: 32px; width: auto; min-width: 320px; }
+                }
             `}</style>
 
             {/* TOP HEADER */}
-            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-bottom border-[#EDF2F7] px-8 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate("/account")} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-bottom border-[#EDF2F7] px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <button onClick={() => navigate("/account")} className="p-2 hover:bg-gray-100 rounded-full transition-colors shrink-0">
                         <ArrowLeft size={20} />
                     </button>
-                    <div>
-                        <h1 className="text-xl font-bold tracking-tight">Profile Editor</h1>
-                        <p className="text-xs text-gray-500 font-medium">Manage your public artist identity</p>
+                    <div className="min-w-0">
+                        <h1 className="text-lg sm:text-xl font-bold tracking-tight truncate">Profile Editor</h1>
+                        <p className="text-xs text-gray-500 font-medium hidden sm:block">Manage your public artist identity</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     <button 
                         onClick={() => navigate("/account")}
-                        className="px-5 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
+                        className="hidden sm:inline-flex px-5 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
                     >
                         Exit
                     </button>
                     <button 
                         onClick={handleSave}
                         disabled={loading || !isDirty}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${
+                        className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
                             isDirty 
                             ? "bg-[#DB0000] text-white shadow-lg shadow-red-200 hover:scale-105 active:scale-95" 
                             : "bg-gray-100 text-gray-400 cursor-not-allowed"
                         }`}
                     >
                         <Save size={16} />
-                        {loading ? "Saving..." : "Save All Changes"}
+                        <span className="hidden sm:inline">{loading ? "Saving..." : "Save All Changes"}</span>
+                        <span className="sm:hidden">{loading ? "..." : "Save"}</span>
                     </button>
                 </div>
             </header>
 
-            <div className="max-w-[1400px] mx-auto grid grid-cols-[280px_1fr] gap-12 p-10">
+            <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 lg:gap-12 p-4 sm:p-6 lg:p-10">
                 
                 {/* LEFT SIDEBAR NAVIGATION */}
-                <aside className="sticky top-32 h-fit">
-                    <div className="space-y-2">
-                        <p className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Edit Sections</p>
+                <aside className="lg:sticky lg:top-32 h-fit">
+                    <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 hide-scrollbar">
+                        <p className="hidden lg:block px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Edit Sections</p>
                         {sections.map((s) => (
                             <button
                                 key={s.id}
                                 onClick={() => scrollToSection(s.id)}
-                                className={`sidebar-btn w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-semibold text-gray-500 text-left ${
+                                className={`sidebar-btn flex-shrink-0 lg:w-full flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-4 rounded-2xl text-sm font-semibold text-gray-500 text-left ${
                                     activeSection === s.id ? "sidebar-active" : ""
                                 }`}
                             >
@@ -299,7 +309,7 @@ export default function EditProfile() {
                         ))}
                     </div>
 
-                    <div className="mt-12 p-6 bg-red-50 rounded-3xl border border-red-100">
+                    <div className="hidden lg:block mt-12 p-6 bg-red-50 rounded-3xl border border-red-100">
                         <p className="text-xs font-bold text-red-600 uppercase mb-2">Live Status</p>
                         <p className="text-[13px] text-red-800 leading-relaxed font-medium">
                             Changes saved here appear immediately on your public profile.
@@ -312,7 +322,7 @@ export default function EditProfile() {
                     
                     {/* MEDIA HEADER (Avatar & Cover) */}
                     <div className="mb-12 relative group">
-                        <div className="h-64 rounded-[32px] overflow-hidden relative">
+                        <div className="h-48 sm:h-64 rounded-[24px] sm:rounded-[32px] overflow-hidden relative">
                             <img 
                                 src={coverPreview ?? "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=1400"} 
                                 className="w-full h-full object-cover" 
@@ -328,11 +338,11 @@ export default function EditProfile() {
                             <input ref={coverRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && handleMediaUpload("cover", e.target.files[0])} />
                         </div>
 
-                        <div className="absolute -bottom-10 left-12 flex items-end gap-6">
+                        <div className="absolute -bottom-8 sm:-bottom-10 left-4 sm:left-12 flex items-end gap-4 sm:gap-6">
                             <div className="relative group/avatar">
                                 <img 
                                     src={avatarPreview ?? "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200"} 
-                                    className="w-32 h-32 rounded-[40px] border-[6px] border-[#F8F9FA] object-cover shadow-2xl" 
+                                    className="w-20 h-20 sm:w-32 sm:h-32 rounded-[28px] sm:rounded-[40px] border-[4px] sm:border-[6px] border-[#F8F9FA] object-cover shadow-2xl" 
                                     alt="avatar"
                                 />
                                 <button 
@@ -343,8 +353,8 @@ export default function EditProfile() {
                                 </button>
                                 <input ref={avatarRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && handleMediaUpload("avatar", e.target.files[0])} />
                             </div>
-                            <div className="pb-12">
-                                <h2 className="text-2xl font-black tracking-tight">{form.stage_name || "New Artist"}</h2>
+                            <div className="pb-8 sm:pb-12 min-w-0">
+                                <h2 className="text-lg sm:text-2xl font-black tracking-tight truncate">{form.stage_name || "New Artist"}</h2>
                                 <p className="text-sm text-gray-500 font-semibold">{form.category} · {form.location}</p>
                             </div>
                         </div>

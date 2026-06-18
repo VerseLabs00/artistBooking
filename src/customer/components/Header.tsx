@@ -8,7 +8,7 @@ export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false)
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-[0_1px_6px_rgba(0,0,0,0.08)]">
-      <div className="max-w-6xl mx-auto px-8 py-3 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between">
         <img src="/logo-dark.png" alt="Logo" className="h-8 w-auto cursor-pointer" onClick={() => navigate('/home')} />
         <div className="flex items-center gap-5">
           {/* Settings */}

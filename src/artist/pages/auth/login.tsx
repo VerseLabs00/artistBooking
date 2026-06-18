@@ -150,9 +150,6 @@ export default function LoginPage() {
                             <ArrowLeft
                                 onClick={() => navigate('/')}
                                 className="cursor-pointer text-gray-600 hover:text-black transition-colors" size={20} />
-                            <button onClick={() => navigate('/signup')} className="text-sm text-gray-500 hover:text-[#E8194B] transition-colors">
-                                + create an account
-                            </button>
                         </div>
                         <h1 className="text-3xl font-bold mb-10 text-black">
                             {showForgot ? 'Reset Password' : 'Sign in'}
@@ -235,17 +232,11 @@ export default function LoginPage() {
                                     className="w-full bg-[#E8194B] hover:bg-[#c8133b] text-white py-4 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed transition-colors font-bold shadow-lg shadow-pink-100">
                                     {loading ? 'Signing in...' : 'Login'}
                                 </button>
-                                <p className="text-center text-xs text-gray-400">or login with</p>
-                                <div className="flex justify-center gap-4">
-                                    {[
-                                        'https://cdn-icons-png.flaticon.com/512/124/124010.png',
-                                        'https://cdn-icons-png.flaticon.com/512/300/300221.png',
-                                        'https://cdn-icons-png.flaticon.com/512/0/747.png',
-                                    ].map((src, i) => (
-                                        <button key={i} className="w-11 h-11 bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.12)] flex items-center justify-center hover:scale-110 transition-transform">
-                                            <img src={src} className="w-5 h-5" />
-                                        </button>
-                                    ))}
+                                <div className="text-center space-y-2">
+                                    <p className="text-xs text-gray-400">or</p>
+                                    <button onClick={() => navigate('/signup')} className="text-sm text-gray-600 hover:text-[#E8194B] transition-colors">
+                                        + create an account
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -258,6 +249,8 @@ export default function LoginPage() {
                                 <img
                                     key={index}
                                     src={slide.image}
+                                    loading={index === 0 ? "eager" : "lazy"}
+                                    {...(index === 0 ? { fetchPriority: "high" } : {})}
                                     className={`absolute inset-0 w-full h-full object-cover grayscale transition-opacity duration-700 ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
                                 />
                             ))}
