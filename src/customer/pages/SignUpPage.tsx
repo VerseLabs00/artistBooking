@@ -139,7 +139,7 @@ export default function SignUpPage() {
               </button>
                 <div className="text-center space-y-2">
                     <p className="text-xs text-gray-400">or</p>
-                    <button onClick={() => navigate('/login')} className="text-sm text-gray-600 hover:text-[#E8194B] transition-colors">
+                    <button onClick={() => navigate('/loginCustomer')} className="text-sm text-gray-600 hover:text-[#E8194B] transition-colors">
                         already have an account
                     </button>
               </div>
