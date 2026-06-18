@@ -6,7 +6,7 @@ import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
     ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, Shield, TrendingUp,
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
-    Play, RefreshCw, GitCompare, BookOpen, X, Loader2
+    Play, RefreshCw, GitCompare, BookOpen, X, Loader2, Menu
 } from "lucide-react";
 import ArtistProfileLanding from "../../customer/pages/ArtistProfileLanding";
 import Footer from "../../customer/components/Footer.tsx";
@@ -285,6 +285,7 @@ export default function HomePage() {
     const [isClosingProfile, setIsClosingProfile] = useState(false);
     const popularArtistsRef = useRef<HTMLDivElement>(null);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const handleCloseProfile = () => {
         setIsClosingProfile(true);
@@ -451,6 +452,7 @@ export default function HomePage() {
     };
 
     const scrollToSection = (id: string) => {
+        setMobileMenuOpen(false);
         const element = document.getElementById(id);
         if (element) {
             element.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -520,7 +522,7 @@ export default function HomePage() {
     );
 
     return (
-        <div className="min-h-screen bg-white" style={{ fontFamily: "'Fraunces', serif" }}>
+        <div className="min-h-screen bg-white overflow-x-hidden" style={{ fontFamily: "'Fraunces', serif" }}>
             <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
         .pink { color: #E8194B; }
@@ -657,6 +659,18 @@ export default function HomePage() {
             filter: blur(8px);
             transition: filter 0.5s ease;
         }
+
+        @media (max-width: 640px) {
+            .cat-overlay {
+                padding: 12px;
+            }
+            .cat-overlay h3 {
+                font-size: 14px;
+            }
+            section[id] {
+                scroll-margin-top: 72px;
+            }
+        }
       `}</style>
 
             {/* Profile Overlay */}
@@ -677,14 +691,14 @@ export default function HomePage() {
                 {/* ══════════════════════════════════════════════════
           NAVBAR
       ══════════════════════════════════════════════════ */}
-                <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
+                <nav className="w-full flex items-center justify-between px-4 sm:px-6 md:px-12 py-3 md:py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
                     {/* Logo */}
                     <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
                         <Link to="/" className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                             <img
                                 src="/assets/logo/logo-navbar-light@3x.png"
                                 alt="Perfoma"
-                                className="h-10 w-auto object-contain"
+                                className="h-8 sm:h-10 w-auto object-contain"
                             />
                         </Link>
                     </div>
@@ -700,21 +714,41 @@ export default function HomePage() {
                     </div>
 
                     {/* Action */}
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-2">
                         <button 
                             onClick={() => scrollToSection('artists-section')}
-                            className="btn-pink text-sm font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-pink-100"
+                            className="btn-pink text-xs sm:text-sm font-bold px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl shadow-lg shadow-pink-100"
                         >
-                            Explore Talent
+                            <span className="hidden sm:inline">Explore Talent</span>
+                            <span className="sm:hidden">Explore</span>
+                        </button>
+                        <button
+                            type="button"
+                            className="md:hidden p-2 text-gray-600 hover:text-[#E8194B] transition-colors"
+                            onClick={() => setMobileMenuOpen(prev => !prev)}
+                            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                        >
+                            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
                         </button>
                     </div>
+
+                    {mobileMenuOpen && (
+                        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-100 shadow-lg z-50 py-4 px-6 flex flex-col gap-1">
+                            <button onClick={() => scrollToSection('categories-section')} className="nav-link text-left py-3 border-b border-gray-50">Categories</button>
+                            <button onClick={() => scrollToSection('artists-section')} className="nav-link text-left py-3 border-b border-gray-50">Explore</button>
+                            <button onClick={() => scrollToSection('how-it-works')} className="nav-link text-left py-3 border-b border-gray-50">How it works</button>
+                            <button onClick={() => scrollToSection('join-section')} className="nav-link text-left py-3 border-b border-gray-50">Join as Artist</button>
+                            <button onClick={() => scrollToSection('contact-section')} className="nav-link text-left py-3 border-b border-gray-50">Contact Us</button>
+                            <button className="nav-link text-left py-3">Events</button>
+                        </div>
+                    )}
                 </nav>
 
                 {/* ══════════════════════════════════════════════════
           HERO SECTION
       ══════════════════════════════════════════════════ */}
                 <section id="hero-section"
-                    className="relative w-full overflow-hidden bg-cover bg-center py-12 px-6 md:px-12 lg:px-20"
+                    className="relative w-full overflow-hidden bg-cover bg-center py-10 sm:py-12 px-4 sm:px-6 md:px-12 lg:px-20"
                     style={{ backgroundImage: "url('/Cover7.jpg')" }}
                 >
                     {/* Overlay for better text readability */}
@@ -766,8 +800,8 @@ export default function HomePage() {
                                 </div>
                             </div>
 
-                            {/* Right: Collage */}
-                            <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end">
+                            {/* Right: Collage — hidden on small screens */}
+                            <div className="hidden lg:block relative h-[480px] flex items-center justify-end">
                             </div>
                         </div>
                     </div>
@@ -776,7 +810,7 @@ export default function HomePage() {
                 {/* ══════════════════════════════════════════════════
           BROWSE CATEGORIES
       ══════════════════════════════════════════════════ */}
-                <section id="categories-section" className="w-full px-6 md:px-12 lg:px-20 mt-16">
+                <section id="categories-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 mt-10 sm:mt-16">
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="section-title">Browse Categories</h2>
@@ -820,7 +854,7 @@ export default function HomePage() {
                 {/* ══════════════════════════════════════════════════
           POPULAR ARTISTS
       ══════════════════════════════════════════════════ */}
-                <section id="artists-section" className="w-full px-6 md:px-12 lg:px-20 mt-14 overflow-hidden">
+                <section id="artists-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 mt-10 sm:mt-14 overflow-hidden">
                     <div className="max-w-7xl mx-auto relative group">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="section-title">
@@ -845,7 +879,7 @@ export default function HomePage() {
                         </div>
 
                         <form
-                            className="search-bar-wrap p-5 mb-10"
+                            className="search-bar-wrap p-3 sm:p-5 mb-6 sm:mb-10"
                             onSubmit={e => {
                                 e.preventDefault();
                                 runSearch();
@@ -981,9 +1015,9 @@ export default function HomePage() {
                 {/* ══════════════════════════════════════════════════
     HOW IT WORKS
 ══════════════════════════════════════════════════ */}
-                <section id="how-it-works" className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14" style={{ background: "#f5f3ef" }}>
+                <section id="how-it-works" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 mt-10 sm:mt-16 py-10 sm:py-14" style={{ background: "#f5f3ef" }}>
                     <div className="max-w-4xl mx-auto">
-                        <h2 className="text-center mb-3" style={{ fontFamily: "Georgia, serif", fontSize: "38px", fontWeight: 800, color: "#111" }}>
+                        <h2 className="text-center mb-3 text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900" style={{ fontFamily: "Georgia, serif" }}>
                             How It Works
                         </h2>
                         <p className="text-center mb-14 text-sm leading-relaxed" style={{ color: "#999" }}>
@@ -1036,8 +1070,8 @@ export default function HomePage() {
                 {/* ══════════════════════════════════════════════════
           CTA SECTION (dark)
       ══════════════════════════════════════════════════ */}
-                <section id="join-section" className="dark-section w-full px-6 md:px-12 lg:px-20 py-14 mt-0">
-                    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                <section id="join-section" className="dark-section w-full px-4 sm:px-6 md:px-12 lg:px-20 py-10 sm:py-14 mt-0">
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-8 items-center">
 
                         {/* Left: Artists CTA */}
                         <div>
@@ -1057,8 +1091,8 @@ export default function HomePage() {
                         </div>
 
                         {/* Center: Hero image + checklist card */}
-                        <div className="relative flex justify-center">
-                            <div className="relative rounded-2xl overflow-hidden" style={{ height: "260px", width: "100%" }}>
+                        <div className="relative flex justify-center order-first md:order-none mb-4 md:mb-0">
+                            <div className="relative rounded-2xl overflow-hidden w-full" style={{ height: "220px" }}>
                                 <img
                                     src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80"
                                     className="w-full h-full object-cover object-top"
@@ -1067,7 +1101,7 @@ export default function HomePage() {
                                 />
                             </div>
                             {/* Checklist floating card */}
-                            <div className="cta-card absolute bottom-4 right-4 p-4 min-w-[180px]">
+                            <div className="cta-card absolute bottom-3 left-3 right-3 sm:left-auto sm:right-4 sm:bottom-4 p-3 sm:p-4 sm:min-w-[180px]">
                                 <p className="text-white font-800 text-sm mb-3">Get More Bookings</p>
                                 {["Verified Profile", "Direct Leads", "Secure Payments", "Grow Your Fanbase"].map(item => (
                                     <div key={item} className="checklist-item">

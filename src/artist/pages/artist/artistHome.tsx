@@ -7,7 +7,7 @@ import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
     ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, Shield, TrendingUp,
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
-    Play, RefreshCw, GitCompare, BookOpen, X, Loader2, LogOut
+    Play, RefreshCw, GitCompare, BookOpen, X, Loader2, LogOut, Menu
 } from "lucide-react";
 import ArtistProfileLanding from "../../../customer/pages/ArtistProfileLanding";
 import Footer from "../../../customer/components/Footer.tsx";
@@ -300,6 +300,7 @@ export default function ArtistHome() {
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
     const [isClosingProfile, setIsClosingProfile] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const popularArtistsRef = useRef<HTMLDivElement>(null);
 
     const handleCloseProfile = () => {
@@ -473,6 +474,7 @@ export default function ArtistHome() {
     };
 
     const scrollToSection = (id: string) => {
+        setMobileMenuOpen(false);
         const element = document.getElementById(id);
         if (element) {
             element.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -542,7 +544,7 @@ export default function ArtistHome() {
     );
 
     return (
-        <div className="min-h-screen bg-white" style={{ fontFamily: "'Fraunces', serif" }}>
+        <div className="min-h-screen bg-white overflow-x-hidden" style={{ fontFamily: "'Fraunces', serif" }}>
             <style>{`
                  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
                 .btn-pink { background: #E8194B; color: white; transition: all 0.2s ease; }
@@ -616,13 +618,13 @@ export default function ArtistHome() {
             <div className={`transition-all duration-500 ${selectedArtistId ? 'blur-bg scale-[0.98]' : ''}`}>
 
                 {/* NAVBAR */}
-                <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
+                <nav className="w-full flex items-center justify-between px-4 sm:px-6 md:px-12 py-3 md:py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
                     <div className="flex items-center cursor-pointer" onClick={() => navigate("/artistHome")}>
                         <Link to="/" className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                             <img
                                 src="/assets/logo/logo-navbar-light@3x.png"
                                 alt="Perfoma"
-                                className="h-10 w-auto object-contain"
+                                className="h-8 sm:h-10 w-auto object-contain"
                             />
                         </Link>
                     </div>
@@ -635,10 +637,10 @@ export default function ArtistHome() {
                         <button className="nav-link">Events</button>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <div
                             onClick={() => navigate("/account")}
-                            className="w-10 h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all"
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all"
                         >
                             <img
                                 src={profile?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"}
@@ -653,7 +655,25 @@ export default function ArtistHome() {
                         >
                             <LogOut size={20} />
                         </button>
+                        <button
+                            type="button"
+                            className="md:hidden p-2 text-gray-600 hover:text-[#E8194B] transition-colors"
+                            onClick={() => setMobileMenuOpen(prev => !prev)}
+                            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                        >
+                            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                        </button>
                     </div>
+
+                    {mobileMenuOpen && (
+                        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-100 shadow-lg z-50 py-4 px-6 flex flex-col gap-1">
+                            <button onClick={() => scrollToSection('categories-section')} className="nav-link text-left py-3 border-b border-gray-50">Categories</button>
+                            <button onClick={() => scrollToSection('artists-section')} className="nav-link text-left py-3 border-b border-gray-50">Explore</button>
+                            <button onClick={() => scrollToSection('how-it-works')} className="nav-link text-left py-3 border-b border-gray-50">How it works</button>
+                            <button onClick={() => scrollToSection('contact-section')} className="nav-link text-left py-3 border-b border-gray-50">Contact Us</button>
+                            <button className="nav-link text-left py-3">Events</button>
+                        </div>
+                    )}
                 </nav>
 
                 {/* HERO */}
