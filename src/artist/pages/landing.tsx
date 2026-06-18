@@ -206,54 +206,54 @@ interface CategoryData {
 
 const ALL_CATEGORIES_DATA: CategoryData[] = [
     { 
-        name: "Musician", 
-        description: "Elegant solo instrumentalists and performers for ambient atmosphere.", 
-        image: "/assets/categories/musician.webp"
-    },
-    { 
-        name: "Solo Singer", 
+        name: "Singer", 
         description: "Powerful vocalists covering a wide range of genres and styles.", 
-        image: "/assets/categories/solosinger.webp"
+        image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=400&q=60"
     },
     { 
         name: "Rapper", 
         description: "Dynamic hip-hop artists and lyricists for high-energy performances.", 
-        image: "/assets/categories/rapper.webp"
+        image: "https://images.unsplash.com/photo-1546707012-c46675f12716?auto=format&fit=crop&w=400&q=60"
     },
     { 
         name: "Live Band", 
         description: "Full musical ensembles providing an immersive live experience.", 
-        image: "/assets/categories/liveband.webp"
+        image: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=400&q=60"
     },
     { 
         name: "Dance Group", 
         description: "Professional choreographies and high-energy dance routines.", 
-        image: "/assets/categories/dancegroups.webp"
+        image: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=400&q=60"
     },
     { 
         name: "Producer", 
         description: "Creative minds behind the beats and sound engineering.", 
-        image: "/assets/categories/producer.webp"
+        image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=400&q=60"
     },
     { 
         name: "DJ", 
         description: "Expert curators of energy and rhythm for every dance floor.", 
-        image: "/assets/categories/dj.webp"
+        image: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=400&q=60"
     },
     { 
         name: "Sound System", 
         description: "Premium audio equipment and technicians for crystal clear sound.", 
-        image: "/assets/categories/soundsystem.webp"
+        image: "https://images.unsplash.com/photo-1545128485-c400e7702796?auto=format&fit=crop&w=400&q=60"
     },
     { 
         name: "Lightning System", 
         description: "Atmospheric and stage lighting to set the perfect visual mood.", 
-        image: "/assets/categories/lightningsystem.webp"
+        image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=400&q=60"
+    },
+    { 
+        name: "Photographers", 
+        description: "Professional photographers to freeze your precious event moments in time.", 
+        image: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=400&q=60"
     },
     { 
         name: "Videographers", 
         description: "Cinematic storytellers capturing your most precious moments.",
-        image: "/assets/categories/videographers.webp"
+        image: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=400&q=60"
     }
 ];
 
