@@ -151,9 +151,9 @@ const Information: React.FC = () => {
                                         <option>Producer</option>
                                         <option>DJ</option>
                                         <option>Sound System</option>
-                                        <option>Lightning System</option>
-                                        <option>Photographers</option>
-                                        <option>Videographers</option>
+                                        <option>Lighting System</option>
+                                        <option>Photographer</option>
+                                        <option>Videographer</option>
                                     </select>
                                 </div>
                             </div>

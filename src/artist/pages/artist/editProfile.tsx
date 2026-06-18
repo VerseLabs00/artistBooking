@@ -159,13 +159,31 @@ export default function EditProfile() {
             setGallery(imgs.map((m: any) => ({ id: m.id, url: m.url })));
             
         } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to save profile.", { id: saveToast });
+            const errors = err.response?.data?.errors;
+            let errMsg = err.response?.data?.message || "Failed to save profile.";
+            if (errors) {
+                errMsg = Object.values(errors).flat().join(" ");
+            }
+            toast.error(errMsg, { id: saveToast });
         } finally {
             setLoading(false);
         }
     };
 
     const handleMediaUpload = async (type: "avatar" | "cover", file: File) => {
+        // Client-side validation
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error(`Failed to upload ${type}: File size exceeds 5MB limit.`);
+            return;
+        }
+
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        if (!extension || !allowedExtensions.includes(extension)) {
+            toast.error(`Failed to upload ${type}: Unsupported format. Allowed: JPG, PNG, GIF, WebP`);
+            return;
+        }
+
         const previewUrl = URL.createObjectURL(file);
         if (type === "avatar") setAvatarPreview(previewUrl);
         if (type === "cover") setCoverPreview(previewUrl);
@@ -177,16 +195,36 @@ export default function EditProfile() {
         try {
             await api.post("/profile/media", fd, { headers: { "Content-Type": "multipart/form-data" } });
             toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} updated!`, { id: uploadToast });
-        } catch {
-            toast.error(`Failed to upload ${type}`, { id: uploadToast });
+        } catch (err: any) {
+            const errors = err.response?.data?.errors;
+            let errMsg = err.response?.data?.message || `Failed to upload ${type}.`;
+            if (errors) {
+                errMsg = Object.values(errors).flat().join(" ");
+            }
+            toast.error(errMsg, { id: uploadToast });
         }
     };
 
     const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
-        const newImages = files.map(file => ({ url: URL.createObjectURL(file), isNew: true, file }));
-        setGallery(prev => [...prev, ...newImages]);
-        setIsDirty(true);
+        const validFiles: { url: string; isNew: boolean; file: File }[] = [];
+        for (const file of files) {
+            if (file.size > 50 * 1024 * 1024) {
+                toast.error(`File "${file.name}" exceeds the 50MB limit and was skipped.`);
+                continue;
+            }
+            const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'avi'];
+            const extension = file.name.split('.').pop()?.toLowerCase();
+            if (!extension || !allowedExtensions.includes(extension)) {
+                toast.error(`File "${file.name}" has an unsupported format and was skipped. Allowed formats: JPG, PNG, GIF, WebP, MP4, MOV, AVI`);
+                continue;
+            }
+            validFiles.push({ url: URL.createObjectURL(file), isNew: true, file });
+        }
+        if (validFiles.length > 0) {
+            setGallery(prev => [...prev, ...validFiles]);
+            setIsDirty(true);
+        }
     };
 
     const deleteGalleryItem = async (item: { id?: number; url: string; isNew?: boolean }) => {
@@ -195,8 +233,8 @@ export default function EditProfile() {
             try { 
                 await api.delete(`/profile/gallery/${item.id}`); 
                 toast.success("Photo removed", { id: delToast });
-            } catch { 
-                toast.error("Failed to remove photo", { id: delToast });
+            } catch (err: any) { 
+                toast.error(err.response?.data?.message || "Failed to remove photo", { id: delToast });
                 return;
             }
         }
@@ -376,13 +414,18 @@ export default function EditProfile() {
                                 <Field label="Category">
                                     <select className="input-field cursor-pointer" name="category" value={form.category} onChange={handleChange}>
                                         <option>Musician</option>
-                                        <option>Producer</option>
-                                        <option>DJ</option>
                                         <option>Singer</option>
+                                        <option>Rapper</option>
+                                        <option>DJ</option>
                                         <option>Live Band</option>
+                                        <option>Producer</option>
+                                        <option>Dance Group</option>
                                         <option>Dancer</option>
                                         <option>MC</option>
+                                        <option>Sound System</option>
+                                        <option>Lighting System</option>
                                         <option>Photographer</option>
+                                        <option>Videographer</option>
                                     </select>
                                 </Field>
                                 <Field label="Performance Location">

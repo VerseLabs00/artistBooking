@@ -676,7 +676,7 @@ export default function HomePage() {
             {/* Profile Overlay */}
             {selectedArtistId && (
                 <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity duration-500 ${isClosingProfile ? 'opacity-0' : 'opacity-100'}`}>
-                    <div className={`max-w-5xl w-full h-full bg-white shadow-[0_0_60px_rgba(0,0,0,0.3)] overflow-hidden ${isClosingProfile ? 'animate-slide-down' : 'animate-slide-up'}`}>
+                    <div className={`max-w-5xl w-full h-full md:h-[95vh] md:max-h-[900px] md:rounded-2xl md:my-4 bg-white shadow-[0_0_60px_rgba(0,0,0,0.3)] overflow-hidden ${isClosingProfile ? 'animate-slide-down' : 'animate-slide-up'}`}>
                         <ArtistProfileLanding
                             id={selectedArtistId}
                             onClose={handleCloseProfile}

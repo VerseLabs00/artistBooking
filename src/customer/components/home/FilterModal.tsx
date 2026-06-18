@@ -43,7 +43,7 @@ export default function FilterModal({ onClose }: FilterModalProps) {
       <div className="absolute inset-0 bg-red-900/20 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-[#f0f0f5] rounded-2xl w-[480px] max-w-[95vw] shadow-2xl overflow-hidden">
+      <div className="relative bg-[#f0f0f5] rounded-2xl w-full max-w-[480px] mx-4 shadow-2xl overflow-hidden">
 
         {/* Close button */}
         <button
