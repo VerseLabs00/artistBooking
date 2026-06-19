@@ -593,6 +593,21 @@ export default function ArtistHome() {
                     from { transform: translateY(100%); }
                     to { transform: translateY(0); }
                 }
+                
+                @media (max-width: 640px) {
+                    .mobile-search-grid {
+                        display: grid !important;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 0 !important;
+                    }
+
+                    .mobile-search-grid .search-submit-btn {
+                        grid-column: 1 / -1; /* span both columns */
+                        width: 100%;
+                        border-radius: 0 0 12px 12px;
+                    }
+                }
+                
                 @keyframes slideDown {
                     from { transform: translateY(0); }
                     to { transform: translateY(100%); }
@@ -857,7 +872,7 @@ export default function ArtistHome() {
                                 {/* Search Button */}
                                 <button
                                     type="submit"
-                                    className="btn-pink font-bold text-sm px-8 py-4 flex-shrink-0 md:rounded-r-xl"
+                                    className="search-submit-btn btn-pink font-bold text-sm px-8 py-4 flex-shrink-0 md:rounded-r-xl"
                                 >
                                     Search
                                 </button>
