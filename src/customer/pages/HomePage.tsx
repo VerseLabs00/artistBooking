@@ -572,9 +572,17 @@ export default function HomePage() {
             .cat-overlay h3 { font-size: 14px; }
             section[id] { scroll-margin-top: 72px; }
             .tag-pill { padding: 5px 10px; font-size: 11px; gap: 4px; }
-            .search-bar-wrap { padding: 12px !important; border-radius: 16px; }
+            .search-bar-wrap { padding: 8px !important; border-radius: 14px; }
             .carousel-btn { width: 34px; height: 34px; }
             .checklist-item { font-size: 12px; margin-bottom: 6px; }
+            .mobile-search-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 0 !important; }
+            .mobile-search-grid > div { border-bottom: none !important; border-right: none !important; }
+            .mobile-search-grid > div:nth-child(odd) { border-right: 1px solid #e5e7eb !important; }
+            .mobile-search-grid > div:nth-child(1),
+            .mobile-search-grid > div:nth-child(2) { border-bottom: 1px solid #e5e7eb !important; }
+            .search-field-label { display: none !important; }
+            .search-category-pills { display: none !important; }
+            .cta-image-block { display: none !important; }
         }
         @media (max-width: 768px) {
             .section-title { font-size: 20px; }
@@ -592,7 +600,7 @@ export default function HomePage() {
 
             <div className={`transition-all duration-500 ${selectedArtistId ? 'blur-bg scale-[0.98]' : ''}`}>
                 {/* NAVBAR */}
-                <nav className="w-full flex items-center justify-between px-4 sm:px-6 md:px-12 py-3 md:py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
+                <nav className="fixed top-0 left-0 right-0 z-50 w-full flex items-center justify-between px-4 sm:px-6 md:px-12 py-3 md:py-4 bg-white border-b border-gray-100">
                     {/* Logo */}
                     <div className="flex items-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                         <Link className="flex items-center">
@@ -621,7 +629,7 @@ export default function HomePage() {
                                 className="w-full h-full object-cover"
                             />
                         </div>
-                        <button 
+                        <button
                             onClick={() => navigate("/loginCustomer")}
                             className="p-2 text-gray-400 hover:text-[#E8194B] transition-colors"
                             title="Sign out"
@@ -754,11 +762,11 @@ export default function HomePage() {
                                 runSearch();
                             }}
                         >
-                            <div className="flex flex-col md:flex-row items-stretch gap-0 bg-white rounded-xl overflow-hidden">
+                            <div className="flex flex-col md:flex-row items-stretch gap-0 bg-white rounded-xl overflow-hidden mobile-search-grid">
                                 <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
                                     <Search size={18} className="text-gray-400 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-400 font-600">What are you looking for?</p>
+                                        <p className="text-xs text-gray-400 font-600 search-field-label">What are you looking for?</p>
                                         <input
                                             type="text"
                                             placeholder="DJs, Singers, Bands..."
@@ -771,7 +779,7 @@ export default function HomePage() {
                                 <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
                                     <MapPin size={18} className="text-gray-400 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-400 font-600">Location</p>
+                                        <p className="text-xs text-gray-400 font-600 search-field-label">Location</p>
                                         <input
                                             type="text"
                                             placeholder="All Sri Lanka"
@@ -784,7 +792,7 @@ export default function HomePage() {
                                 <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
                                     <Calendar size={18} className="text-gray-400 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-400 font-600">Event Date</p>
+                                        <p className="text-xs text-gray-400 font-600 search-field-label">Event Date</p>
                                         <input
                                             type="date"
                                             value={eventDate}
@@ -797,7 +805,7 @@ export default function HomePage() {
                                 <div className="flex items-center gap-3 flex-1 px-5 py-3.5">
                                     <DollarSign size={18} className="text-gray-400 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-400 font-600">Budget</p>
+                                        <p className="text-xs text-gray-400 font-600 search-field-label">Budget</p>
                                         <input
                                             type="text"
                                             placeholder="Any Budget"
@@ -810,7 +818,7 @@ export default function HomePage() {
                                 <button type="submit" className="btn-pink font-bold text-sm px-6 sm:px-8 py-3 sm:py-4 w-full md:w-auto flex-shrink-0 md:rounded-r-xl">Search</button>
                             </div>
 
-                            <div className="flex flex-wrap gap-2 mt-4 px-1">
+                            <div className="flex flex-wrap gap-2 mt-4 px-1 search-category-pills">
                                 {browseCategoriesLoading ? (
                                     <span className="text-xs text-gray-500">Loading categories...</span>
                                 ) : (
@@ -908,7 +916,7 @@ export default function HomePage() {
                             </button>
                         </div>
 
-                        <div className="relative flex flex-col items-stretch sm:block">
+                        <div className="relative flex flex-col items-stretch sm:block cta-image-block">
                             <div className="relative rounded-2xl overflow-hidden w-full" style={{ height: '220px' }}>
                                 <img
                                     src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80"

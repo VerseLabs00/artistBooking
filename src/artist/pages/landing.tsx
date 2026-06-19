@@ -205,53 +205,53 @@ interface CategoryData {
 }
 
 const ALL_CATEGORIES_DATA: CategoryData[] = [
-    { 
-        name: "Singer", 
-        description: "Powerful vocalists covering a wide range of genres and styles.", 
+    {
+        name: "Singer",
+        description: "Powerful vocalists covering a wide range of genres and styles.",
         image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=400&q=60"
     },
-    { 
-        name: "Rapper", 
-        description: "Dynamic hip-hop artists and lyricists for high-energy performances.", 
+    {
+        name: "Rapper",
+        description: "Dynamic hip-hop artists and lyricists for high-energy performances.",
         image: "https://images.unsplash.com/photo-1546707012-c46675f12716?auto=format&fit=crop&w=400&q=60"
     },
-    { 
-        name: "Live Band", 
-        description: "Full musical ensembles providing an immersive live experience.", 
+    {
+        name: "Live Band",
+        description: "Full musical ensembles providing an immersive live experience.",
         image: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=400&q=60"
     },
-    { 
-        name: "Dance Group", 
-        description: "Professional choreographies and high-energy dance routines.", 
+    {
+        name: "Dance Group",
+        description: "Professional choreographies and high-energy dance routines.",
         image: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=400&q=60"
     },
-    { 
-        name: "Producer", 
-        description: "Creative minds behind the beats and sound engineering.", 
+    {
+        name: "Producer",
+        description: "Creative minds behind the beats and sound engineering.",
         image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=400&q=60"
     },
-    { 
-        name: "DJ", 
-        description: "Expert curators of energy and rhythm for every dance floor.", 
+    {
+        name: "DJ",
+        description: "Expert curators of energy and rhythm for every dance floor.",
         image: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=400&q=60"
     },
-    { 
-        name: "Sound System", 
-        description: "Premium audio equipment and technicians for crystal clear sound.", 
+    {
+        name: "Sound System",
+        description: "Premium audio equipment and technicians for crystal clear sound.",
         image: "https://images.unsplash.com/photo-1545128485-c400e7702796?auto=format&fit=crop&w=400&q=60"
     },
-    { 
-        name: "Lightning System", 
-        description: "Atmospheric and stage lighting to set the perfect visual mood.", 
+    {
+        name: "Lightning System",
+        description: "Atmospheric and stage lighting to set the perfect visual mood.",
         image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=400&q=60"
     },
-    { 
-        name: "Photographers", 
-        description: "Professional photographers to freeze your precious event moments in time.", 
+    {
+        name: "Photographers",
+        description: "Professional photographers to freeze your precious event moments in time.",
         image: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=400&q=60"
     },
-    { 
-        name: "Videographers", 
+    {
+        name: "Videographers",
         description: "Cinematic storytellers capturing your most precious moments.",
         image: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=400&q=60"
     }
@@ -323,7 +323,7 @@ export default function HomePage() {
                 }
             })
             .catch(() => {});
-            
+
         getArtists({ per_page: 50 })
             .then(({ data }) => {
                 const artists = data.map(mapDiscoveryArtist);
@@ -596,7 +596,7 @@ export default function HomePage() {
         #how-it-works,
         #join-section,
         #contact-section {
-            scroll-margin-top: 73px;
+            scroll-margin-top: 71px;
         }
 
         /* Carousel Styles */
@@ -661,15 +661,24 @@ export default function HomePage() {
         }
 
         @media (max-width: 640px) {
-            .cat-overlay {
-                padding: 12px;
-            }
-            .cat-overlay h3 {
-                font-size: 14px;
-            }
-            section[id] {
-                scroll-margin-top: 72px;
-            }
+            .cat-overlay { padding: 12px; }
+            .cat-overlay h3 { font-size: 14px; }
+            section[id] { scroll-margin-top: 72px; }
+            .tag-pill { padding: 5px 10px; font-size: 11px; gap: 4px; }
+            .search-bar-wrap { padding: 8px !important; border-radius: 14px; }
+            .carousel-btn { width: 34px; height: 34px; }
+            .checklist-item { font-size: 12px; margin-bottom: 6px; }
+            .mobile-search-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 0 !important; }
+            .mobile-search-grid > div { border-bottom: none !important; border-right: none !important; }
+            .mobile-search-grid > div:nth-child(odd) { border-right: 1px solid #e5e7eb !important; }
+            .mobile-search-grid > div:nth-child(1),
+            .mobile-search-grid > div:nth-child(2) { border-bottom: 1px solid #e5e7eb !important; }
+            .search-field-label { display: none !important; }
+            .search-category-pills { display: none !important; }
+            .cta-image-block { display: none !important; }
+        }
+        @media (max-width: 768px) {
+            .section-title { font-size: 20px; }
         }
       `}</style>
 
@@ -691,7 +700,7 @@ export default function HomePage() {
                 {/* ══════════════════════════════════════════════════
           NAVBAR
       ══════════════════════════════════════════════════ */}
-                <nav className="w-full flex items-center justify-between px-4 sm:px-6 md:px-12 py-3 md:py-4 bg-white border-b border-gray-100 sticky top-0 z-50 relative">
+                <nav className="fixed top-0 left-0 right-0 z-50 w-full flex items-center justify-between px-4 sm:px-6 md:px-12 py-3 md:py-4 bg-white border-b border-gray-100">
                     {/* Logo */}
                     <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
                         <Link to="/" className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
@@ -715,7 +724,7 @@ export default function HomePage() {
 
                     {/* Action */}
                     <div className="flex items-center gap-2">
-                        <button 
+                        <button
                             onClick={() => scrollToSection('artists-section')}
                             className="btn-pink text-xs sm:text-sm font-bold px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl shadow-lg shadow-pink-100"
                         >
@@ -748,8 +757,8 @@ export default function HomePage() {
           HERO SECTION
       ══════════════════════════════════════════════════ */}
                 <section id="hero-section"
-                    className="relative w-full overflow-hidden bg-cover bg-center py-10 sm:py-12 px-4 sm:px-6 md:px-12 lg:px-20"
-                    style={{ backgroundImage: "url('/Cover7.jpg')" }}
+                         className="relative w-full overflow-hidden bg-cover bg-center py-10 sm:py-12 px-4 sm:px-6 md:px-12 lg:px-20 pt-20"
+                         style={{ backgroundImage: "url('/Cover7.jpg')" }}
                 >
                     {/* Overlay for better text readability */}
                     <div className="absolute inset-0 bg-black/40 z-0" />
@@ -886,12 +895,12 @@ export default function HomePage() {
                             }}
                         >
                             {/* Inputs row */}
-                            <div className="flex flex-col md:flex-row items-stretch gap-0 bg-white rounded-xl overflow-hidden">
+                            <div className="flex flex-col md:flex-row items-stretch gap-0 bg-white rounded-xl overflow-hidden mobile-search-grid">
                                 {/* What */}
                                 <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
                                     <Search size={18} className="text-gray-400 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-400 font-600">What are you looking for?</p>
+                                        <p className="text-xs text-gray-400 font-600 search-field-label">What are you looking for?</p>
                                         <input
                                             type="text"
                                             placeholder="DJs, Singers, Bands..."
@@ -906,7 +915,7 @@ export default function HomePage() {
                                 <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
                                     <MapPin size={18} className="text-gray-400 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-400 font-600">Location</p>
+                                        <p className="text-xs text-gray-400 font-600 search-field-label">Location</p>
                                         <input
                                             type="text"
                                             placeholder="All Sri Lanka"
@@ -921,7 +930,7 @@ export default function HomePage() {
                                 <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
                                     <Calendar size={18} className="text-gray-400 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-400 font-600">Event Date</p>
+                                        <p className="text-xs text-gray-400 font-600 search-field-label">Event Date</p>
                                         <input
                                             type="date"
                                             value={eventDate}
@@ -936,7 +945,7 @@ export default function HomePage() {
                                 <div className="flex items-center gap-3 flex-1 px-5 py-3.5">
                                     <DollarSign size={18} className="text-gray-400 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-400 font-600">Budget</p>
+                                        <p className="text-xs text-gray-400 font-600 search-field-label">Budget</p>
                                         <input
                                             type="text"
                                             placeholder="Any Budget"
@@ -957,7 +966,7 @@ export default function HomePage() {
                             </div>
 
                             {/* Category tags */}
-                            <div className="flex flex-wrap gap-2 mt-4 px-1">
+                            <div className="flex flex-wrap gap-2 mt-4 px-1 search-category-pills">
                                 {browseCategoriesLoading ? (
                                     <div className="flex flex-wrap gap-2 animate-pulse">
                                         {[1, 2, 3, 4, 5, 6].map(i => (
@@ -1091,7 +1100,7 @@ export default function HomePage() {
                         </div>
 
                         {/* Center: Hero image + checklist card */}
-                        <div className="relative flex justify-center order-first md:order-none mb-4 md:mb-0">
+                        <div className="relative flex justify-center order-first md:order-none mb-4 md:mb-0 cta-image-block">
                             <div className="relative rounded-2xl overflow-hidden w-full" style={{ height: "220px" }}>
                                 <img
                                     src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80"
@@ -1130,23 +1139,23 @@ export default function HomePage() {
                     </div>
                 </section>
 
-      {/*          /!* ══════════════════════════════════════════════════*/}
-      {/*    PARTNER LOGOS*/}
-      {/*══════════════════════════════════════════════════ *!/*/}
-      {/*          <section className="logo-strip w-full h-1 px-6 md:px-12 lg:px-20 py-8 bg-white">*/}
-      {/*              <div className="max-w-7xl mx-auto">*/}
-      {/*                  <p className="text-center text-gray-400 text-sm mb-6 font-500">*/}
-      {/*                      Trusted by event planners and companies across Sri Lanka*/}
-      {/*                  </p>*/}
-      {/*        /!*          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">*!/*/}
-      {/*        /!*              {PARTNER_LOGOS.map(logo => (*!/*/}
-      {/*        /!*                  <span key={logo} className="text-gray-400 font-800 text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">*!/*/}
-      {/*        /!*  {logo}*!/*/}
-      {/*        /!*</span>*!/*/}
-      {/*        /!*              ))}*!/*/}
-      {/*        /!*          </div>*!/*/}
-      {/*              </div>*/}
-      {/*          </section>*/}
+                {/*          /!* ══════════════════════════════════════════════════*/}
+                {/*    PARTNER LOGOS*/}
+                {/*══════════════════════════════════════════════════ *!/*/}
+                {/*          <section className="logo-strip w-full h-1 px-6 md:px-12 lg:px-20 py-8 bg-white">*/}
+                {/*              <div className="max-w-7xl mx-auto">*/}
+                {/*                  <p className="text-center text-gray-400 text-sm mb-6 font-500">*/}
+                {/*                      Trusted by event planners and companies across Sri Lanka*/}
+                {/*                  </p>*/}
+                {/*        /!*          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">*!/*/}
+                {/*        /!*              {PARTNER_LOGOS.map(logo => (*!/*/}
+                {/*        /!*                  <span key={logo} className="text-gray-400 font-800 text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">*!/*/}
+                {/*        /!*  {logo}*!/*/}
+                {/*        /!*</span>*!/*/}
+                {/*        /!*              ))}*!/*/}
+                {/*        /!*          </div>*!/*/}
+                {/*              </div>*/}
+                {/*          </section>*/}
 
                 <Footer />
             </div>
