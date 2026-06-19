@@ -584,6 +584,21 @@ export default function HomePage() {
             .search-category-pills { display: none !important; }
             .cta-image-block { display: none !important; }
         }
+        
+        @media (max-width: 640px) {
+            .mobile-search-grid {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 0 !important;
+            }
+
+            .mobile-search-grid .search-submit-btn {
+                grid-column: 1 / -1; /* span both columns */
+                width: 100%;
+                border-radius: 0 0 12px 12px;
+            }
+        }
+        
         @media (max-width: 768px) {
             .section-title { font-size: 20px; }
         }
@@ -815,8 +830,12 @@ export default function HomePage() {
                                         />
                                     </div>
                                 </div>
-                                <button type="submit" className="btn-pink font-bold text-sm px-6 sm:px-8 py-3 sm:py-4 w-full md:w-auto flex-shrink-0 md:rounded-r-xl">Search</button>
-                            </div>
+                                <button
+                                    type="submit"
+                                    className="search-submit-btn btn-pink font-bold text-sm px-8 py-4 flex-shrink-0 md:rounded-r-xl"
+                                >
+                                    Search
+                                </button>                            </div>
 
                             <div className="flex flex-wrap gap-2 mt-4 px-1 search-category-pills">
                                 {browseCategoriesLoading ? (
