@@ -14,7 +14,7 @@ const Information: React.FC = () => {
         phone_number: "",
         dob: "",
         email: "",
-        category: "Musician",
+        category: "Singer",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
