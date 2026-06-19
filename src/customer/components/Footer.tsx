@@ -215,7 +215,7 @@ export default function Footer() {
           >
 
             {/* ── Panel 1: FAQ ─────────────────────────────── */}
-            <div className="w-1/2 bg-white px-4 sm:px-8 md:px-12 lg:px-16 py-12 sm:py-16 md:py-20" style={{ flexShrink: 0 }}>
+            <div className="w-1/2 bg-white px-4 sm:px-8 md:px-12 lg:px-16 py-8 sm:py-16 md:py-20" style={{ flexShrink: 0 }}>
               <div className="max-w-3xl mx-auto">
                 <h2 className="text-2xl sm:text-3xl md:text-[42px] font-black text-gray-900 text-center leading-tight mb-3" style={{ letterSpacing: '-0.5px' }}>
                   Frequently Asked Questions
@@ -243,7 +243,7 @@ export default function Footer() {
             </div>
 
             {/* ── Panel 2: Contact ─────────────────────────── */}
-            <div className="w-1/2 bg-[#111] px-4 sm:px-8 md:px-12 lg:px-16 py-10 sm:py-16" style={{ flexShrink: 0 }}>
+            <div className="w-1/2 bg-[#111] px-4 sm:px-8 md:px-12 lg:px-16 py-8 sm:py-16" style={{ flexShrink: 0 }}>
               <div className="max-w-none w-full">
 
                 {/* Back button */}
@@ -364,7 +364,7 @@ export default function Footer() {
       ══════════════════════════════════════════════════ */}
         <footer className="bg-[#0a0a0a] text-white pt-10 sm:pt-16 pb-8">
           <div className="w-full px-4 sm:px-8 md:px-12 lg:px-16">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 pb-10 sm:pb-14">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10 pb-10 sm:pb-14">
 
               {/* Brand */}
               <div>

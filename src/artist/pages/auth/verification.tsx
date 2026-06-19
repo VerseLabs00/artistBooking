@@ -23,10 +23,10 @@ const Verification: React.FC = () => {
 
     const validateFile = (file: File | null, maxSizeMB: number, allowedTypes: string[]): string | null => {
         if (!file) return null;
-        
+
         const extension = file.name.split('.').pop()?.toLowerCase();
         const mimeType = file.type;
-        
+
         const isAllowedType = allowedTypes.some(type => {
             if (type.startsWith('.')) {
                 return extension === type.slice(1);
@@ -37,7 +37,7 @@ const Verification: React.FC = () => {
         if (!isAllowedType) {
             return `File "${file.name}" has an unsupported format. Allowed formats: ${allowedTypes.join(', ').toUpperCase().replace(/\./g, '')}`;
         }
-        
+
         if (file.size > maxSizeMB * 1024 * 1024) {
             return `File "${file.name}" exceeds the maximum size of ${maxSizeMB}MB.`;
         }
@@ -124,18 +124,21 @@ const Verification: React.FC = () => {
         file ? <p className="text-xs text-green-600 mt-1 truncate">{file.name}</p> : null;
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 overflow-x-hidden overflow-y-auto bg-cover bg-center" style={{ backgroundImage: `url(${stage})` }}>
-            <div className="relative w-full max-w-6xl min-h-0 max-h-none lg:max-h-[90vh] lg:h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden my-4 lg:my-0">
+        <div
+            className="h-screen overflow-hidden flex items-center justify-center p-2 sm:p-6 bg-cover bg-center"
+            style={{ backgroundImage: `url(${stage})`, fontFamily: "'Fraunces', serif" }}
+        >
+            <div className="relative w-full max-w-6xl h-[95vh] bg-white rounded-2xl shadow-2xl overflow-hidden">
                 <div onClick={() => navigate("/information")} className="absolute top-4 right-4 sm:top-6 sm:right-8 text-xs sm:text-sm font-medium cursor-pointer flex items-center gap-2 z-20">
                     ← Back
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 h-full overflow-y-auto lg:overflow-hidden">
-                    {/* LEFT */}
-                    <div className="relative p-6 sm:p-10 lg:p-16 flex flex-col justify-center lg:h-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 h-full">
+                    {/* LEFT - hidden on mobile, visible from md breakpoint up */}
+                    <div className="hidden md:flex relative p-10 lg:p-16 flex-col justify-center h-full">
                         <div className="absolute inset-0 bg-white"></div>
                         <div className="relative z-10">
-                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight">Verify your<br />Identity</h1>
-                            <p className="mt-4 sm:mt-6 max-w-md text-sm sm:text-base leading-relaxed">We verify all artists to keep the platform safe and trusted. Your documents are fully encrypted and never shared with third parties.</p>
+                            <h1 className="text-4xl lg:text-5xl font-semibold leading-tight">Verify your<br />Identity</h1>
+                            <p className="mt-6 max-w-md leading-relaxed text-gray-600">We verify all artists to keep the platform safe and trusted. Your documents are fully encrypted and never shared with third parties.</p>
                             <div className="flex items-center gap-4 mt-8">
                                 <div className="flex -space-x-3">
                                     <img src="https://randomuser.me/api/portraits/men/32.jpg" className="w-10 h-10 rounded-full border-2 border-white" />
@@ -143,16 +146,16 @@ const Verification: React.FC = () => {
                                     <img src="https://randomuser.me/api/portraits/men/76.jpg" className="w-10 h-10 rounded-full border-2 border-white" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium">600+ artist already joined</p>
+                                    <p className="text-sm font-medium">600+ artists already joined</p>
                                     <div className="text-yellow-400 text-sm">★★★★★</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* RIGHT */}
-                    <div className="p-4 sm:p-8 lg:p-16 h-full overflow-y-auto scroll-smooth">
-                        <div className="flex items-center gap-6 text-sm mb-8">
+                    {/* RIGHT - form, full width on mobile, only this panel scrolls */}
+                    <div className="p-4 sm:p-8 lg:p-16 h-full overflow-y-auto scroll-smooth pb-10 sm:pb-12">
+                        <div className="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm mb-6 sm:mb-8 mt-6 md:mt-0 flex-wrap">
                             <div className="flex items-center gap-2 text-gray-400 font-medium">
                                 <div className="w-5 h-5 rounded-full border border-gray-400 flex items-center justify-center text-xs">✓</div>
                                 Basic Info
@@ -167,7 +170,7 @@ const Verification: React.FC = () => {
                             </div>
                         </div>
 
-                        <h2 className="text-xl font-semibold mb-2">Upload your document</h2>
+                        <h2 className="text-lg sm:text-xl font-semibold mb-2">Upload your document</h2>
                         <p className="text-gray-600 text-sm mb-6">Select a document type and upload a clear, unedited photo.</p>
 
                         {error && (
@@ -175,10 +178,10 @@ const Verification: React.FC = () => {
                         )}
 
                         {/* Document Types */}
-                        <div className="flex gap-4 mb-8 flex-wrap">
+                        <div className="flex gap-3 sm:gap-4 mb-8 flex-wrap">
                             {docTypes.map((item) => (
                                 <div key={item} onClick={() => setDocType(item)}
-                                    className={`w-28 h-24 border rounded-2xl flex flex-col items-center justify-center text-xs cursor-pointer transition ${docType === item ? "border-red-500 text-red-600 bg-red-50" : "text-gray-600 hover:border-red-500"}`}>
+                                     className={`w-24 sm:w-28 h-20 sm:h-24 border rounded-2xl flex flex-col items-center justify-center text-xs text-center px-1 cursor-pointer transition ${docType === item ? "border-red-500 text-red-600 bg-red-50" : "text-gray-600 hover:border-red-500"}`}>
                                     <div className="mb-2 text-red-500">🪪</div>
                                     {item}
                                 </div>
@@ -186,11 +189,11 @@ const Verification: React.FC = () => {
                         </div>
 
                         {/* Front & Back */}
-                        <div className="grid grid-cols-2 gap-6 mb-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                             <div>
                                 <p className="text-xs text-gray-400 mb-2">FRONT SIDE *</p>
                                 <div onClick={() => frontRef.current?.click()}
-                                    className={`border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${frontFile ? "border-green-400" : ""}`}>
+                                     className={`border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${frontFile ? "border-green-400" : ""}`}>
                                     <Upload className="w-6 h-6 text-red-500 mb-2" />
                                     <p className="text-sm">{frontFile ? "Change front" : "Upload front"}</p>
                                     <p className="text-xs text-gray-400">JPG, PNG or PDF</p>
@@ -201,7 +204,7 @@ const Verification: React.FC = () => {
                             <div>
                                 <p className="text-xs text-gray-400 mb-2">BACK SIDE</p>
                                 <div onClick={() => backRef.current?.click()}
-                                    className={`border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${backFile ? "border-green-400" : ""}`}>
+                                     className={`border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${backFile ? "border-green-400" : ""}`}>
                                     <Upload className="w-6 h-6 text-red-500 mb-2" />
                                     <p className="text-sm">{backFile ? "Change back" : "Upload back"}</p>
                                     <p className="text-xs text-gray-400">JPG, PNG or PDF</p>
@@ -215,8 +218,8 @@ const Verification: React.FC = () => {
                         <div className="mb-6">
                             <p className="text-xs text-gray-400 mb-2">SELFIE *</p>
                             <div onClick={() => selfieRef.current?.click()}
-                                className={`border-2 border-dashed rounded-2xl h-36 flex items-center justify-between px-6 hover:border-red-500 cursor-pointer transition ${selfieFile ? "border-green-400" : ""}`}>
-                                <div className="flex items-center gap-4">
+                                 className={`border-2 border-dashed rounded-2xl h-36 flex flex-col sm:flex-row items-center sm:justify-between justify-center gap-3 px-6 hover:border-red-500 cursor-pointer transition ${selfieFile ? "border-green-400" : ""}`}>
+                                <div className="flex items-center gap-4 text-center sm:text-left">
                                     <Camera className="w-6 h-6 text-gray-500" />
                                     <div>
                                         <p className="text-sm font-medium">{selfieFile ? selfieFile.name : "Selfie with document"}</p>
@@ -234,13 +237,13 @@ const Verification: React.FC = () => {
                             <p>I confirm these documents are genuine and belong to me. I agree to the <span className="text-red-600 font-medium">Privacy Policy</span> and <span className="text-red-600 font-medium">Verification Terms</span>.</p>
                         </div>
 
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                             <div>
                                 <p className="text-sm font-medium">Step 2 of 3</p>
                                 <p className="text-xs text-gray-500">All documents are encrypted & private</p>
                             </div>
                             <button onClick={handleContinue} disabled={loading}
-                                className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-full font-medium transition disabled:opacity-60 disabled:cursor-not-allowed">
+                                    className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-full font-medium transition disabled:opacity-60 disabled:cursor-not-allowed">
                                 {loading ? 'Uploading...' : 'continue →'}
                             </button>
                         </div>
