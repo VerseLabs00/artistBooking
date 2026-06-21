@@ -841,7 +841,7 @@ export default function HomePage() {
                         </div>
 
                         {browseCategoriesLoading ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                                 {Array.from({ length: ALL_CATEGORIES_DATA.length }).map((_, i) => (
                                     <div
                                         key={i}
@@ -850,7 +850,7 @@ export default function HomePage() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                                 {browseCategories.map(cat => (
                                     <div
                                         key={cat.name}
@@ -1048,43 +1048,43 @@ export default function HomePage() {
                             Booking your perfect artist takes just three steps. No agents, no<br className="hidden md:block" /> hidden fees, no hassle.
                         </p>
 
-                        <div className="flex flex-col md:flex-row items-start justify-center">
+                        <div className="flex flex-row items-start justify-center gap-1 sm:gap-0 md:flex-row">
                             {/* Step 1 */}
-                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-4">
-                                <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5 text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
+                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-1 sm:px-4">
+                                <div className="w-[44px] h-[44px] sm:w-[72px] sm:h-[72px] rounded-full flex items-center justify-center mb-2 sm:mb-5 text-lg sm:text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
                                     🔍
                                 </div>
-                                <h3 className="font-bold text-gray-900 text-base mb-2">Search</h3>
-                                <p className="text-sm leading-relaxed" style={{ color: "#999" }}>
-                                    Browse hundreds of verified artists by category, location, and budget. Read real reviews from real clients.
+                                <h3 className="font-bold text-gray-900 text-[12px] sm:text-base mb-1 sm:mb-2">Search</h3>
+                                <p className="text-[10px] sm:text-sm leading-snug sm:leading-relaxed" style={{ color: "#999" }}>
+                                    Browse hundreds of verified artists by category, location, and budget.
                                 </p>
                             </div>
 
                             {/* Connector */}
-                            <div className="hidden md:block flex-1 max-w-[120px] mt-9 border-t-2 border-dashed" style={{ borderColor: "#f0a0b8" }} />
+                            <div className="block flex-1 max-w-[40px] sm:max-w-[120px] mt-5 sm:mt-9 border-t-2 border-dashed" style={{ borderColor: "#f0a0b8" }} />
 
                             {/* Step 2 */}
-                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-4 mt-8 md:mt-0">
-                                <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5 text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
+                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-1 sm:px-4">
+                                <div className="w-[44px] h-[44px] sm:w-[72px] sm:h-[72px] rounded-full flex items-center justify-center mb-2 sm:mb-5 text-lg sm:text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
                                     ⚖️
                                 </div>
-                                <h3 className="font-bold text-gray-900 text-base mb-2">Compare</h3>
-                                <p className="text-sm leading-relaxed" style={{ color: "#999" }}>
-                                    View detailed profiles, watch performance videos, compare prices and availability all in one place.
+                                <h3 className="font-bold text-gray-900 text-[12px] sm:text-base mb-1 sm:mb-2">Compare</h3>
+                                <p className="text-[10px] sm:text-sm leading-snug sm:leading-relaxed" style={{ color: "#999" }}>
+                                    View profiles, compare prices and availability all in one place.
                                 </p>
                             </div>
 
                             {/* Connector */}
-                            <div className="hidden md:block flex-1 max-w-[120px] mt-9 border-t-2 border-dashed" style={{ borderColor: "#f0a0b8" }} />
+                            <div className="block flex-1 max-w-[40px] sm:max-w-[120px] mt-5 sm:mt-9 border-t-2 border-dashed" style={{ borderColor: "#f0a0b8" }} />
 
                             {/* Step 3 */}
-                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-4 mt-8 md:mt-0">
-                                <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5 text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
+                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-1 sm:px-4">
+                                <div className="w-[44px] h-[44px] sm:w-[72px] sm:h-[72px] rounded-full flex items-center justify-center mb-2 sm:mb-5 text-lg sm:text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
                                     📅
                                 </div>
-                                <h3 className="font-bold text-gray-900 text-base mb-2">Book</h3>
-                                <p className="text-sm leading-relaxed" style={{ color: "#999" }}>
-                                    Contact and book your favourite artist directly. Secure payment and confirmation in minutes.
+                                <h3 className="font-bold text-gray-900 text-[12px] sm:text-base mb-1 sm:mb-2">Book</h3>
+                                <p className="text-[10px] sm:text-sm leading-snug sm:leading-relaxed" style={{ color: "#999" }}>
+                                    Contact and book directly. Secure payment in minutes.
                                 </p>
                             </div>
                         </div>
@@ -1095,26 +1095,26 @@ export default function HomePage() {
           CTA SECTION (dark)
       ══════════════════════════════════════════════════ */}
                 <section id="join-section" className="dark-section w-full px-4 sm:px-6 md:px-12 lg:px-20 py-10 sm:py-14 mt-0">
-                    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-8 items-center">
+                    <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8 md:gap-8 items-center">
 
                         {/* Left: Artists CTA */}
                         <div>
-                            <p className="pink-text text-xs font-700 uppercase tracking-widest mb-2">For Artists</p>
-                            <h2 className="text-white font-black text-2xl md:text-3xl leading-tight mb-3">
+                            <p className="pink-text text-[10px] sm:text-xs font-700 uppercase tracking-widest mb-2">For Artists</p>
+                            <h2 className="text-white font-black text-lg sm:text-2xl md:text-3xl leading-tight mb-3">
                                 Turn Your Talent<br />Into a Business
                             </h2>
-                            <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                            <p className="text-gray-400 text-[11px] sm:text-sm leading-relaxed mb-6">
                                 Join thousands of artists and grow your brand, reach more clients and get booked.
                             </p>
 
                             <button
                                 onClick={() => navigate("/login")}
-                                className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm">
+                                className="btn-pink flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-[11px] sm:text-sm">
                                 Join as Artist <ArrowRight size={15} />
                             </button>
                         </div>
 
-                        {/* Center: Hero image + checklist card */}
+                        {/* Center: Hero image + checklist card (hidden on mobile via .cta-image-block) */}
                         <div className="relative flex justify-center order-first md:order-none mb-4 md:mb-0 cta-image-block">
                             <div className="relative rounded-2xl overflow-hidden w-full" style={{ height: "220px" }}>
                                 <img
@@ -1138,16 +1138,16 @@ export default function HomePage() {
 
                         {/* Right: Customers CTA */}
                         <div>
-                            <p className="pink-text text-xs font-700 uppercase tracking-widest mb-2">For Customers</p>
-                            <h2 className="text-white font-black text-2xl md:text-3xl leading-tight mb-3">
+                            <p className="pink-text text-[10px] sm:text-xs font-700 uppercase tracking-widest mb-2">For Customers</p>
+                            <h2 className="text-white font-black text-lg sm:text-2xl md:text-3xl leading-tight mb-3">
                                 Make Every Event<br />Unforgettable
                             </h2>
-                            <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                            <p className="text-gray-400 text-[11px] sm:text-sm leading-relaxed mb-6">
                                 Book the best local talent for weddings, parties, corporate events and more.
                             </p>
                             <button
                                 onClick={() => navigate("/loginCustomer")}
-                                className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm">
+                                className="btn-pink flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-[11px] sm:text-sm">
                                 Find Artists <ArrowRight size={15} />
                             </button>
                         </div>

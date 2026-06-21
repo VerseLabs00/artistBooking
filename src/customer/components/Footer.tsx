@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useLayoutEffect } from 'react'
 import api from '../lib/api'
 
 const LOGO_PATH = "/assets/logo/logo-footer@3x.png"
@@ -172,6 +172,37 @@ export default function Footer() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null)
 
+  // ── Dynamic height measurement ──────────────────────────────
+  // Both panels live side-by-side in the same flex row and the slide
+  // is done with `transform`, which does NOT remove the inactive panel
+  // from layout. Without this, the row (and therefore the section)
+  // always takes the height of whichever panel is taller — even if
+  // that panel is currently off-screen — leaving empty space under
+  // the shorter, visible panel (most noticeable on mobile, where the
+  // Contact panel's form stacks and becomes much taller than the FAQ
+  // panel). We measure the *active* panel's real height and lock the
+  // wrapper to it instead of letting the browser auto-size the row.
+  const [contentHeight, setContentHeight] = useState<number | undefined>(undefined)
+  const faqPanelRef = useRef<HTMLDivElement>(null)
+  const contactPanelRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const activeEl = showContact ? contactPanelRef.current : faqPanelRef.current
+    if (activeEl) {
+      setContentHeight(activeEl.offsetHeight)
+    }
+  }, [showContact])
+
+  // Re-measure on resize (e.g. rotating phone, or status message appearing/disappearing)
+  useLayoutEffect(() => {
+    const handleResize = () => {
+      const activeEl = showContact ? contactPanelRef.current : faqPanelRef.current
+      if (activeEl) setContentHeight(activeEl.offsetHeight)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [showContact])
+
   const handleContactClick = () => {
     setShowContact(true)
     // Small delay so the slide animation completes, then scroll into view
@@ -190,9 +221,9 @@ export default function Footer() {
       setStatus({ type: 'success', message: response.data.message })
       setFormData({ first_name: '', last_name: '', email: '', message: '' })
     } catch (err: any) {
-      setStatus({ 
-        type: 'error', 
-        message: err.response?.data?.message || 'Failed to send message. Please try again later.' 
+      setStatus({
+        type: 'error',
+        message: err.response?.data?.message || 'Failed to send message. Please try again later.'
       })
     } finally {
       setLoading(false)
@@ -206,16 +237,17 @@ export default function Footer() {
       ══════════════════════════════════════════════════ */}
         <section id="contact-section" className="w-full overflow-hidden">
           <div
-              className="flex"
+              className="flex items-start"
               style={{
                 width: '200%',
+                height: contentHeight,
                 transform: showContact ? 'translateX(-50%)' : 'translateX(0)',
-                transition: 'transform 0.55s cubic-bezier(0.77, 0, 0.175, 1)',
+                transition: 'transform 0.55s cubic-bezier(0.77, 0, 0.175, 1), height 0.3s ease',
               }}
           >
 
             {/* ── Panel 1: FAQ ─────────────────────────────── */}
-            <div className="w-1/2 bg-white px-4 sm:px-8 md:px-12 lg:px-16 py-8 sm:py-16 md:py-20" style={{ flexShrink: 0 }}>
+            <div ref={faqPanelRef} className="w-1/2 bg-white px-4 sm:px-8 md:px-12 lg:px-16 py-8 sm:py-16 md:py-20" style={{ flexShrink: 0 }}>
               <div className="max-w-3xl mx-auto">
                 <h2 className="text-2xl sm:text-3xl md:text-[42px] font-black text-gray-900 text-center leading-tight mb-3" style={{ letterSpacing: '-0.5px' }}>
                   Frequently Asked Questions
@@ -243,7 +275,7 @@ export default function Footer() {
             </div>
 
             {/* ── Panel 2: Contact ─────────────────────────── */}
-            <div className="w-1/2 bg-[#111] px-4 sm:px-8 md:px-12 lg:px-16 py-8 sm:py-16" style={{ flexShrink: 0 }}>
+            <div ref={contactPanelRef} className="w-1/2 bg-[#111] px-4 sm:px-8 md:px-12 lg:px-16 py-8 sm:py-16" style={{ flexShrink: 0 }}>
               <div className="max-w-none w-full">
 
                 {/* Back button */}
@@ -292,9 +324,9 @@ export default function Footer() {
                   <form onSubmit={handleSubmit} className="bg-[#1a1a1a] rounded-2xl p-4 sm:p-6 md:p-8 border border-[#2a2a2a]">
                     <div className="flex flex-col gap-4">
                       {status && (
-                        <div className={`p-4 rounded-xl text-sm font-semibold ${status.type === 'success' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
-                          {status.message}
-                        </div>
+                          <div className={`p-4 rounded-xl text-sm font-semibold ${status.type === 'success' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                            {status.message}
+                          </div>
                       )}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -342,10 +374,10 @@ export default function Footer() {
                             className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#E8194B] transition-colors resize-none"
                         />
                       </div>
-                      <button 
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-[#E8194B] hover:bg-[#c8133b] text-white font-bold text-sm py-3.5 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      <button
+                          type="submit"
+                          disabled={loading}
+                          className="w-full bg-[#E8194B] hover:bg-[#c8133b] text-white font-bold text-sm py-3.5 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       >
                         {loading ? 'Sending...' : 'Send Message'}
                       </button>

@@ -713,10 +713,10 @@ export default function ArtistHome() {
                 </nav>
 
                 {/* HERO */}
-                <section className="relative w-full overflow-hidden bg-cover bg-center py-6 px-4 sm:px-6 md:px-12 lg:px-20"
+                <section className="relative w-full overflow-hidden bg-cover bg-center py-6 px-4 sm:px-6 md:px-12 lg:px-20 min-h-[420px] sm:min-h-[480px] flex items-center"
                          style={{ backgroundImage: "url('/Cover7.jpg')" }}>
                     <div className="absolute inset-0 bg-black/40 z-0" />
-                    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10">
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10 w-full">
                         <div>
                             <p className="text-gray-200 text-base font-600 mb-1">Welcome Back</p>
                             <h1 className="font-black leading-tight text-white mb-2" style={{ fontSize: "clamp(38px, 5vw, 62px)", lineHeight: 1.1 }}>
@@ -734,7 +734,7 @@ export default function ArtistHome() {
                                 </p>
                             </div>
                         </div>
-                        <div className="relative h-[350px] lg:h-[420px] flex items-center justify-end" />
+                        <div className="hidden lg:flex relative h-[350px] lg:h-[420px] items-center justify-end" />
                     </div>
                 </section>
 
@@ -748,7 +748,7 @@ export default function ArtistHome() {
                         </div>
 
                         {browseCategoriesLoading ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                                 {Array.from({ length: ALL_CATEGORIES_DATA.length }).map((_, i) => (
                                     <div
                                         key={i}
@@ -758,7 +758,7 @@ export default function ArtistHome() {
                             </div>
                         ) : (
                             // ── FIX: Now iterates CategoryData objects — cat.name, cat.image, cat.description all work ──
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                                 {browseCategories.map(cat => (
                                     <div
                                         key={cat.name}
@@ -948,14 +948,14 @@ export default function ArtistHome() {
                             Manage Bookings in 4 Simple Steps
                         </h2>
 
-                        <p className="text-center text-gray-400 text-sm mb-16">
+                        <p className="text-center text-gray-400 text-xs sm:text-sm mb-10 sm:mb-16 px-2">
                             Receive requests, connect with clients, and grow your bookings.
                         </p>
 
-                        <div className="relative flex flex-col md:flex-row items-start justify-between">
+                        <div className="relative flex flex-row items-start justify-between">
                             {/* Dashed connector line */}
                             <div
-                                className="hidden md:block absolute top-8 left-0 right-0 h-px"
+                                className="block absolute top-5 sm:top-8 left-0 right-0 h-px"
                                 style={{
                                     backgroundImage:
                                         'repeating-linear-gradient(to right, #E8194B 0, #E8194B 8px, transparent 8px, transparent 18px)',
@@ -989,21 +989,21 @@ export default function ArtistHome() {
                             ].map((step) => (
                                 <div
                                     key={step.num}
-                                    className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0 relative"
+                                    className="flex flex-col items-center text-center flex-1 px-1 sm:px-4 relative"
                                     style={{ zIndex: 1 }}
                                 >
                                     <div
-                                        className="w-16 h-16 rounded-full flex items-center justify-center mb-5 text-white text-xl font-bold"
+                                        className="w-9 h-9 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-2 sm:mb-5 text-white text-xs sm:text-xl font-bold"
                                         style={{ background: '#E8194B' }}
                                     >
                                         {step.num}
                                     </div>
 
-                                    <h3 className="font-bold text-white text-base mb-2">
+                                    <h3 className="font-bold text-white text-[11px] sm:text-base mb-1 sm:mb-2">
                                         {step.title}
                                     </h3>
 
-                                    <p className="text-gray-400 text-sm leading-relaxed">
+                                    <p className="text-gray-400 text-[9px] sm:text-sm leading-snug sm:leading-relaxed hidden sm:block">
                                         {step.desc}
                                     </p>
                                 </div>
