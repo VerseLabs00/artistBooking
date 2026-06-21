@@ -674,13 +674,13 @@ export default function HomePage() {
 
                 {/* HERO SECTION */}
                 <section
-                    className="relative w-full overflow-hidden bg-cover bg-center py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 lg:px-20"
+                    className="relative w-full overflow-hidden bg-cover bg-center pt-28 pb-12 sm:pt-16 sm:pb-16 md:py-24 px-4 sm:px-6 md:px-12 lg:px-20 min-h-[480px] sm:min-h-0 flex items-center"
                     style={{ backgroundImage: "url('/Cover7.jpg')" }}
                 >
                     <div className="absolute inset-0 bg-black/40 z-0" />
                     <div className="hero-bg-dots absolute top-0 right-0 w-72 h-72 opacity-30 pointer-events-none z-10" />
 
-                    <div className="max-w-7xl mx-auto relative z-20">
+                    <div className="max-w-7xl mx-auto relative z-20 w-full">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
                             <div className="z-10">
                                 <p className="text-gray-200 text-base font-600 mb-1">Find & Book</p>
@@ -724,7 +724,7 @@ export default function HomePage() {
                         </div>
 
                         {browseCategoriesLoading ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                                 {Array.from({ length: ALL_CATEGORIES_DATA.length }).map((_, i) => (
                                     <div
                                         key={i}
@@ -733,7 +733,7 @@ export default function HomePage() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                                 {browseCategories.map(cat => (
                                     <div
                                         key={cat.name}
@@ -892,9 +892,9 @@ export default function HomePage() {
                             From search to confirmed booking in minutes — not days.
                         </p>
 
-                        <div className="relative flex flex-col md:flex-row items-start justify-between">
+                        <div className="relative flex flex-row items-start justify-between">
                             {/* Dashed connector line */}
-                            <div className="hidden md:block absolute top-8 left-0 right-0 h-px" style={{
+                            <div className="block absolute top-5 sm:top-8 left-0 right-0 h-px" style={{
                                 backgroundImage: 'repeating-linear-gradient(to right, #E8194B 0, #E8194B 8px, transparent 8px, transparent 18px)',
                                 zIndex: 0,
                                 marginLeft: '10%',
@@ -907,12 +907,12 @@ export default function HomePage() {
                                 { num: 3, title: 'Contact', desc: 'Message the artist directly to discuss your event details and confirm availability.' },
                                 { num: 4, title: 'Book', desc: 'Confirm your booking securely through the platform and get ready for your event.' },
                             ].map((step) => (
-                                <div key={step.num} className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0 relative" style={{ zIndex: 1 }}>
-                                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 text-white text-xl font-bold" style={{ background: '#E8194B' }}>
+                                <div key={step.num} className="flex flex-col items-center text-center flex-1 px-1 sm:px-4 relative" style={{ zIndex: 1 }}>
+                                    <div className="w-9 h-9 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-2 sm:mb-5 text-white text-xs sm:text-xl font-bold" style={{ background: '#E8194B' }}>
                                         {step.num}
                                     </div>
-                                    <h3 className="font-bold text-white text-base mb-2">{step.title}</h3>
-                                    <p className="text-gray-400 text-sm leading-relaxed">{step.desc}</p>
+                                    <h3 className="font-bold text-white text-[11px] sm:text-base mb-1 sm:mb-2">{step.title}</h3>
+                                    <p className="text-gray-400 text-[9px] sm:text-sm leading-snug sm:leading-relaxed hidden sm:block">{step.desc}</p>
                                 </div>
                             ))}
                         </div>

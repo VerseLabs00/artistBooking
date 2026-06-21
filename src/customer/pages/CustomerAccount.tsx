@@ -567,7 +567,7 @@ export default function CustomerAccount() {
         </div>
       </div>
 
-      <Footer />
+      {/*<Footer />*/}
     </div>
   )
 }
