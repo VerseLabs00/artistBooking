@@ -208,52 +208,52 @@ const ALL_CATEGORIES_DATA: CategoryData[] = [
     {
         name: "Singer",
         description: "Powerful vocalists covering a wide range of genres and styles.",
-        image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=400&q=60"
+        image: "https://images.unsplash.com/photo-1526218626217-dc65a29bb444?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
     {
         name: "Rapper",
         description: "Dynamic hip-hop artists and lyricists for high-energy performances.",
-        image: "https://images.unsplash.com/photo-1546707012-c46675f12716?auto=format&fit=crop&w=400&q=60"
+        image: "https://images.unsplash.com/photo-1623531249239-07774b804ac8?q=80&w=412&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
     {
         name: "Live Band",
         description: "Full musical ensembles providing an immersive live experience.",
-        image: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=400&q=60"
+        image: "https://images.unsplash.com/photo-1550219363-d0adfaa43d0f?q=80&w=1472&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
     {
         name: "Dance Group",
         description: "Professional choreographies and high-energy dance routines.",
-        image: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=400&q=60"
+        image: "https://images.unsplash.com/photo-1547153760-18fc86324498?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
     {
         name: "Producer",
         description: "Creative minds behind the beats and sound engineering.",
-        image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=400&q=60"
+        image: "https://images.unsplash.com/photo-1610716632424-4d45990bcd48?q=80&w=726&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
     {
         name: "DJ",
         description: "Expert curators of energy and rhythm for every dance floor.",
-        image: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=400&q=60"
+        image: "https://images.unsplash.com/photo-1541126274323-dbac58d14741?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
     {
         name: "Sound System",
         description: "Premium audio equipment and technicians for crystal clear sound.",
-        image: "https://images.unsplash.com/photo-1545128485-c400e7702796?auto=format&fit=crop&w=400&q=60"
+        image: "https://images.unsplash.com/photo-1504904126298-3fde501c9b31?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
     {
         name: "Lightning System",
         description: "Atmospheric and stage lighting to set the perfect visual mood.",
-        image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=400&q=60"
+        image: "https://images.unsplash.com/photo-1670028514318-0ac718c0590d?q=80&w=435&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
     {
         name: "Photographers",
         description: "Professional photographers to freeze your precious event moments in time.",
-        image: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=400&q=60"
+        image: "https://images.unsplash.com/photo-1612548403247-aa2873e9422d?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     },
     {
         name: "Videographers",
         description: "Cinematic storytellers capturing your most precious moments.",
-        image: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=400&q=60"
+        image: "https://images.unsplash.com/photo-1601506521937-0121a7fc2a6b?q=80&w=871&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     }
 ];
 
