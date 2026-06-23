@@ -482,7 +482,7 @@ export default function ArtistHome() {
     };
 
     const renderArtistCard = (artist: Artist) => (
-        <div key={artist.id} className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px] artist-card cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100" onClick={() => setSelectedArtistId(artist.id.toString())}>
+        <div key={artist.id} className="flex-shrink-0 w-[130px] sm:w-[170px] md:w-[190px] artist-card cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100" onClick={() => setSelectedArtistId(artist.id.toString())}>
             <div className="relative" style={{ aspectRatio: "3/4" }}>
                 <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
@@ -523,7 +523,7 @@ export default function ArtistHome() {
     );
 
     const renderArtistSkeleton = (index: number) => (
-        <div key={index} className="flex-shrink-0 w-[150px] sm:w-[170px] md:w-[190px] animate-pulse bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+        <div key={index} className="flex-shrink-0 w-[130px] sm:w-[170px] md:w-[190px] animate-pulse bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
             <div className="relative bg-gray-100" style={{ aspectRatio: "3/4" }} />
             <div className="p-2.5 space-y-2">
                 <div className="h-3 bg-gray-100 rounded w-3/4" />
@@ -594,20 +594,6 @@ export default function ArtistHome() {
                     to { transform: translateY(0); }
                 }
                 
-                @media (max-width: 640px) {
-                    .mobile-search-grid {
-                        display: grid !important;
-                        grid-template-columns: 1fr 1fr;
-                        gap: 0 !important;
-                    }
-
-                    .mobile-search-grid .search-submit-btn {
-                        grid-column: 1 / -1; /* span both columns */
-                        width: 100%;
-                        border-radius: 0 0 12px 12px;
-                    }
-                }
-                
                 @keyframes slideDown {
                     from { transform: translateY(0); }
                     to { transform: translateY(100%); }
@@ -621,15 +607,46 @@ export default function ArtistHome() {
                     .cat-overlay h3 { font-size: 14px; }
                     section[id] { scroll-margin-top: 72px; }
                     .tag-pill { padding: 5px 10px; font-size: 11px; gap: 4px; }
-                    .search-bar-wrap { padding: 8px !important; border-radius: 14px; }
+                    .search-bar-wrap { padding: 12px !important; border-radius: 20px; }
                     .carousel-btn { width: 34px; height: 34px; }
                     .checklist-item { font-size: 12px; margin-bottom: 6px; }
-                    .mobile-search-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 0 !important; }
-                    .mobile-search-grid > div { border-bottom: none !important; border-right: none !important; }
-                    .mobile-search-grid > div:nth-child(odd) { border-right: 1px solid #e5e7eb !important; }
-                    .mobile-search-grid > div:nth-child(1),
-                    .mobile-search-grid > div:nth-child(2) { border-bottom: 1px solid #e5e7eb !important; }
-                    .search-field-label { display: none !important; }
+
+                    .mobile-search-grid { 
+                        display: grid !important; 
+                        grid-template-columns: 1fr 1fr; 
+                        gap: 8px !important; 
+                        background: transparent !important;
+                        border-radius: 0 !important;
+                        overflow: visible !important;
+                    }
+                    .mobile-search-grid > div { 
+                        background: #fff !important;
+                        border: 1px solid #e5e7eb !important; 
+                        border-radius: 12px !important; 
+                        padding: 10px 14px !important;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.02) !important;
+                    }
+                    .search-field-label { 
+                        display: block !important; 
+                        font-size: 9px !important; 
+                        color: #9ca3af !important; 
+                        font-weight: 700 !important; 
+                        text-transform: uppercase !important; 
+                        letter-spacing: 0.05em !important;
+                        margin-bottom: 2px !important;
+                    }
+                    .search-input {
+                        font-size: 13px !important;
+                    }
+                    .mobile-search-grid .search-submit-btn {
+                        grid-column: 1 / -1; 
+                        width: 100%;
+                        border-radius: 12px !important;
+                        padding: 12px !important;
+                        margin-top: 4px !important;
+                        box-shadow: 0 4px 14px rgba(232, 25, 75, 0.25) !important;
+                    }
+
                     .search-category-pills { display: none !important; }
                     .cta-image-block { display: none !important; }
                 }
@@ -713,7 +730,7 @@ export default function ArtistHome() {
                 </nav>
 
                 {/* HERO */}
-                <section className="relative w-full overflow-hidden bg-cover bg-center py-6 px-4 sm:px-6 md:px-12 lg:px-20 min-h-[420px] sm:min-h-[480px] flex items-center"
+                <section className="relative w-full overflow-hidden bg-cover bg-center pt-28 pb-16 sm:pt-36 sm:pb-24 px-4 sm:px-6 md:px-12 lg:px-20 min-h-[480px] sm:min-h-[540px] flex items-center"
                          style={{ backgroundImage: "url('/Cover7.jpg')" }}>
                     <div className="absolute inset-0 bg-black/40 z-0" />
                     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10 w-full">
@@ -741,7 +758,7 @@ export default function ArtistHome() {
                 {/* ══════════════════════════════════════════════════
                 BROWSE CATEGORIES
             ══════════════════════════════════════════════════ */}
-                <section id="categories-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 mt-10 sm:mt-16">
+                <section id="categories-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 py-16 sm:py-24">
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="section-title">Browse Categories</h2>
@@ -784,7 +801,7 @@ export default function ArtistHome() {
                 {/* ══════════════════════════════════════════════════
                 ARTISTS / SEARCH
             ══════════════════════════════════════════════════ */}
-                <section id="artists-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 mt-10 sm:mt-14 overflow-hidden">
+                <section id="artists-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 py-16 sm:py-24 overflow-hidden">
                     <div className="max-w-7xl mx-auto relative group">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="section-title">
@@ -937,7 +954,7 @@ export default function ArtistHome() {
                 {/* HOW IT WORKS */}
                 <section
                     id="how-it-works"
-                    className="w-full px-4 sm:px-6 md:px-12 lg:px-20 mt-10 sm:mt-16 py-10 sm:py-14"
+                    className="w-full px-4 sm:px-6 md:px-12 lg:px-20 py-16 sm:py-24"
                     style={{ background: '#111' }}
                 >
                     <div className="max-w-5xl mx-auto">
@@ -1013,7 +1030,7 @@ export default function ArtistHome() {
                 </section>
 
                 {/* CTA SECTION - FOR ARTISTS */}
-                <section id="join-section" className="dark-section w-full px-4 sm:px-6 md:px-12 lg:px-20 py-10 sm:py-14" style={{ background: '#0a0a0a' }}>
+                <section id="join-section" className="dark-section w-full px-4 sm:px-6 md:px-12 lg:px-20 py-16 sm:py-24" style={{ background: '#0a0a0a' }}>
                     <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                         <div>
                             <p className="pink-text text-xs font-bold uppercase tracking-widest mb-2">
