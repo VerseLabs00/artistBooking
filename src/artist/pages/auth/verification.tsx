@@ -56,14 +56,14 @@ const Verification: React.FC = () => {
         file ? <p className="text-xs text-green-600 mt-1 truncate">{file.name}</p> : null;
 
     return (
-        <div className="h-screen flex items-center justify-center p-6 overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${stage})` }}>
-            <div className="relative w-full max-w-6xl h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center p-0 md:p-6 overflow-y-auto md:overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${stage})` }}>
+            <div className="relative w-full max-w-6xl min-h-screen md:min-h-0 md:h-[90vh] bg-white rounded-none md:rounded-2xl shadow-2xl md:overflow-hidden">
                 <div onClick={() => navigate("/information")} className="absolute top-6 right-8 text-sm font-medium cursor-pointer flex items-center gap-2 z-20">
                     ← Back
                 </div>
-                <div className="grid grid-cols-2 h-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 h-full">
                     {/* LEFT */}
-                    <div className="relative p-16 flex flex-col justify-center h-full">
+                    <div className="relative p-16 hidden md:flex flex-col justify-center h-full">
                         <div className="absolute inset-0 bg-white"></div>
                         <div className="relative z-10">
                             <h1 className="text-5xl font-semibold leading-tight">Verify your<br />Identity</h1>
@@ -83,7 +83,7 @@ const Verification: React.FC = () => {
                     </div>
 
                     {/* RIGHT */}
-                    <div className="p-16 h-full overflow-y-auto scroll-smooth">
+                    <div className="p-6 md:p-16 h-full md:overflow-y-auto scroll-smooth">
                         <div className="flex items-center gap-6 text-sm mb-8">
                             <div className="flex items-center gap-2 text-gray-400 font-medium">
                                 <div className="w-5 h-5 rounded-full border border-gray-400 flex items-center justify-center text-xs">✓</div>
@@ -127,7 +127,7 @@ const Verification: React.FC = () => {
                                     <p className="text-sm">{frontFile ? "Change front" : "Upload front"}</p>
                                     <p className="text-xs text-gray-400">JPG, PNG or PDF</p>
                                 </div>
-                                <input ref={frontRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={e => setFrontFile(e.target.files?.[0] || null)} />
+                                <input ref={frontRef} type="file" accept=".jpg,.jpeg,.png,.pdf,.heic,.heif,image/*,application/pdf" className="hidden" onChange={e => setFrontFile(e.target.files?.[0] || null)} />
                                 <FileLabel file={frontFile} />
                             </div>
                             <div>
@@ -138,7 +138,7 @@ const Verification: React.FC = () => {
                                     <p className="text-sm">{backFile ? "Change back" : "Upload back"}</p>
                                     <p className="text-xs text-gray-400">JPG, PNG or PDF</p>
                                 </div>
-                                <input ref={backRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={e => setBackFile(e.target.files?.[0] || null)} />
+                                <input ref={backRef} type="file" accept=".jpg,.jpeg,.png,.pdf,.heic,.heif,image/*,application/pdf" className="hidden" onChange={e => setBackFile(e.target.files?.[0] || null)} />
                                 <FileLabel file={backFile} />
                             </div>
                         </div>
@@ -157,7 +157,7 @@ const Verification: React.FC = () => {
                                 </div>
                                 <Upload className="w-5 h-5 text-red-500" />
                             </div>
-                            <input ref={selfieRef} type="file" accept=".jpg,.jpeg,.png" className="hidden" onChange={e => setSelfieFile(e.target.files?.[0] || null)} />
+                            <input ref={selfieRef} type="file" accept=".jpg,.jpeg,.png,.heic,.heif,image/*" capture="user" className="hidden" onChange={e => setSelfieFile(e.target.files?.[0] || null)} />
                         </div>
 
                         {/* Agreement */}
@@ -166,13 +166,13 @@ const Verification: React.FC = () => {
                             <p>I confirm these documents are genuine and belong to me. I agree to the <span className="text-red-600 font-medium">Privacy Policy</span> and <span className="text-red-600 font-medium">Verification Terms</span>.</p>
                         </div>
 
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center pb-6 md:pb-0">
                             <div>
                                 <p className="text-sm font-medium">Step 2 of 3</p>
                                 <p className="text-xs text-gray-500">All documents are encrypted & private</p>
                             </div>
                             <button onClick={handleContinue} disabled={loading}
-                                className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-full font-medium transition disabled:opacity-60 disabled:cursor-not-allowed">
+                                className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-full font-medium transition disabled:opacity-60 disabled:cursor-not-allowed">
                                 {loading ? 'Uploading...' : 'continue →'}
                             </button>
                         </div>
