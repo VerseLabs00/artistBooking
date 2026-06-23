@@ -1,11 +1,29 @@
-import React, { useState, useRef } from "react";
-import { Upload, Camera } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Upload, Camera, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import stage from "../../../../public/bg-login.png";
 import api from "../../api/axios";
+import { compressImage } from "../../utils/compressImage";
 
 const docTypes = ["National ID", "Passport", "Bank Statement", "Driving License"] as const;
 type DocType = typeof docTypes[number];
+
+type Field = "front" | "back" | "selfie";
+type FieldErrors = Partial<Record<Field, string>>;
+
+const fieldLabels: Record<Field, string> = {
+    front: "Front side",
+    back: "Back side",
+    selfie: "Selfie",
+};
+
+// Map a backend error key to one of our boxes.
+const keyToField = (key: string): Field | null => {
+    if (key.includes("front")) return "front";
+    if (key.includes("back")) return "back";
+    if (key.includes("selfie")) return "selfie";
+    return null;
+};
 
 const Verification: React.FC = () => {
     const navigate = useNavigate();
@@ -13,47 +31,113 @@ const Verification: React.FC = () => {
     const [frontFile, setFrontFile] = useState<File | null>(null);
     const [backFile, setBackFile] = useState<File | null>(null);
     const [selfieFile, setSelfieFile] = useState<File | null>(null);
+    const [frontPreview, setFrontPreview] = useState<string | null>(null);
+    const [backPreview, setBackPreview] = useState<string | null>(null);
+    const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
     const [agreed, setAgreed] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [progress, setProgress] = useState(0);
     const [error, setError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
     const frontRef = useRef<HTMLInputElement>(null);
     const backRef = useRef<HTMLInputElement>(null);
     const selfieRef = useRef<HTMLInputElement>(null);
 
+    // Clean up any object URLs when the component unmounts.
+    useEffect(() => {
+        return () => {
+            [frontPreview, backPreview, selfiePreview].forEach(
+                (url) => url && URL.revokeObjectURL(url)
+            );
+        };
+    }, [frontPreview, backPreview, selfiePreview]);
+
+    const selectFile = (
+        field: Field,
+        file: File | null,
+        setFile: (f: File | null) => void,
+        prevPreview: string | null,
+        setPreview: (p: string | null) => void
+    ) => {
+        if (prevPreview) URL.revokeObjectURL(prevPreview);
+        setFile(file);
+        setPreview(file && file.type.startsWith("image/") ? URL.createObjectURL(file) : null);
+        // Re-selecting clears any previous failure for this box.
+        setFieldErrors((prev) => {
+            const next = { ...prev };
+            delete next[field];
+            return next;
+        });
+    };
+
     const handleContinue = async () => {
         setError("");
+        setFieldErrors({});
         if (!frontFile) { setError("Please upload the front side of your document."); return; }
         if (!selfieFile) { setError("Please upload a selfie with your document."); return; }
         if (!agreed) { setError("Please agree to the terms to continue."); return; }
 
         setLoading(true);
+        setProgress(0);
         try {
+            // Phone photos are large (and iPhones use HEIC). Compress/convert to
+            // JPEG in the browser so uploads don't fail on mobile devices.
+            const [front, selfie, back] = await Promise.all([
+                compressImage(frontFile),
+                compressImage(selfieFile),
+                backFile ? compressImage(backFile) : Promise.resolve(null),
+            ]);
+
             const formData = new FormData();
             formData.append("document_type", docType);
-            formData.append("front", frontFile);
-            if (backFile) formData.append("back", backFile);
-            formData.append("selfie", selfieFile);
+            formData.append("front", front);
+            if (back) formData.append("back", back);
+            formData.append("selfie", selfie);
 
             await api.post("/onboarding/verification", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
+                timeout: 120000,
+                onUploadProgress: (e) => {
+                    if (e.total) setProgress(Math.round((e.loaded * 100) / e.total));
+                },
             });
             window.scrollTo(0, 0);
             navigate("/talent");
         } catch (err: any) {
             const errors = err.response?.data?.errors;
             if (errors) {
-                setError(Object.values(errors).flat().join(" "));
+                // Map each failed field to its box, clear only that image and
+                // show the reason so the user knows which one to re-upload.
+                const newFieldErrors: FieldErrors = {};
+                Object.entries(errors).forEach(([key, msgs]) => {
+                    const field = keyToField(key);
+                    const reason = (Array.isArray(msgs) ? msgs.join(" ") : String(msgs));
+                    if (field) {
+                        newFieldErrors[field] = reason;
+                        if (field === "front") selectFile("front", null, setFrontFile, frontPreview, setFrontPreview);
+                        if (field === "back") selectFile("back", null, setBackFile, backPreview, setBackPreview);
+                        if (field === "selfie") selectFile("selfie", null, setSelfieFile, selfiePreview, setSelfiePreview);
+                    }
+                });
+                if (Object.keys(newFieldErrors).length) {
+                    setFieldErrors(newFieldErrors);
+                    setError("Some documents failed to upload. Please re-upload the highlighted items below.");
+                } else {
+                    setError(Object.values(errors).flat().join(" "));
+                }
+            } else if (err.code === "ECONNABORTED") {
+                setError("Upload timed out. Please check your connection and try again.");
+            } else if (err.response?.status === 413) {
+                setError("Your photos are too large. Please use smaller images and try again.");
             } else {
                 setError(err.response?.data?.message || "Upload failed. Please try again.");
             }
         } finally {
             setLoading(false);
+            setProgress(0);
         }
     };
-
-    const FileLabel = ({ file }: { file: File | null }) =>
-        file ? <p className="text-xs text-green-600 mt-1 truncate">{file.name}</p> : null;
 
     return (
         <div className="min-h-screen flex items-center justify-center p-0 md:p-6 overflow-y-auto md:overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${stage})` }}>
@@ -122,24 +206,58 @@ const Verification: React.FC = () => {
                             <div>
                                 <p className="text-xs text-gray-400 mb-2">FRONT SIDE *</p>
                                 <div onClick={() => frontRef.current?.click()}
-                                    className={`border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${frontFile ? "border-green-400" : ""}`}>
-                                    <Upload className="w-6 h-6 text-red-500 mb-2" />
-                                    <p className="text-sm">{frontFile ? "Change front" : "Upload front"}</p>
-                                    <p className="text-xs text-gray-400">JPG, PNG or PDF</p>
+                                    className={`relative overflow-hidden border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${fieldErrors.front ? "border-red-500" : frontPreview ? "border-green-400" : ""}`}>
+                                    {frontPreview ? (
+                                        <>
+                                            <img src={frontPreview} alt="Front preview" className="absolute inset-0 w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
+                                                <p className="text-white text-sm font-medium">Change</p>
+                                            </div>
+                                        </>
+                                    ) : frontFile ? (
+                                        <>
+                                            <div className="text-red-500 text-3xl mb-2">📄</div>
+                                            <p className="text-sm">PDF selected</p>
+                                            <p className="text-xs text-gray-400">Tap to change</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload className="w-6 h-6 text-red-500 mb-2" />
+                                            <p className="text-sm">Upload front</p>
+                                            <p className="text-xs text-gray-400">JPG, PNG or PDF</p>
+                                        </>
+                                    )}
                                 </div>
-                                <input ref={frontRef} type="file" accept=".jpg,.jpeg,.png,.pdf,.heic,.heif,image/*,application/pdf" className="hidden" onChange={e => setFrontFile(e.target.files?.[0] || null)} />
-                                <FileLabel file={frontFile} />
+                                <input ref={frontRef} type="file" accept=".jpg,.jpeg,.png,.pdf,.heic,.heif,image/*,application/pdf" className="hidden" onChange={e => selectFile("front", e.target.files?.[0] || null, setFrontFile, frontPreview, setFrontPreview)} />
+                                {fieldErrors.front && <p className="text-xs text-red-600 mt-1 flex items-start gap-1"><AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />{fieldErrors.front}</p>}
                             </div>
                             <div>
                                 <p className="text-xs text-gray-400 mb-2">BACK SIDE</p>
                                 <div onClick={() => backRef.current?.click()}
-                                    className={`border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${backFile ? "border-green-400" : ""}`}>
-                                    <Upload className="w-6 h-6 text-red-500 mb-2" />
-                                    <p className="text-sm">{backFile ? "Change back" : "Upload back"}</p>
-                                    <p className="text-xs text-gray-400">JPG, PNG or PDF</p>
+                                    className={`relative overflow-hidden border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${fieldErrors.back ? "border-red-500" : backPreview ? "border-green-400" : ""}`}>
+                                    {backPreview ? (
+                                        <>
+                                            <img src={backPreview} alt="Back preview" className="absolute inset-0 w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
+                                                <p className="text-white text-sm font-medium">Change</p>
+                                            </div>
+                                        </>
+                                    ) : backFile ? (
+                                        <>
+                                            <div className="text-red-500 text-3xl mb-2">📄</div>
+                                            <p className="text-sm">PDF selected</p>
+                                            <p className="text-xs text-gray-400">Tap to change</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload className="w-6 h-6 text-red-500 mb-2" />
+                                            <p className="text-sm">Upload back</p>
+                                            <p className="text-xs text-gray-400">JPG, PNG or PDF</p>
+                                        </>
+                                    )}
                                 </div>
-                                <input ref={backRef} type="file" accept=".jpg,.jpeg,.png,.pdf,.heic,.heif,image/*,application/pdf" className="hidden" onChange={e => setBackFile(e.target.files?.[0] || null)} />
-                                <FileLabel file={backFile} />
+                                <input ref={backRef} type="file" accept=".jpg,.jpeg,.png,.pdf,.heic,.heif,image/*,application/pdf" className="hidden" onChange={e => selectFile("back", e.target.files?.[0] || null, setBackFile, backPreview, setBackPreview)} />
+                                {fieldErrors.back && <p className="text-xs text-red-600 mt-1 flex items-start gap-1"><AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />{fieldErrors.back}</p>}
                             </div>
                         </div>
 
@@ -147,17 +265,29 @@ const Verification: React.FC = () => {
                         <div className="mb-6">
                             <p className="text-xs text-gray-400 mb-2">SELFIE *</p>
                             <div onClick={() => selfieRef.current?.click()}
-                                className={`border-2 border-dashed rounded-2xl h-36 flex items-center justify-between px-6 hover:border-red-500 cursor-pointer transition ${selfieFile ? "border-green-400" : ""}`}>
-                                <div className="flex items-center gap-4">
-                                    <Camera className="w-6 h-6 text-gray-500" />
-                                    <div>
-                                        <p className="text-sm font-medium">{selfieFile ? selfieFile.name : "Selfie with document"}</p>
-                                        <p className="text-xs text-gray-400">Hold your document next to your face. JPG or PNG</p>
-                                    </div>
-                                </div>
-                                <Upload className="w-5 h-5 text-red-500" />
+                                className={`relative overflow-hidden border-2 border-dashed rounded-2xl h-36 flex items-center justify-between px-6 hover:border-red-500 cursor-pointer transition ${fieldErrors.selfie ? "border-red-500" : selfiePreview ? "border-green-400" : ""}`}>
+                                {selfiePreview ? (
+                                    <>
+                                        <img src={selfiePreview} alt="Selfie preview" className="absolute inset-0 w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
+                                            <p className="text-white text-sm font-medium">Change</p>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-4">
+                                            <Camera className="w-6 h-6 text-gray-500" />
+                                            <div>
+                                                <p className="text-sm font-medium">Selfie with document</p>
+                                                <p className="text-xs text-gray-400">Hold your document next to your face. JPG or PNG</p>
+                                            </div>
+                                        </div>
+                                        <Upload className="w-5 h-5 text-red-500" />
+                                    </>
+                                )}
                             </div>
-                            <input ref={selfieRef} type="file" accept=".jpg,.jpeg,.png,.heic,.heif,image/*" capture="user" className="hidden" onChange={e => setSelfieFile(e.target.files?.[0] || null)} />
+                            <input ref={selfieRef} type="file" accept=".jpg,.jpeg,.png,.heic,.heif,image/*" capture="user" className="hidden" onChange={e => selectFile("selfie", e.target.files?.[0] || null, setSelfieFile, selfiePreview, setSelfiePreview)} />
+                            {fieldErrors.selfie && <p className="text-xs text-red-600 mt-1 flex items-start gap-1"><AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />{fieldErrors.selfie}</p>}
                         </div>
 
                         {/* Agreement */}
@@ -176,6 +306,22 @@ const Verification: React.FC = () => {
                                 {loading ? 'Uploading...' : 'continue →'}
                             </button>
                         </div>
+
+                        {/* Upload progress bar */}
+                        {loading && (
+                            <div className="mt-4">
+                                <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                    <span>Uploading your documents…</span>
+                                    <span>{progress}%</span>
+                                </div>
+                                <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-red-600 rounded-full transition-all duration-300 ease-out"
+                                        style={{ width: `${progress || 5}%` }}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
