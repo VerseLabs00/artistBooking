@@ -9,14 +9,19 @@ export default function ForYouSection() {
   const [loading, setLoading] = useState(true)
   const [searchParams] = useSearchParams()
   const category = searchParams.get('category') ?? ''
+  const location = searchParams.get('location') ?? ''
 
   useEffect(() => {
     setLoading(true)
-    getArtists(category ? { category } : undefined)
+    const params: any = {}
+    if (category) params.category = category
+    if (location) params.location = location
+
+    getArtists(Object.keys(params).length > 0 ? params : undefined)
       .then(({ data }) => setArtists(data))
       .catch(() => setArtists([]))
       .finally(() => setLoading(false))
-  }, [category])
+  }, [category, location])
 
   return (
     <section className="py-6">

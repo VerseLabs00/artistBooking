@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { initiateBooking } from '../../services/bookingService'
+import { getArtistCalendar, type CalendarEntry } from '../../services/discoveryService'
 
 interface BookingModalProps {
   onClose: () => void
@@ -8,24 +10,29 @@ interface BookingModalProps {
   startingPrice: number
 }
 
-// ── Calendar helpers ──
-const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-function getCalendarDays() {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = now.getMonth()
-  const firstDay = new Date(year, month, 1).getDay()
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const days: (number | null)[] = []
-  for (let i = 0; i < firstDay; i++) days.push(null)
-  for (let i = 1; i <= daysInMonth; i++) days.push(i)
-  return { days, year, month }
-}
-
+const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 
-// ── Step indicator ──
+function toMonthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+function toDateKey(year: number, month: number, day: number): string {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+function getCalendarCells(viewDate: Date): (number | null)[] {
+  const year = viewDate.getFullYear()
+  const month = viewDate.getMonth()
+  const firstDay = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const cells: (number | null)[] = []
+  for (let i = 0; i < firstDay; i++) cells.push(null)
+  for (let i = 1; i <= daysInMonth; i++) cells.push(i)
+  return cells
+}
+
 function StepIndicator({ current }: { current: number }) {
   return (
     <div className="flex items-end gap-10 mb-6">
@@ -39,48 +46,122 @@ function StepIndicator({ current }: { current: number }) {
   )
 }
 
-// ── Step 1: Date & Time ──
 function Step1({
-  selectedDay, setSelectedDay, hour, setHour, period, setPeriod, onContinue,
+  artistProfileId,
+  selectedDateKey,
+  setSelectedDateKey,
+  hour,
+  setHour,
+  period,
+  setPeriod,
+  onContinue,
 }: {
-  selectedDay: number; setSelectedDay: (d: number) => void
-  hour: string; setHour: (h: string) => void
-  period: string; setPeriod: (p: string) => void
+  artistProfileId: string
+  selectedDateKey: string
+  setSelectedDateKey: (key: string) => void
+  hour: string
+  setHour: (h: string) => void
+  period: string
+  setPeriod: (p: string) => void
   onContinue: () => void
 }) {
-  const { days, year, month } = getCalendarDays()
-  const today = new Date().getDate()
+  const [viewDate, setViewDate] = useState(() => new Date())
+  const [entries, setEntries] = useState<CalendarEntry[]>([])
+  const [loadingCalendar, setLoadingCalendar] = useState(true)
+
+  const year = viewDate.getFullYear()
+  const month = viewDate.getMonth()
+  const cells = useMemo(() => getCalendarCells(viewDate), [viewDate])
+
+  const todayKey = toDateKey(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())
+
+  const entriesByDate = useMemo(() => {
+    const map = new Map<string, CalendarEntry[]>()
+    for (const entry of entries) {
+      const list = map.get(entry.date) ?? []
+      list.push(entry)
+      map.set(entry.date, list)
+    }
+    return map
+  }, [entries])
+
+  useEffect(() => {
+    let cancelled = false
+    setLoadingCalendar(true)
+    getArtistCalendar(artistProfileId, toMonthKey(viewDate))
+      .then(data => { if (!cancelled) setEntries(data) })
+      .catch(() => { if (!cancelled) setEntries([]) })
+      .finally(() => { if (!cancelled) setLoadingCalendar(false) })
+    return () => { cancelled = true }
+  }, [artistProfileId, viewDate])
+
+  const goMonth = (delta: number) => {
+    setViewDate(prev => new Date(prev.getFullYear(), prev.getMonth() + delta, 1))
+    setSelectedDateKey('')
+  }
+
+  const selectedParts = selectedDateKey ? selectedDateKey.split('-').map(Number) : null
+  const selectedDay = selectedParts ? selectedParts[2] : 0
 
   return (
     <div className="flex flex-col h-full">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Set Date & Time</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-2">Set Date & Time</h2>
+      <p className="text-xs text-gray-500 mb-4">Dates marked in red are already booked and cannot be selected.</p>
+
       <div className="flex gap-6 flex-1">
-        {/* Calendar */}
         <div className="flex-1">
-          <p className="text-center font-semibold text-gray-800 mb-4">{year} {MONTH_NAMES[month]}</p>
-          <div className="grid grid-cols-7 gap-1 text-center mb-2">
-            {DAYS.map((d, i) => <span key={i} className="text-xs text-gray-400 font-medium py-1">{d}</span>)}
+          <div className="flex items-center justify-between mb-4">
+            <button type="button" onClick={() => goMonth(-1)} className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50">
+              <ChevronLeft size={16} />
+            </button>
+            <p className="font-semibold text-gray-800">{MONTH_NAMES[month]} {year}</p>
+            <button type="button" onClick={() => goMonth(1)} className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50">
+              <ChevronRight size={16} />
+            </button>
           </div>
-          <div className="grid grid-cols-7 gap-1 text-center">
-            {days.map((day, i) => {
-              const isPast = day !== null && day <= today
-              const isSelected = day === selectedDay
-              return (
-                <button
-                  key={i}
-                  disabled={!day || isPast}
-                  onClick={() => day && setSelectedDay(day)}
-                  className={`h-9 w-9 mx-auto rounded-full text-sm font-medium transition-colors
-                    ${!day ? '' : isPast ? 'text-gray-300 cursor-not-allowed' : isSelected ? 'bg-red-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
-                >
-                  {day ?? ''}
-                </button>
-              )
-            })}
-          </div>
+
+          {loadingCalendar ? (
+            <p className="text-xs text-gray-400 text-center py-6">Loading availability...</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                {WEEKDAYS.map((d, i) => <span key={i} className="text-xs text-gray-400 font-medium py-1">{d}</span>)}
+              </div>
+              <div className="grid grid-cols-7 gap-1 text-center">
+                {cells.map((day, i) => {
+                  if (!day) return <div key={`empty-${i}`} className="h-9" />
+
+                  const dateKey = toDateKey(year, month, day)
+                  const isPast = dateKey < todayKey
+                  const dayEntries = entriesByDate.get(dateKey) ?? []
+                  const isBooked = dayEntries.length > 0
+                  const isSelected = selectedDateKey === dateKey
+                  const isDisabled = isPast || isBooked
+
+                  return (
+                    <button
+                      key={dateKey}
+                      type="button"
+                      disabled={isDisabled}
+                      title={isBooked ? dayEntries.map(e => e.title).join(', ') : undefined}
+                      onClick={() => {
+                        if (!isDisabled) setSelectedDateKey(dateKey)
+                      }}
+                      className={`h-9 w-9 mx-auto rounded-full text-sm font-medium transition-colors relative
+                        ${isSelected ? 'bg-red-600 text-white' : isBooked ? 'bg-red-100 text-red-600 cursor-not-allowed line-through' : isPast ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
+                    >
+                      {day}
+                      {isBooked && !isSelected && (
+                        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-500" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Time picker */}
         <div className="w-36 flex-shrink-0">
           <p className="font-semibold text-gray-800 mb-4">Pick a time</p>
           <div className="flex flex-col gap-3">
@@ -100,13 +181,13 @@ function Step1({
 
       <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
         <p className="text-sm text-gray-500">
-          {selectedDay
-            ? `${DAY_NAMES[new Date(new Date().getFullYear(), new Date().getMonth(), selectedDay).getDay()]}, ${MONTH_NAMES[new Date().getMonth()]} ${selectedDay} at ${hour} ${period}`
-            : 'Select a date'}
+          {selectedDateKey
+            ? `${DAY_NAMES[new Date(year, month, selectedDay).getDay()]}, ${MONTH_NAMES[month]} ${selectedDay} at ${hour} ${period}`
+            : 'Select an available date'}
         </p>
         <button
           onClick={onContinue}
-          disabled={!selectedDay}
+          disabled={!selectedDateKey}
           className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold px-6 py-2.5 rounded-full flex items-center gap-2 transition-colors"
         >
           Continue
@@ -119,13 +200,13 @@ function Step1({
   )
 }
 
-// ── Step 2: Location & Event ──
 function Step2({
-  venue, setVenue, eventType, setEventType, specialNotes, setSpecialNotes,
+  venue, setVenue, eventType, setEventType, customerPhone, setCustomerPhone, specialNotes, setSpecialNotes,
   onPrev, onContinue,
 }: {
   venue: string; setVenue: (v: string) => void
   eventType: string; setEventType: (t: string) => void
+  customerPhone: string; setCustomerPhone: (p: string) => void
   specialNotes: string; setSpecialNotes: (n: string) => void
   onPrev: () => void; onContinue: () => void
 }) {
@@ -133,7 +214,7 @@ function Step2({
     <div className="flex flex-col h-full">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Event Details</h2>
 
-      <div className="flex flex-col gap-4 flex-1">
+      <div className="flex flex-col gap-4 flex-1 overflow-y-auto pr-1">
         <div>
           <label className="block text-xs text-gray-400 mb-1">Venue / Address</label>
           <input
@@ -153,12 +234,23 @@ function Step2({
           />
         </div>
         <div>
+          <label className="block text-xs text-gray-400 mb-1">Your Phone Number</label>
+          <input
+            type="tel"
+            value={customerPhone}
+            onChange={e => setCustomerPhone(e.target.value)}
+            placeholder="e.g. 077 123 4567"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400 transition-colors"
+          />
+          <p className="text-[10px] text-gray-400 mt-1">So the artist can contact you about the event.</p>
+        </div>
+        <div>
           <label className="block text-xs text-gray-400 mb-1">Special Notes (optional)</label>
           <textarea
             value={specialNotes}
             onChange={e => setSpecialNotes(e.target.value)}
             placeholder="Any special requirements..."
-            rows={3}
+            rows={2}
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400 resize-none transition-colors"
           />
         </div>
@@ -173,7 +265,7 @@ function Step2({
         </button>
         <button
           onClick={onContinue}
-          disabled={!venue || !eventType}
+          disabled={!venue || !eventType || !customerPhone.trim()}
           className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors"
         >
           Continue
@@ -183,19 +275,19 @@ function Step2({
   )
 }
 
-// ── Step 3: Confirm & Pay ──
 function Step3({
-  artistName, startingPrice, selectedDay, hour, period, venue, eventType,
+  artistName, startingPrice, selectedDateKey, hour, period, venue, eventType, customerPhone,
   onPrev, onConfirm, loading, error,
 }: {
   artistName: string; startingPrice: number
-  selectedDay: number; hour: string; period: string
-  venue: string; eventType: string
+  selectedDateKey: string; hour: string; period: string
+  venue: string; eventType: string; customerPhone: string
   onPrev: () => void; onConfirm: () => void
   loading: boolean; error: string
 }) {
   const advance = Math.round(startingPrice * 0.30 * 100) / 100
   const balance = startingPrice - advance
+  const [y, m, d] = selectedDateKey.split('-').map(Number)
 
   return (
     <div className="flex flex-col h-full">
@@ -204,10 +296,11 @@ function Step3({
       <div className="flex-1 space-y-3">
         <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-2">
           <div className="flex justify-between"><span className="text-gray-500">Artist</span><span className="font-medium text-gray-900">{artistName}</span></div>
-          <div className="flex justify-between"><span className="text-gray-500">Date</span><span className="font-medium text-gray-900">{MONTH_NAMES[new Date().getMonth()]} {selectedDay}, {new Date().getFullYear()}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500">Date</span><span className="font-medium text-gray-900">{MONTH_NAMES[m - 1]} {d}, {y}</span></div>
           <div className="flex justify-between"><span className="text-gray-500">Time</span><span className="font-medium text-gray-900">{hour} {period}</span></div>
           <div className="flex justify-between"><span className="text-gray-500">Venue</span><span className="font-medium text-gray-900 text-right max-w-[200px]">{venue}</span></div>
           <div className="flex justify-between"><span className="text-gray-500">Event Type</span><span className="font-medium text-gray-900">{eventType}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500">Phone</span><span className="font-medium text-gray-900">{customerPhone}</span></div>
         </div>
 
         <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-2">
@@ -242,7 +335,6 @@ function Step3({
   )
 }
 
-// ── PayHere form redirect ──
 function submitToPayHere(payhere: Record<string, string>) {
   const form = document.createElement('form')
   form.method = 'POST'
@@ -265,21 +357,18 @@ const stepInfo = [
   { title: 'Confirm & Pay', desc: 'Review your booking and pay the 30% advance via PayHere.' },
 ]
 
-// ── Main Modal ──
 export default function BookingModal({ onClose, artistProfileId, artistName, startingPrice }: BookingModalProps) {
   const [step, setStep] = useState(1)
 
-  // Step 1 state
-  const [selectedDay, setSelectedDay] = useState(0)
+  const [selectedDateKey, setSelectedDateKey] = useState('')
   const [hour, setHour] = useState('10:00')
   const [period, setPeriod] = useState('AM')
 
-  // Step 2 state
   const [venue, setVenue] = useState('')
   const [eventType, setEventType] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
   const [specialNotes, setSpecialNotes] = useState('')
 
-  // Step 3 state
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -289,11 +378,6 @@ export default function BookingModal({ onClose, artistProfileId, artistName, sta
     setError('')
     setLoading(true)
     try {
-      const now = new Date()
-      const eventDate = new Date(now.getFullYear(), now.getMonth(), selectedDay)
-      const dateStr = eventDate.toISOString().split('T')[0]
-
-      // Convert to 24h format for the API (H:i)
       let [h] = hour.split(':')
       let hNum = parseInt(h)
       if (period === 'PM' && hNum !== 12) hNum += 12
@@ -302,19 +386,22 @@ export default function BookingModal({ onClose, artistProfileId, artistName, sta
 
       const data = await initiateBooking({
         artist_profile_id: artistProfileId,
-        event_date: dateStr,
+        event_date: selectedDateKey,
         event_start_time: timeStr,
         event_type: eventType,
         venue,
+        customer_phone: customerPhone.trim(),
         special_notes: specialNotes || undefined,
       })
 
       submitToPayHere(data.payhere as unknown as Record<string, string>)
-    } catch (err: any) {
-      const msg = err?.response?.data?.message
-        ?? Object.values(err?.response?.data?.errors ?? {})[0]
-        ?? 'Something went wrong. Please try again.'
-      setError(Array.isArray(msg) ? msg[0] : String(msg))
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
+      const errors = axiosErr.response?.data?.errors
+      const msg = errors
+        ? Object.values(errors).flat()[0]
+        : axiosErr.response?.data?.message ?? 'Something went wrong. Please try again.'
+      setError(String(msg))
       setLoading(false)
     }
   }
@@ -323,40 +410,57 @@ export default function BookingModal({ onClose, artistProfileId, artistName, sta
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-red-900/20 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative bg-[#f2f2f2] rounded-2xl flex w-[880px] max-w-[95vw] overflow-hidden shadow-2xl min-h-[500px]">
+      <div className="relative bg-[#f2f2f2] rounded-2xl flex flex-col md:flex-row w-full max-w-[95vw] md:max-w-[880px] mx-2 sm:mx-0 overflow-hidden shadow-2xl min-h-0 md:min-h-[500px] max-h-[95vh]">
 
-        {/* Left panel */}
-        <div className="w-64 flex-shrink-0 bg-[#ebebeb] px-6 py-6 flex flex-col">
-          <StepIndicator current={step} />
-
-          <div className="flex flex-col items-center text-center flex-1 justify-center">
-            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-              <span className="text-2xl font-bold text-red-600">{step}</span>
-            </div>
-            <h3 className="text-base font-bold text-gray-900 mt-3">{info.title}</h3>
-            <p className="text-xs text-gray-500 mt-2 leading-relaxed">{info.desc}</p>
+        <div className="w-full md:w-64 flex-shrink-0 bg-[#ebebeb] px-4 sm:px-6 py-3 sm:py-6 flex flex-row md:flex-col items-center md:items-stretch gap-4 md:gap-0">
+          <div className="hidden md:block">
+            <StepIndicator current={step} />
           </div>
 
-          <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-700 mt-6 text-center w-full transition-colors">
+          <div className="flex flex-row md:flex-col items-center text-center flex-1 justify-center gap-3 md:gap-0 min-w-0">
+            <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-red-100 flex items-center justify-center md:mb-4 shrink-0">
+              <span className="text-lg md:text-2xl font-bold text-red-600">{step}</span>
+            </div>
+            <div className="text-left md:text-center min-w-0">
+              <h3 className="text-sm md:text-base font-bold text-gray-900 md:mt-3 truncate">{info.title}</h3>
+              <p className="text-[11px] md:text-xs text-gray-500 mt-1 md:mt-2 leading-relaxed line-clamp-2 md:line-clamp-none">{info.desc}</p>
+            </div>
+          </div>
+
+          <button onClick={onClose} className="hidden md:block text-sm text-gray-500 hover:text-gray-700 mt-6 text-center w-full transition-colors">
             Cancel
           </button>
         </div>
 
-        {/* Right panel */}
-        <div className="flex-1 bg-white px-8 py-6">
+        <div className="flex-1 bg-white px-4 sm:px-8 py-4 sm:py-6 overflow-y-auto relative">
+          <button
+            onClick={onClose}
+            className="md:hidden absolute top-3 right-3 text-xs text-gray-500 hover:text-gray-700 font-semibold z-10"
+          >
+            Cancel
+          </button>
           {step === 1 && (
             <Step1
-              selectedDay={selectedDay} setSelectedDay={setSelectedDay}
-              hour={hour} setHour={setHour}
-              period={period} setPeriod={setPeriod}
+              artistProfileId={artistProfileId}
+              selectedDateKey={selectedDateKey}
+              setSelectedDateKey={setSelectedDateKey}
+              hour={hour}
+              setHour={setHour}
+              period={period}
+              setPeriod={setPeriod}
               onContinue={() => setStep(2)}
             />
           )}
           {step === 2 && (
             <Step2
-              venue={venue} setVenue={setVenue}
-              eventType={eventType} setEventType={setEventType}
-              specialNotes={specialNotes} setSpecialNotes={setSpecialNotes}
+              venue={venue}
+              setVenue={setVenue}
+              eventType={eventType}
+              setEventType={setEventType}
+              customerPhone={customerPhone}
+              setCustomerPhone={setCustomerPhone}
+              specialNotes={specialNotes}
+              setSpecialNotes={setSpecialNotes}
               onPrev={() => setStep(1)}
               onContinue={() => setStep(3)}
             />
@@ -365,11 +469,12 @@ export default function BookingModal({ onClose, artistProfileId, artistName, sta
             <Step3
               artistName={artistName}
               startingPrice={startingPrice}
-              selectedDay={selectedDay}
+              selectedDateKey={selectedDateKey}
               hour={hour}
               period={period}
               venue={venue}
               eventType={eventType}
+              customerPhone={customerPhone}
               onPrev={() => setStep(2)}
               onConfirm={handleConfirm}
               loading={loading}

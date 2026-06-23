@@ -1,9 +1,29 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import {
+    Calendar,
+    Clock,
+    MapPin,
+    CheckCircle,
+    XCircle,
+    AlertCircle,
+    ChevronRight,
+    User,
+    Search,
+    Loader2,
+    X,
+    CreditCard,
+    FileText,
+    TrendingUp,
+    Phone,
+    Mail,
+    ArrowLeft
+} from 'lucide-react'
 import api from "../../api/axios";
 
-interface Booking {
-    id: number;
+// --- Extended Booking Type for UI ---
+interface DetailedBooking {
+    id: string;
     booking_status: string;
     payment_status: string;
     event_date: string;
@@ -15,261 +35,469 @@ interface Booking {
     balance_due: number;
     customer_name: string;
     created_at: string;
-    // Detailed fields
+    customer?: any;
     event_duration_hours?: number;
     special_notes?: string;
     customer_email?: string;
     customer_phone?: string;
+    customer_avatar?: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-    pending: "border-yellow-400",
-    confirmed: "border-green-500",
-    rejected: "border-red-400",
-    completed: "border-blue-400",
-    cancelled: "border-gray-400",
-    pending_payment: "border-orange-400",
-};
+// --- Normalization Helper ---
+function normalizeBooking(b: any): DetailedBooking {
+    // Check multiple locations for customer data (inspired by Admin logic)
+    const customer = b.customer || b.user || b.customer_profile || {};
+
+    return {
+        ...b,
+        id: String(b.id),
+        customer_name: b.customer_name || customer.name || customer.full_name || "Customer",
+        customer_avatar: b.customer_avatar || customer.avatar_url || customer.avatar || `https://i.pravatar.cc/150?u=c${customer.id || b.customer_id || b.id}`,
+        customer_email: b.customer_email || customer.email || "N/A",
+        customer_phone: b.customer_phone || customer.phone || b.customer_phone || "N/A",
+        event_date: b.event_date || "N/A",
+        event_type: b.event_type || "N/A",
+        venue: b.venue || "To be shared",
+        event_start_time: b.event_start_time || "TBD",
+        special_notes: b.special_notes || "",
+        payment_status: b.payment_status || "Pending"
+    };
+}
 
 export default function BookingRequests() {
     const navigate = useNavigate();
-    const [bookings, setBookings] = useState<Booking[]>([]);
-    const [selected, setSelected] = useState<Booking | null>(null);
+    const [bookings, setBookings] = useState<DetailedBooking[]>([]);
     const [loading, setLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState(false);
-    const [successMsg, setSuccessMsg] = useState("");
-    const [error, setError] = useState("");
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const [selectedBooking, setSelectedBooking] = useState<DetailedBooking | null>(null);
+    const [detailsLoading, setDetailsLoading] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'all' | 'cancelled' | 'confirmed' | 'completed'>('all');
 
     useEffect(() => { fetchBookings(); }, []);
 
     const fetchBookings = async () => {
         setLoading(true);
         try {
-            const { data } = await api.get("/bookings");
-            setBookings(data.data || []);
+            const { data } = await api.get("/artist/bookings");
+            // Robust check for data location (handle wrapped or direct array)
+            const raw = Array.isArray(data) ? data : (data.data || []);
+            
+            // Sort by created_at descending (newest first)
+            const sorted = raw.sort((a: any, b: any) => 
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            
+            setBookings(sorted.map(normalizeBooking));
         } catch (err: any) {
-            setError(err.response?.data?.message || "Failed to load bookings.");
+            console.error("Failed to load bookings", err);
         } finally {
             setLoading(false);
         }
     };
 
-    const openBooking = async (id: number) => {
+    const handleShowDetails = async (id: string) => {
+        setDetailsLoading(id);
         try {
-            const { data } = await api.get(`/bookings/${id}`);
-            setSelected(data.data);
-        } catch { /* fallback to list data */ setSelected(bookings.find(b => b.id === id) || null); }
-    };
-
-    const updateStatus = async (id: number, status: "rejected" | "completed") => {
-        setActionLoading(true);
-        try {
-            await api.put(`/bookings/${id}/status`, { status });
-            setSuccessMsg(status === "rejected" ? "Booking declined." : "Booking marked as completed.");
-            setSelected(null);
-            await fetchBookings();
-            setTimeout(() => setSuccessMsg(""), 3000);
-        } catch (err: any) {
-            setError(err.response?.data?.message || "Action failed.");
+            const { data } = await api.get(`/artist/bookings/${id}`);
+            // Robust check for details
+            const detailData = data.data || data;
+            setSelectedBooking(normalizeBooking(detailData));
+        } catch {
+            setSelectedBooking(bookings.find(b => b.id === id) || null);
         } finally {
-            setActionLoading(false);
+            setDetailsLoading(null);
         }
     };
 
-    const pendingBookings = bookings.filter(b => b.booking_status === "pending" || b.booking_status === "confirmed");
-    const otherBookings = bookings.filter(b => !["pending", "confirmed"].includes(b.booking_status));
+    const updateStatus = async (id: string, status: "rejected" | "completed" | "confirmed") => {
+        setActionLoading(id);
+        try {
+            const { data } = await api.put(`/artist/bookings/${id}/status`, { status });
+            const updated = normalizeBooking(data.data || data);
+            
+            setBookings(prev => prev.map(b => b.id === id ? updated : b));
+            if (selectedBooking?.id === id) {
+                setSelectedBooking(updated);
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Action failed.");
+        } finally {
+            setActionLoading(null);
+        }
+    };
 
-    const formatDate = (dateStr: string): { month: string; day: number } => {
-        if (!dateStr) return { month: "", day: 0 };
-        const d = new Date(dateStr);
-        return { month: d.toLocaleString("en", { month: "short" }).toUpperCase(), day: d.getDate() };
+    const filteredBookings = bookings.filter(b => {
+        if (activeTab === 'all') return true;
+        if (activeTab === 'cancelled') return b.booking_status === 'rejected' || b.booking_status === 'cancelled';
+        return b.booking_status === activeTab;
+    });
+
+    const getStatusColor = (status: string) => {
+        switch (status?.toLowerCase()) {
+            case 'confirmed': return 'bg-green-100 text-green-700 border-green-200';
+            case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+            case 'pending_payment': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+            case 'rejected': return 'bg-red-100 text-red-700 border-red-200';
+            case 'cancelled': return 'bg-red-100 text-red-700 border-red-200';
+            case 'completed': return 'bg-blue-100 text-blue-700 border-blue-200';
+            default: return 'bg-gray-100 text-gray-700 border-gray-200';
+        }
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex justify-center items-start p-6">
-            <div className="w-full max-w-6xl grid grid-cols-3 gap-6 relative">
-
-                {/* LEFT PROFILE CARD */}
-                <div className={`col-span-1 space-y-6 transition ${selected ? "opacity-30 pointer-events-none" : ""}`}>
-                    <div className="bg-white rounded-2xl shadow p-6 text-center">
-                        <div className="mt-4">
-                            <h2 className="text-xl font-semibold">My Bookings</h2>
-                            <p className="text-gray-500 text-sm">Manage your booking requests</p>
-                        </div>
-                        <div className="mt-6 space-y-2 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Pending</span>
-                                <span className="text-yellow-500 font-medium">{bookings.filter(b => b.booking_status === "pending").length}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Confirmed</span>
-                                <span className="text-green-500 font-medium">{bookings.filter(b => b.booking_status === "confirmed").length}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Completed</span>
-                                <span className="font-medium">{bookings.filter(b => b.booking_status === "completed").length}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-2xl shadow p-6 border-l-4 border-red-500">
-                        <p className="text-sm font-medium">Respond within 48h</p>
-                        <p className="text-xs text-gray-500 mt-1">Late response lowers your profile ranking and visibility.</p>
-                    </div>
-                </div>
-
-                {/* RIGHT PANEL */}
-                <div className="col-span-2">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-sm text-gray-500">
-                            Pending Requests · {pendingBookings.length}
-                        </h3>
-                        <button onClick={() => navigate("/account")} className="text-red-500 text-sm">Back to Profile</button>
-                    </div>
-
-                    {successMsg && (
-                        <div className="mb-4 bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-2 rounded-lg">{successMsg}</div>
-                    )}
-                    {error && (
-                        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-2 rounded-lg">{error}</div>
-                    )}
-
-                    {loading ? (
-                        <div className="bg-white rounded-2xl shadow p-8 text-center text-gray-400 text-sm">Loading bookings...</div>
-                    ) : bookings.length === 0 ? (
-                        <div className="bg-white rounded-2xl shadow p-8 text-center text-gray-400 text-sm">No booking requests yet.</div>
-                    ) : (
-                        <div className="space-y-3">
-                            {[...pendingBookings, ...otherBookings].map(b => {
-                                const { month, day } = formatDate(b.event_date);
-                                return (
-                                    <div key={b.id} className={`bg-white rounded-2xl shadow p-4 flex items-center justify-between border-l-4 ${STATUS_COLORS[b.booking_status] || "border-gray-300"}`}>
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-center min-w-[40px]">
-                                                <p className="text-xs text-gray-400">{month}</p>
-                                                <p className="text-lg font-semibold">{day}</p>
-                                            </div>
-                                            <div>
-                                                <p className="font-medium">{b.customer_name}</p>
-                                                <p className="text-xs text-gray-500">{b.event_type} · {b.event_start_time}</p>
-                                                <p className="text-xs text-gray-500">{b.venue}</p>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-semibold">${b.agreed_price}</p>
-                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                                b.booking_status === "pending" ? "bg-yellow-100 text-yellow-700" :
-                                                b.booking_status === "confirmed" ? "bg-green-100 text-green-700" :
-                                                b.booking_status === "completed" ? "bg-blue-100 text-blue-700" :
-                                                "bg-gray-100 text-gray-600"
-                                            }`}>
-                                                {b.booking_status}
-                                            </span>
-                                            <br />
-                                            <button onClick={() => openBooking(b.id)} className="text-xs text-red-500 mt-1">View Request</button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                {/* SLIDE OVER PANEL */}
-                {selected && (
-                    <div className="fixed inset-0 flex justify-end bg-black/20 z-40">
-                        <div className="w-full max-w-md bg-white h-full shadow-xl p-6 overflow-y-auto">
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="font-semibold">{selected.customer_name}</h2>
-                                <button onClick={() => setSelected(null)}>✕</button>
-                            </div>
-                            <div className="border-t pt-4 space-y-4">
-                                <p className="text-xs text-gray-400">Event Details</p>
-                                <div className="grid grid-cols-2 gap-3 text-sm">
-                                    <div className="bg-gray-100 p-3 rounded-lg">
-                                        <p className="text-gray-400 text-xs">Date</p>
-                                        <p>{selected.event_date}</p>
-                                    </div>
-                                    <div className="bg-gray-100 p-3 rounded-lg">
-                                        <p className="text-gray-400 text-xs">Time</p>
-                                        <p>{selected.event_start_time}</p>
-                                    </div>
-                                    {selected.event_duration_hours && (
-                                        <div className="bg-gray-100 p-3 rounded-lg">
-                                            <p className="text-gray-400 text-xs">Duration</p>
-                                            <p>{selected.event_duration_hours} hours</p>
-                                        </div>
-                                    )}
-                                    <div className="bg-gray-100 p-3 rounded-lg">
-                                        <p className="text-gray-400 text-xs">Event Type</p>
-                                        <p>{selected.event_type}</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-400 mb-2">Venue</p>
-                                    <div className="bg-gray-100 p-3 rounded-lg text-sm">{selected.venue}</div>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-400 mb-2">Client Info</p>
-                                    <div className="space-y-2 text-sm">
-                                        <div className="bg-gray-100 p-3 rounded-lg">{selected.customer_name}</div>
-                                        {selected.customer_phone && <div className="bg-gray-100 p-3 rounded-lg">{selected.customer_phone}</div>}
-                                        {selected.customer_email && <div className="bg-gray-100 p-3 rounded-lg">{selected.customer_email}</div>}
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-400 mb-2">Payment</p>
-                                    <div className="grid grid-cols-2 gap-3 text-sm">
-                                        <div className="bg-gray-100 p-3 rounded-lg">
-                                            <p className="text-gray-400 text-xs">Agreed Price</p>
-                                            <p>${selected.agreed_price}</p>
-                                        </div>
-                                        <div className="bg-gray-100 p-3 rounded-lg">
-                                            <p className="text-gray-400 text-xs">Balance Due</p>
-                                            <p>${selected.balance_due}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                {selected.special_notes && (
-                                    <div>
-                                        <p className="text-xs text-gray-400 mb-2">Notes</p>
-                                        <div className="bg-gray-100 p-3 rounded-lg text-sm">{selected.special_notes}</div>
-                                    </div>
-                                )}
-                                {(selected.booking_status === "pending" || selected.booking_status === "confirmed") && (
-                                    <div className="flex gap-3 pt-4">
-                                        {selected.booking_status === "confirmed" && (
-                                            <button onClick={() => updateStatus(selected.id, "completed")} disabled={actionLoading}
-                                                className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition disabled:opacity-60">
-                                                {actionLoading ? "..." : "Mark Completed"}
-                                            </button>
-                                        )}
-                                        <button onClick={() => updateStatus(selected.id, "rejected")} disabled={actionLoading}
-                                            className="flex-1 border border-red-400 text-red-500 py-2 rounded-lg hover:bg-red-50 transition disabled:opacity-60">
-                                            {actionLoading ? "..." : "Decline"}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* SUCCESS POPUP */}
-                {successMsg && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 pointer-events-none">
-                        <div className="bg-white rounded-2xl shadow-2xl px-8 py-6 text-center animate-scaleIn">
-                            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xl">✓</div>
-                            <h3 className="text-lg font-semibold">Done!</h3>
-                            <p className="text-sm text-gray-500 mt-1">{successMsg}</p>
-                        </div>
-                    </div>
-                )}
-            </div>
-
+        <div className="min-h-screen bg-gray-50 flex flex-col" style={{ fontFamily: "'Fraunces', serif" }}>
             <style>{`
-                @keyframes scaleIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-                .animate-scaleIn { animation: scaleIn 0.25s ease; }
+                @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700;800;900&display=swap');
+                .pink-text { color: #E8194B; }
+                .bg-pink { background-color: #E8194B; }
+                .btn-pink { background: #E8194B; color: #fff; transition: all 0.2s; }
+                .btn-pink:hover { background: #c8133b; transform: translateY(-1px); }
+                .tab-active { color: #E8194B; border-bottom: 2px solid #E8194B; }
+                .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-blur-md; border: 1px solid rgba(255, 255, 255, 0.4); }
+                .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
             `}</style>
+
+            {/* Booking Details Modal */}
+            {selectedBooking && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white w-full max-w-2xl rounded-[40px] overflow-hidden shadow-2xl relative">
+                        <button
+                            onClick={() => setSelectedBooking(null)}
+                            className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
+                        >
+                            <X size={24} className="text-gray-400" />
+                        </button>
+
+                        <div className="flex flex-col md:flex-row h-full max-h-[90vh] overflow-y-auto">
+                            <div className="w-full md:w-1/3 bg-gray-100">
+                                <img src={selectedBooking.customer_avatar} className="w-full h-full object-cover" alt="" />
+                            </div>
+                            <div className="w-full md:w-2/3 p-8">
+                                <div className="mb-6">
+                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(selectedBooking.booking_status)}`}>
+                                        {selectedBooking.booking_status}
+                                    </span>
+                                    <h2 className="text-3xl font-black text-gray-900 mt-3">{selectedBooking.customer_name}</h2>
+                                    <p className="text-pink font-bold text-sm">{selectedBooking.event_type}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6 mb-8">
+                                    <div>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Event Date</p>
+                                        <div className="flex items-center gap-2 text-gray-900 font-bold">
+                                            <Calendar size={16} className="text-pink" />
+                                            <span>{selectedBooking.event_date}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Start Time</p>
+                                        <div className="flex items-center gap-2 text-gray-900 font-bold">
+                                            <Clock size={16} className="text-pink" />
+                                            <span>{selectedBooking.event_start_time}</span>
+                                        </div>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Venue</p>
+                                        <div className="flex items-center gap-2 text-gray-900 font-bold">
+                                            <MapPin size={16} className="text-pink" />
+                                            <span>{selectedBooking.venue}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-50 rounded-2xl p-6 mb-8 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-gray-500">
+                                            <CreditCard size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Total Price</span>
+                                        </div>
+                                        <span className="text-lg font-black text-gray-900">Rs. {selectedBooking.agreed_price.toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-gray-500">
+                                            <FileText size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Advance Paid</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-gray-900">Rs. {selectedBooking.advance_amount.toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-gray-500">
+                                            <AlertCircle size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Balance Due</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-gray-900">Rs. {selectedBooking.balance_due.toLocaleString()}</span>
+                                    </div>
+                                </div>
+
+                                <div className="mb-8 p-6 bg-pink/5 rounded-2xl border border-pink/10">
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Customer Contact</p>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink shadow-sm">
+                                                <Mail size={14} />
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-700">{selectedBooking.customer_email}</p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink shadow-sm">
+                                                <Phone size={14} />
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-700">{selectedBooking.customer_phone}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {selectedBooking.special_notes && (
+                                    <div className="mb-8">
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Special Notes</p>
+                                        <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl italic">
+                                            "{selectedBooking.special_notes}"
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3">
+                                    {(selectedBooking.booking_status === "pending" || selectedBooking.booking_status === "pending_payment") && (
+                                        <>
+                                            <button
+                                                onClick={() => updateStatus(selectedBooking.id, "confirmed")}
+                                                disabled={actionLoading === selectedBooking.id}
+                                                className="flex-1 btn-pink py-4 rounded-2xl font-bold text-sm disabled:opacity-50"
+                                            >
+                                                {actionLoading === selectedBooking.id ? 'Accepting...' : 'Accept Request'}
+                                            </button>
+                                            <button
+                                                onClick={() => updateStatus(selectedBooking.id, "rejected")}
+                                                disabled={actionLoading === selectedBooking.id}
+                                                className="flex-1 px-6 py-4 border border-red-200 text-red-500 rounded-2xl font-bold text-sm hover:bg-red-50 transition-colors disabled:opacity-50"
+                                            >
+                                                {actionLoading === selectedBooking.id ? 'Declining...' : 'Decline Request'}
+                                            </button>
+                                        </>
+                                    )}
+                                    {selectedBooking.booking_status === "confirmed" && (
+                                        <button
+                                            onClick={() => updateStatus(selectedBooking.id, "completed")}
+                                            disabled={actionLoading === selectedBooking.id}
+                                            className="flex-1 btn-pink py-4 rounded-2xl font-bold text-sm disabled:opacity-50"
+                                        >
+                                            {actionLoading === selectedBooking.id ? 'Updating...' : 'Mark Completed'}
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setSelectedBooking(null)}
+                                        className="flex-1 bg-gray-900 text-white rounded-2xl font-bold text-sm hover:bg-black transition-colors px-6 py-4"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* NAVBAR */}
+            <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={() => navigate(-1)}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-pink-600"
+                        title="Go back"
+                    >
+                        <ArrowLeft size={22} />
+                    </button>
+                    <Link to="/artistHome" className="flex items-center">
+                        <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-10 w-auto object-contain" />
+                    </Link>
+                </div>
+                {/*<div className="flex items-center gap-4">*/}
+                {/*    <button*/}
+                {/*        onClick={() => navigate('/account')}*/}
+                {/*        className="text-gray-600 hover:text-black transition-colors text-sm font-semibold">*/}
+                {/*        My Account*/}
+                {/*    </button>*/}
+
+                {/*</div>*/}
+            </nav>
+
+            <div className="flex-grow max-w-7xl mx-auto w-full px-4 md:px-8 py-10">
+                <div className="flex flex-col md:flex-row gap-8">
+                    {/* SIDEBAR */}
+                    <aside className="w-full md:w-64 flex-shrink-0">
+                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sticky top-24">
+                            <div className="text-center mb-8">
+                                <div className="w-20 h-20 rounded-full bg-pink/10 flex items-center justify-center text-pink mx-auto mb-4 border-2 border-pink/20">
+                                    <User size={32} />
+                                </div>
+                                <h2 className="font-bold text-xl text-gray-900">Artist Panel</h2>
+                                <p className="text-gray-500 text-xs mt-1">Manage Requests</p>
+                            </div>
+
+                            <nav className="space-y-2">
+                                {[
+                                    { id: 'all', icon: <Search size={18} />, label: 'All Requests' },
+                                    { id: 'cancelled', icon: <XCircle size={18} />, label: 'Cancel' },
+                                    { id: 'confirmed', icon: <CheckCircle size={18} />, label: 'Confirmed' },
+                                    { id: 'completed', icon: <TrendingUp size={18} />, label: 'Completed' },
+                                ].map(item => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => setActiveTab(item.id as any)}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                                            activeTab === item.id
+                                                ? 'bg-pink text-white shadow-lg shadow-pink/20'
+                                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                                        }`}
+                                    >
+                                        {item.icon}
+                                        {item.label}
+                                        <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTab === item.id ? 'bg-white/20' : 'bg-gray-100'}`}>
+                                            {bookings.filter(b => {
+                                                if (item.id === 'all') return true;
+                                                if (item.id === 'cancelled') return b.booking_status === 'rejected' || b.booking_status === 'cancelled';
+                                                return b.booking_status === item.id;
+                                            }).length}
+                                        </span>
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+                    </aside>
+
+                    {/* MAIN CONTENT */}
+                    <main className="flex-1 min-w-0">
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <header>
+                                <h1 className="text-3xl font-black text-gray-900">Booking Requests</h1>
+                                <p className="text-gray-500 mt-2">View and manage your incoming booking requests.</p>
+                            </header>
+
+                            {loading ? (
+                                <div className="flex items-center justify-center py-40 bg-white rounded-[40px] border border-gray-100 shadow-sm">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <Loader2 className="animate-spin text-pink" size={40} />
+                                        <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Loading requests...</p>
+                                    </div>
+                                </div>
+                            ) : filteredBookings.length === 0 ? (
+                                <div className="text-center py-40 bg-white rounded-[40px] border border-gray-100 shadow-sm px-6">
+                                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mx-auto mb-6">
+                                        <Calendar size={40} />
+                                    </div>
+                                    <h4 className="font-bold text-gray-900">No {activeTab !== 'all' ? activeTab : ''} bookings found</h4>
+                                    <p className="text-gray-500 text-sm mt-2">New requests will appear here once customers book you.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {filteredBookings.map(booking => (
+                                        <div key={booking.id} className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group">
+                                            <div className="flex flex-col md:flex-row gap-6">
+                                                <div className="relative w-full md:w-32 h-32 rounded-[20px] overflow-hidden flex-shrink-0 shadow-inner">
+                                                    <img src={booking.customer_avatar} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={booking.customer_name} />
+                                                    <div className={`absolute top-3 left-3 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border glass-card ${getStatusColor(booking.booking_status)}`}>
+                                                        {booking.booking_status}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex-1 flex flex-col justify-between py-1">
+                                                    <div>
+                                                        <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
+                                                            <div>
+                                                                <h3 className="text-xl font-black text-gray-900">{booking.customer_name}</h3>
+                                                                <div className="flex items-center gap-2 mt-0.5">
+                                                                    <span className="text-pink font-bold text-xs">{booking.event_type}</span>
+                                                                    <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                                                    <span className="text-gray-400 text-[10px] font-bold uppercase tracking-tighter">ID: #{booking.id.slice(0, 8)}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
+                                                                <p className="text-gray-400 text-[9px] font-bold uppercase tracking-wider mb-0.5">Price</p>
+                                                                <p className="text-lg font-black text-gray-900">Rs. {booking.agreed_price.toLocaleString()}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-pink/5 flex items-center justify-center text-pink">
+                                                                    <Calendar size={16} />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[9px] text-gray-400 font-bold uppercase">Date</p>
+                                                                    <p className="text-xs font-bold text-gray-900">{booking.event_date}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-pink/5 flex items-center justify-center text-pink">
+                                                                    <Clock size={16} />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[9px] text-gray-400 font-bold uppercase">Start</p>
+                                                                    <p className="text-xs font-bold text-gray-900">{booking.event_start_time}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-pink/5 flex items-center justify-center text-pink">
+                                                                    <MapPin size={16} />
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-[9px] text-gray-400 font-bold uppercase">Venue</p>
+                                                                    <p className="text-xs font-bold text-gray-900 truncate">{booking.venue}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-50">
+                                                        <button
+                                                            onClick={() => handleShowDetails(booking.id)}
+                                                            className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-colors flex items-center gap-2"
+                                                        >
+                                                            {detailsLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
+                                                            View Request
+                                                        </button>
+                                                        {(booking.booking_status === "pending" || booking.booking_status === "pending_payment") && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => updateStatus(booking.id, "confirmed")}
+                                                                    disabled={actionLoading === booking.id}
+                                                                    className="btn-pink px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2"
+                                                                >
+                                                                    {actionLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
+                                                                    Accept
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => updateStatus(booking.id, "rejected")}
+                                                                    disabled={actionLoading === booking.id}
+                                                                    className="px-6 py-2.5 border border-red-200 text-red-500 rounded-xl text-xs font-bold hover:bg-red-50 transition-colors flex items-center gap-2"
+                                                                >
+                                                                    {actionLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
+                                                                    Decline
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        {booking.booking_status === "confirmed" && (
+                                                            <button
+                                                                onClick={() => updateStatus(booking.id, "completed")}
+                                                                disabled={actionLoading === booking.id}
+                                                                className="btn-pink px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2"
+                                                            >
+                                                                {actionLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
+                                                                Mark Completed
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </main>
+                </div>
+            </div>
         </div>
     );
 }

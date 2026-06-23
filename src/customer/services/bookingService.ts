@@ -6,6 +6,7 @@ export interface InitiateBookingPayload {
   event_start_time: string
   event_type: string
   venue: string
+  customer_phone: string
   event_duration_hours?: number
   venue_lat?: number
   venue_lng?: number

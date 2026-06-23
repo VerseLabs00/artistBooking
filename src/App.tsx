@@ -1,4 +1,6 @@
 import { Routes, Route } from "react-router-dom";
+import ScrollToTop from "./artist/component/ScrollToTop.tsx";
+
 import Login from "./artist/pages/auth/login.tsx";
 import Account from "./artist/pages/artist/account.tsx";
 import Information from "./artist/pages/auth/informations.tsx";
@@ -8,37 +10,55 @@ import Signup from "./artist/pages/auth/signup.tsx";
 import EditProfile from "./artist/pages/artist/editProfile.tsx";
 import Bookings from "./artist/pages/artist/bookingRequests.tsx";
 import Landing from "./artist/pages/landing.tsx";
+import ArtistHome from "./artist/pages/artist/artistHome.tsx";
 
 import LoginCustomer from "./customer/pages/LoginPage.tsx";
 import SignupCustomer from "./customer/pages/SignUpPage.tsx";
 import HomePageCustomer from "./customer/pages/HomePage.tsx";
-import ArtistProfilePage from "./customer/pages/ArtistProfilePage.tsx";
+import ArtistProfileLanding from "./customer/pages/ArtistProfileLanding.tsx";
+import ArtistProfileCustomer from "./customer/pages/ArtistProfile.tsx";
+import CategoryCustomer from "./artist/pages/artist/categoryCustomer.tsx";
+import CustomerAccount from "./customer/pages/CustomerAccount.tsx";
 
 import AdminRoutes from "./admin/routes/AppRouter.jsx";
+import Category from "./artist/pages/artist/categoryLanding.tsx";
+
+import DevGate from "./artist/component/DevGate.tsx";
 
 function App() {
-    return (
-        <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/information" element={<Information />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/verification" element={<Verification />} />
-            <Route path="/talent" element={<Talent />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/editProfile" element={<EditProfile />} />
-            <Route path="/bookingRequests" element={<Bookings />} />
-            
-            {/* Customer Routes */}
-            <Route path="/loginCustomer" element={<LoginCustomer />} />
-            <Route path="/signupCustomer" element={<SignupCustomer />} />
-            <Route path="/home" element={<HomePageCustomer />} />
-            <Route path="/artist/:id" element={<ArtistProfilePage />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin/*" element={<AdminRoutes />} />
-        </Routes>
-    );
+        return (
+            <>
+                    <DevGate>
+                    <ScrollToTop />
+                    <Routes>
+                            <Route path="/" element={<Landing />} />
+
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/information" element={<Information />} />
+                            <Route path="/account" element={<Account />} />
+                            <Route path="/verification" element={<Verification />} />
+                            <Route path="/talent" element={<Talent />} />
+                            <Route path="/signup" element={<Signup />} />
+                            <Route path="/editProfile" element={<EditProfile />} />
+                            <Route path="/bookingRequests" element={<Bookings />} />
+                            <Route path="/category" element={<Category />} />
+                            <Route path="/artistHome" element={<ArtistHome />} />
+
+                            {/* Customer Routes */}
+                            <Route path="/loginCustomer" element={<LoginCustomer />} />
+                            <Route path="/signupCustomer" element={<SignupCustomer />} />
+                            <Route path="/home" element={<HomePageCustomer />} />
+                            <Route path="/artistProfile/:id" element={<ArtistProfileCustomer />} />
+                            <Route path="/artist/:id" element={<ArtistProfileLanding />} />
+                            <Route path="/categoryCustomer" element={<CategoryCustomer />} />
+                            <Route path="/customerAccount" element={<CustomerAccount />} />
+
+                            {/* Admin Routes */}
+                            <Route path="/admin/*" element={<AdminRoutes />} />
+                    </Routes>
+                    </DevGate>
+            </>
+        );
 }
 
 export default App;

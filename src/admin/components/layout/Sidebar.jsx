@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import {Link, NavLink, useNavigate} from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   LayoutDashboard, Users, UserCheck, ShoppingBag, Settings, LogOut, X,
@@ -46,16 +46,13 @@ export default function Sidebar({ open, onClose }) {
       lg:translate-x-0 lg:z-20
     `}>
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
-        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shrink-0">
-          <span className="text-white font-bold text-lg">H</span>
-        </div>
-        <span className="text-xl font-bold text-gray-900">HireMe</span>
-        <span className="ml-1 bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full">Admin</span>
-        <button onClick={onClose} className="ml-auto lg:hidden text-gray-400 hover:text-gray-700 p-1">
-          <X size={18} />
-        </button>
-      </div>
+      <Link to="/" className="flex items-center">
+        <img
+            src="/logoBlack.svg"
+            alt="Perfoma"
+            className="h-10 w-auto object-contain"
+        />
+      </Link>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-4 py-5 space-y-1">

@@ -164,7 +164,7 @@ export default function Topbar({ onMenuClick }) {
         >
           <Menu size={20} />
         </button>
-        <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+        <h2 className="text-sm sm:text-base font-semibold text-gray-900 truncate max-w-[140px] sm:max-w-none">{title}</h2>
       </div>
 
       {/* Right — search + bell */}
@@ -203,7 +203,7 @@ export default function Topbar({ onMenuClick }) {
         {notifOpen && (
           <div
             ref={dropRef}
-            className="absolute top-[68px] right-4 md:right-6 lg:right-8 w-[360px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+            className="absolute top-[68px] right-2 sm:right-4 md:right-6 lg:right-8 w-[calc(100vw-1rem)] sm:w-[360px] max-w-[360px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">

@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { getArtists, getCategories, getNearYou, getStats } from "../../customer/services/discoveryService";
+import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../../customer/services/discoveryService";
 import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
-    ArrowRight, ChevronRight, Star, Users, Zap, Shield, TrendingUp,
+    ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, Shield, TrendingUp,
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
-    Play, RefreshCw, GitCompare, BookOpen
+    Play, RefreshCw, GitCompare, BookOpen, X, Loader2, Menu
 } from "lucide-react";
+import ArtistProfileLanding from "../../customer/pages/ArtistProfileLanding";
+import Footer from "../../customer/components/Footer.tsx";
 
-// ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Artist {
-    id: number;
+    id: string | number;
     name: string;
     type: string;
     location: string;
@@ -18,50 +21,429 @@ interface Artist {
     price: string;
     image: string;
     verified: boolean;
+    startingPrice: number | null;
+    maxPrice: number | null;
 }
 
-interface Category {
-    id: number;
-    label: string;
-    icon: React.ReactNode;
+interface ArtistSearchFilters {
+    search?: string;
+    category?: string;
+    location?: string;
+    eventDate?: string;
+    budget?: number;
+}
+
+const FALLBACK_ARTIST_IMAGE =
+    "https://images.unsplash.com/photo-1571935441008-e42d7f4a8f65?w=400&q=80";
+
+function formatArtistPrice(starting: number | null, max: number | null): string {
+    if (starting != null) return `Rs. ${starting.toLocaleString("en-LK")}+`;
+    if (max != null) return `Rs. ${max.toLocaleString("en-LK")}+`;
+    return "Contact for price";
+}
+
+function parseBudget(value: string): number | null {
+    const parsed = parseFloat(value.replace(/[^\d.]/g, ""));
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function buildArtistSearchParams(filters: ArtistSearchFilters, page: number): ArtistSearchParams {
+    const params: ArtistSearchParams = { per_page: 50, page };
+    if (filters.search?.trim()) params.search = filters.search.trim();
+    if (filters.category) params.category = filters.category;
+    if (filters.location?.trim()) params.location = filters.location.trim();
+    if (filters.eventDate) params.event_date = filters.eventDate;
+    if (filters.budget != null) params.max_budget = filters.budget;
+    return params;
+}
+
+function applyClientSearchFilters(artists: Artist[], filters: ArtistSearchFilters): Artist[] {
+    let result = artists;
+    const query = filters.search?.trim().toLowerCase();
+
+    if (query) {
+        result = result.filter(
+            a =>
+                a.name.toLowerCase().includes(query) ||
+                a.type.toLowerCase().includes(query) ||
+                a.location.toLowerCase().includes(query),
+        );
+    }
+
+    const loc = filters.location?.trim().toLowerCase();
+    if (loc) {
+        result = result.filter(a => a.location.toLowerCase().includes(loc));
+    }
+
+    if (filters.category) {
+        result = result.filter(a => a.type === filters.category);
+    }
+
+    if (filters.budget != null) {
+        result = result.filter(
+            a => a.startingPrice == null || a.startingPrice <= filters.budget!,
+        );
+    }
+
+    return result;
+}
+
+async function fetchArtistsWithFilters(filters: ArtistSearchFilters = {}): Promise<Artist[]> {
+    const byId = new Map<string | number, Artist>();
+
+    const addArtists = (items: DiscoveryArtist[]) => {
+        for (const item of items) {
+            const mapped = mapDiscoveryArtist(item);
+            byId.set(mapped.id, mapped);
+        }
+    };
+
+    if (filters.location?.trim()) {
+        try {
+            const { data } = await getNearYou(filters.location.trim(), 50);
+            addArtists(data);
+        } catch {
+            /* fall back to main listing */
+        }
+    }
+
+    let page = 1;
+    let lastPage = 1;
+    do {
+        const { data, meta } = await getArtists(buildArtistSearchParams(filters, page));
+        addArtists(data);
+        lastPage = meta?.last_page ?? 1;
+        page++;
+    } while (page <= lastPage);
+
+    return applyClientSearchFilters(Array.from(byId.values()), filters);
+}
+
+async function fetchAllArtists(category?: string): Promise<Artist[]> {
+    const artists: Artist[] = [];
+    let page = 1;
+    let lastPage = 1;
+
+    do {
+        const { data, meta } = await getArtists({
+            per_page: 50,
+            page,
+            ...(category ? { category } : {}),
+        });
+        artists.push(...data.map(mapDiscoveryArtist));
+        lastPage = meta?.last_page ?? 1;
+        page++;
+    } while (page <= lastPage);
+
+    return artists;
+}
+
+function mapDiscoveryArtist(a: DiscoveryArtist): Artist {
+    const extra = a as DiscoveryArtist & {
+        average_rating?: number;
+        reviews_count?: number;
+        verification_status?: string;
+        rating?: { average?: number | null; total?: number };
+    };
+
+    return {
+        id: a.id,
+        name: a.stage_name || "Artist",
+        type: a.category || "Performer",
+        location: a.location || "Sri Lanka",
+        rating: extra.average_rating ?? extra.rating?.average ?? 4.8,
+        reviews: extra.reviews_count ?? extra.rating?.total ?? 0,
+        price: formatArtistPrice(a.starting_price, a.max_price),
+        image: a.avatar_url || a.cover_url || FALLBACK_ARTIST_IMAGE,
+        verified: extra.verification_status === "verified" || extra.verification_status === "approved",
+        startingPrice: a.starting_price,
+        maxPrice: a.max_price,
+    };
+}
+
+function getCategoryIcon(label: string): React.ReactNode {
+    const key = label.toLowerCase();
+    if (key.includes("dj")) return <Radio size={28} />;
+    if (key.includes("sing") || key.includes("vocal") || key.includes("rapper")) return <Mic2 size={28} />;
+    if (key.includes("band") || key.includes("music") || key.includes("producer") || key.includes("musician")) return <Music2 size={28} />;
+    if (key.includes("danc")) return <PersonStanding size={28} />;
+    if (key.includes("sound")) return <Zap size={28} />;
+    if (key.includes("host") || key.includes("mc") || key.includes("emcee")) return <Globe size={28} />;
+    if (key.includes("light")) return <Lightbulb size={28} />;
+    if (key.includes("photo") || key.includes("camera") || key.includes("video") || key.includes("videographer")) return <Camera size={28} />;
+    if (key.includes("cultural") || key.includes("show") || key.includes("comed")) return <Star size={28} />;
+    return <Music2 size={28} />;
 }
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
-const NAV_LINKS = ["Explore", "Categories", "Artists", "Events", "How it works", "Join as Artist"];
-
-const POPULAR_ARTISTS: Artist[] = [
-    { id: 1, name: "DJ Ravin", type: "EDM / Club DJ", location: "Colombo", rating: 4.9, reviews: 128, price: "Rs. 35,000+", image: "https://images.unsplash.com/photo-1571935441008-e42d7f4a8f65?w=400&q=80", verified: true },
-    { id: 2, name: "Nadeemal Perera", type: "Live Band", location: "Kandy", rating: 4.8, reviews: 96, price: "Rs. 60,000+", image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&q=80", verified: true },
-    { id: 3, name: "Dilki Uresha", type: "Wedding Singer", location: "Galle", rating: 4.9, reviews: 176, price: "Rs. 45,000+", image: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80", verified: true },
-    { id: 4, name: "Infinity Dance Crew", type: "Dance Group", location: "Colombo", rating: 4.8, reviews: 112, price: "Rs. 30,000+", image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80", verified: true },
-    { id: 5, name: "Supreme Sounds", type: "Sound & Lighting", location: "Negombo", rating: 4.9, reviews: 143, price: "Rs. 75,000+", image: "https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&q=80", verified: true },
-];
-
-const SEARCH_CATEGORIES = ["DJs", "Live Bands", "Dancers", "Sound Systems", "MCs", "Photographers", "More"];
-
-const BROWSE_CATEGORIES: Category[] = [
-    { id: 1, label: "DJs", icon: <Radio size={28} /> },
-    { id: 2, label: "Singers", icon: <Mic2 size={28} /> },
-    { id: 3, label: "Live Bands", icon: <Music2 size={28} /> },
-    { id: 4, label: "Dancers", icon: <PersonStanding size={28} /> },
-    { id: 5, label: "Sound Systems", icon: <Zap size={28} /> },
-    { id: 6, label: "Event Hosts", icon: <Globe size={28} /> },
-    { id: 7, label: "Cultural Shows", icon: <Star size={28} /> },
-    { id: 8, label: "Lighting", icon: <Lightbulb size={28} /> },
-];
+const NAV_LINKS = ["Explore", "Categories", "Artist", "Events", "How it works", "Join as Artist"];
 
 const PARTNER_LOGOS = ["TAJ", "Shangri-La", "Cinnamon", "Hilton", "MOVENPICK", "Liga Escapes", "atogals"];
+
+const CATEGORY_IMAGES: Record<string, string> = {
+    "Musician": "https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=600&q=80",
+    "Solo Singer": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=80",
+    "Rapper": "https://images.unsplash.com/photo-1546707012-c46675f12716?w=600&q=80",
+    "Live Band": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&q=80",
+    "Dance Group": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&q=80",
+    "Producer": "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=80",
+    "DJ": "https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?w=600&q=80",
+    "Sound System": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80",
+    "Lightning System": "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80",
+    "Videographers": "https://images.unsplash.com/photo-1533107862482-0e6974b06ef4?w=600&q=80",
+    "Band & Duo": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&q=80",
+    "Dancer": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&q=80",
+    "Comedian": "https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=600&q=80",
+    "Photographer": "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600&q=80",
+    "Singer": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&q=80"
+};
+
+interface CategoryData {
+    name: string;
+    description: string;
+    image: string;
+}
+
+const ALL_CATEGORIES_DATA: CategoryData[] = [
+    {
+        name: "Singer",
+        description: "Powerful vocalists covering a wide range of genres and styles.",
+        image: "https://images.unsplash.com/photo-1526218626217-dc65a29bb444?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    },
+    {
+        name: "Rapper",
+        description: "Dynamic hip-hop artists and lyricists for high-energy performances.",
+        image: "https://images.unsplash.com/photo-1623531249239-07774b804ac8?q=80&w=412&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    },
+    {
+        name: "Live Band",
+        description: "Full musical ensembles providing an immersive live experience.",
+        image: "https://images.unsplash.com/photo-1550219363-d0adfaa43d0f?q=80&w=1472&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    },
+    {
+        name: "Dance Group",
+        description: "Professional choreographies and high-energy dance routines.",
+        image: "https://images.unsplash.com/photo-1547153760-18fc86324498?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    },
+    {
+        name: "Producer",
+        description: "Creative minds behind the beats and sound engineering.",
+        image: "https://images.unsplash.com/photo-1610716632424-4d45990bcd48?q=80&w=726&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    },
+    {
+        name: "DJ",
+        description: "Expert curators of energy and rhythm for every dance floor.",
+        image: "https://images.unsplash.com/photo-1541126274323-dbac58d14741?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    },
+    {
+        name: "Sound System",
+        description: "Premium audio equipment and technicians for crystal clear sound.",
+        image: "https://images.unsplash.com/photo-1504904126298-3fde501c9b31?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    },
+    {
+        name: "Lightning System",
+        description: "Atmospheric and stage lighting to set the perfect visual mood.",
+        image: "https://images.unsplash.com/photo-1670028514318-0ac718c0590d?q=80&w=435&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    },
+    {
+        name: "Photographers",
+        description: "Professional photographers to freeze your precious event moments in time.",
+        image: "https://images.unsplash.com/photo-1612548403247-aa2873e9422d?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    },
+    {
+        name: "Videographers",
+        description: "Cinematic storytellers capturing your most precious moments.",
+        image: "https://images.unsplash.com/photo-1601506521937-0121a7fc2a6b?q=80&w=871&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    }
+];
+
+const DEFAULT_CAT_IMAGE = "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=600&q=80";
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 export default function HomePage() {
     const navigate = useNavigate();
+    const [stats, setStats] = useState<{ total_artists: number; sample_avatars: string[] }>({
+        total_artists: 0,
+        sample_avatars: []
+    });
     const [searchQuery, setSearchQuery] = useState("");
     const [location, setLocation] = useState("");
     const [eventDate, setEventDate] = useState("");
     const [budget, setBudget] = useState("");
-    const [likedArtists, setLikedArtists] = useState<Set<number>>(new Set());
+    const [defaultPopularArtists, setDefaultPopularArtists] = useState<Artist[]>([]);
+    const [popularArtists, setPopularArtists] = useState<Artist[]>([]);
+    const [selectedSearchCategory, setSelectedSearchCategory] = useState<string | null>(null);
+    const [hasActiveSearch, setHasActiveSearch] = useState(false);
+    const [popularArtistsLoading, setPopularArtistsLoading] = useState(false);
+    const [browseCategories, setBrowseCategories] = useState<CategoryData[]>(ALL_CATEGORIES_DATA);
+    const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(false);
+    const [browseArtists, setBrowseArtists] = useState<Artist[]>([]);
+    const [selectedBrowseCategory, setSelectedBrowseCategory] = useState<string | null>(null);
+    const [browseArtistsLoading, setBrowseArtistsLoading] = useState(false);
+    const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
+    const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
+    const [isClosingProfile, setIsClosingProfile] = useState(false);
+    const popularArtistsRef = useRef<HTMLDivElement>(null);
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    const toggleLike = (id: number) => {
+    const handleCloseProfile = () => {
+        setIsClosingProfile(true);
+        setTimeout(() => {
+            setSelectedArtistId(null);
+            setIsClosingProfile(false);
+        }, 500); // Matches animation duration
+    };
+
+    const scrollPopular = (direction: 'left' | 'right') => {
+        if (!popularArtistsRef.current) return;
+        const container = popularArtistsRef.current;
+        const scrollAmount = container.clientWidth * 0.8;
+        container.scrollBy({
+            left: direction === 'left' ? -scrollAmount : scrollAmount,
+            behavior: 'smooth'
+        });
+    };
+
+    // Prevent body scroll when overlay is open
+    useEffect(() => {
+        if (selectedArtistId) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => { document.body.style.overflow = 'unset'; };
+    }, [selectedArtistId]);
+
+    useEffect(() => {
+        getStats()
+            .then(data => {
+                if (data && typeof data === 'object' && Array.isArray(data.sample_avatars)) {
+                    setStats(data);
+                }
+            })
+            .catch(() => {});
+
+        getArtists({ per_page: 50 })
+            .then(({ data }) => {
+                const artists = data.map(mapDiscoveryArtist);
+                setDefaultPopularArtists(artists);
+                setPopularArtists(artists);
+            })
+            .catch(() => {
+                setDefaultPopularArtists([]);
+                setPopularArtists([]);
+            });
+    }, []);
+
+    useEffect(() => {
+        setBrowseCategoriesLoading(true);
+        getCategories()
+            .then(cats => {
+                const existingNames = ALL_CATEGORIES_DATA.map(c => c.name);
+                const newCats = cats
+                    .filter(c => !existingNames.includes(c))
+                    .map(c => ({
+                        name: c,
+                        description: `Explore professional ${c.toLowerCase()} for your next event.`,
+                        image: DEFAULT_CAT_IMAGE
+                    }));
+                setBrowseCategories([...ALL_CATEGORIES_DATA, ...newCats]);
+            })
+            .catch(() => setBrowseCategories(ALL_CATEGORIES_DATA))
+            .finally(() => setBrowseCategoriesLoading(false));
+    }, []);
+
+    const runSearch = useCallback(async () => {
+        const filters: ArtistSearchFilters = {
+            search: searchQuery,
+            category: selectedSearchCategory ?? undefined,
+            location: location,
+            eventDate: eventDate || undefined,
+            budget: parseBudget(budget) ?? undefined,
+        };
+
+        const hasCriteria =
+            Boolean(filters.search?.trim()) ||
+            Boolean(filters.category) ||
+            Boolean(filters.location?.trim()) ||
+            Boolean(filters.eventDate) ||
+            filters.budget != null;
+
+        setHasActiveSearch(hasCriteria);
+        setPopularArtistsLoading(true);
+
+        // Clear entered data
+        setSearchQuery("");
+        setLocation("");
+        setEventDate("");
+        setBudget("");
+
+        try {
+            if (!hasCriteria) {
+                setPopularArtists(defaultPopularArtists);
+                return;
+            }
+            const artists = await fetchArtistsWithFilters(filters);
+            setPopularArtists(artists);
+        } catch {
+            setPopularArtists([]);
+        } finally {
+            setPopularArtistsLoading(false);
+        }
+    }, [searchQuery, selectedSearchCategory, location, eventDate, budget, defaultPopularArtists]);
+
+    const handleSearchCategoryClick = async (category: string | null) => {
+        if (category === null) {
+            // "All" logic - immediate reset to default/all artists
+            setSelectedSearchCategory(null);
+            setHasActiveSearch(false);
+            setPopularArtistsLoading(true);
+
+            // Clear entered data
+            setSearchQuery("");
+            setLocation("");
+            setEventDate("");
+            setBudget("");
+
+            try {
+                setPopularArtists(defaultPopularArtists);
+            } catch {
+                setPopularArtists([]);
+            } finally {
+                setPopularArtistsLoading(false);
+            }
+            return;
+        }
+
+        // For other categories, just toggle the selection state
+        // User must click "Search" button to see results
+        setSelectedSearchCategory(prev => prev === category ? null : category);
+    };
+
+    const showAllPopularArtists = async () => {
+        setHasActiveSearch(false);
+        setSelectedSearchCategory(null);
+        setSearchQuery("");
+        setLocation("");
+        setEventDate("");
+        setBudget("");
+        setPopularArtistsLoading(true);
+        try {
+            const artists = await fetchAllArtists();
+            setPopularArtists(artists);
+        } catch {
+            setPopularArtists(defaultPopularArtists);
+        } finally {
+            setPopularArtistsLoading(false);
+        }
+    };
+
+    const filterBrowseArtistsByCategory = (category: string) => {
+        window.open(`/category?name=${encodeURIComponent(category)}`, '_blank');
+    };
+
+    const toggleLike = (id: string | number) => {
         setLikedArtists(prev => {
             const next = new Set(prev);
             next.has(id) ? next.delete(id) : next.add(id);
@@ -69,10 +451,80 @@ export default function HomePage() {
         });
     };
 
+    const scrollToSection = (id: string) => {
+        setMobileMenuOpen(false);
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    };
+
+    const renderArtistCard = (artist: Artist) => (
+        <div key={artist.id} className="flex-shrink-0 w-[130px] sm:w-[170px] md:w-[190px] artist-card cursor-pointer bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100" onClick={() => setSelectedArtistId(artist.id.toString())}>
+            <div className="relative" style={{ aspectRatio: "3/4" }}>
+                <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        toggleLike(artist.id);
+                    }}
+                    className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all hover:scale-110"
+                >
+                    <Heart
+                        size={15}
+                        className={likedArtists.has(artist.id) ? "text-red-500" : "text-gray-500"}
+                        fill={likedArtists.has(artist.id) ? "#ef4444" : "none"}
+                    />
+                </button>
+                {artist.verified && (
+                    <div className="verified-dot" />
+                )}
+            </div>
+            <div className="p-2.5">
+                <h3 className="font-800 text-gray-900 text-[14px] leading-tight truncate">{artist.name}</h3>
+                <p className="text-gray-400 text-[11px] mt-0.5">{artist.type}</p>
+                <div className="flex items-center gap-1 mt-1">
+                    <MapPin size={10} className="text-gray-400" />
+                    <span className="text-gray-400 text-[10px]">{artist.location}</span>
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                    <div className="rating-row">
+                        <Star size={10} fill="#facc15" className="text-yellow-400" />
+                        <span className="text-[10px] font-700 text-gray-800">{artist.rating}</span>
+                        <span className="text-[10px] text-gray-400">({artist.reviews})</span>
+                    </div>
+                    <span className="text-[10px] font-800 pink-text">{artist.price}</span>
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderArtistSkeleton = (index: number) => (
+        <div key={index} className="flex-shrink-0 w-[130px] sm:w-[170px] md:w-[190px] animate-pulse bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+            <div className="relative bg-gray-100" style={{ aspectRatio: "3/4" }} />
+            <div className="p-2.5 space-y-2">
+                <div className="h-3 bg-gray-100 rounded w-3/4" />
+                <div className="h-2 bg-gray-100 rounded w-1/2" />
+                <div className="flex items-center gap-1 mt-1">
+                    <div className="w-2.5 h-2.5 bg-gray-100 rounded-full" />
+                    <div className="h-2 bg-gray-100 rounded w-1/3" />
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-1">
+                        <div className="w-2.5 h-2.5 bg-gray-100 rounded-full" />
+                        <div className="h-2 bg-gray-100 rounded w-6" />
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded w-10" />
+                </div>
+            </div>
+        </div>
+    );
+
     return (
-        <div className="min-h-screen bg-white" style={{ fontFamily: "'Nunito', 'Plus Jakarta Sans', sans-serif" }}>
+        <div className="min-h-screen bg-white overflow-x-hidden" style={{ fontFamily: "'Fraunces', serif" }}>
             <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
         .pink { color: #E8194B; }
         .bg-pink { background-color: #E8194B; }
         .border-pink { border-color: #E8194B; }
@@ -82,9 +534,36 @@ export default function HomePage() {
         .btn-dark:hover { background: #222; }
         .artist-card { transition: transform 0.2s, box-shadow 0.2s; }
         .artist-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.13); }
-        .cat-card { transition: border-color 0.18s, background 0.18s; border: 1.5px solid #f0f0f0; }
-        .cat-card:hover { border-color: #E8194B; background: #fff5f7; }
-        .cat-card:hover .cat-icon { color: #E8194B; }
+        .cat-card-modern { 
+            position: relative; 
+            border-radius: 20px; 
+            overflow: hidden; 
+            aspect-ratio: 3/4;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .cat-card-modern:hover {
+            transform: scale(1.03);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .cat-card-modern:hover .cat-img {
+            transform: scale(1.1);
+        }
+        .cat-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .cat-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+        }
         .search-input { outline: none; }
         .search-input:focus { outline: none; }
         .hero-image-card { border-radius: 16px; overflow: hidden; }
@@ -94,11 +573,12 @@ export default function HomePage() {
         .divider-v { width: 1px; background: rgba(255,255,255,0.12); height: 36px; margin: auto 0; }
         .tag-pill { background: #f5f5f5; border-radius: 100px; padding: 6px 16px; font-size: 13px; font-weight: 600; color: #222; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: background 0.15s, color 0.15s; border: 1.5px solid #eee; }
         .tag-pill:hover { background: #fff0f3; color: #E8194B; border-color: #E8194B; }
+        .tag-pill-active { background: #fff0f3; color: #E8194B; border-color: #E8194B; }
         .step-connector { flex: 1; height: 2px; background: repeating-linear-gradient(90deg, #E8194B 0, #E8194B 8px, transparent 8px, transparent 16px); margin: 0 8px; }
         .dark-section { background: #111; }
         .cta-card { background: #1a1a1a; border-radius: 20px; }
         .checklist-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #ddd; margin-bottom: 8px; }
-        .verified-dot { position: absolute; bottom: 6px; left: 6px; background: #E8194B; border-radius: 100px; padding: 2px 6px; display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: #fff; }
+        .verified-dot { position: absolute; bottom: 8px; left: 8px; background: #ff0000; border-radius: 50%; width: 10px; height: 10px; border: 1.5px solid white; box-shadow: 0 0 4px rgba(255,0,0,0.5); }
         .rating-row { display: flex; align-items: center; gap: 4px; }
         .logo-strip { border-top: 1px solid #f0f0f0; }
         .section-title { font-size: clamp(22px, 3vw, 28px); font-weight: 800; color: #111; }
@@ -107,445 +587,610 @@ export default function HomePage() {
         .card-see-all:hover { text-decoration: underline; }
         .floating-badge { background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); padding: 12px 18px; display: flex; align-items: center; gap: 10px; }
         .hero-bg-dots { background-image: radial-gradient(circle, #E8194B22 1.5px, transparent 1.5px); background-size: 24px 24px; }
+        
+        /* Offset for sticky navbar */
+        section[id] {
+            scroll-margin-top: 90px;
+        }
+
+        #how-it-works,
+        #join-section,
+        #contact-section {
+            scroll-margin-top: 71px;
+        }
+
+        /* Carousel Styles */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .carousel-btn {
+            background: white;
+            border: 1.5px solid #eee;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .carousel-btn:hover {
+            border-color: #E8194B;
+            color: #E8194B;
+            transform: scale(1.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(232,25,75,0.3);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(232,25,75,0.5);
+        }
+
+        /* Slide up animation */
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        @keyframes slideDown {
+            from { transform: translateY(0); }
+            to { transform: translateY(100%); }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.5s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+        .animate-slide-down {
+            animation: slideDown 0.5s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+        .blur-bg {
+            filter: blur(8px);
+            transition: filter 0.5s ease;
+        }
+
+        @media (max-width: 640px) {
+            .cat-overlay { padding: 12px; }
+            .cat-overlay h3 { font-size: 14px; }
+            section[id] { scroll-margin-top: 72px; }
+            .tag-pill { padding: 5px 10px; font-size: 11px; gap: 4px; }
+            .search-bar-wrap { padding: 12px !important; border-radius: 20px; }
+            .carousel-btn { width: 34px; height: 34px; }
+            .checklist-item { font-size: 12px; margin-bottom: 6px; }
+            
+            .mobile-search-grid { 
+                display: grid !important; 
+                grid-template-columns: 1fr 1fr; 
+                gap: 8px !important; 
+                background: transparent !important;
+                border-radius: 0 !important;
+                overflow: visible !important;
+            }
+            .mobile-search-grid > div { 
+                background: #fff !important;
+                border: 1px solid #e5e7eb !important; 
+                border-radius: 12px !important; 
+                padding: 10px 14px !important;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.02) !important;
+            }
+            .search-field-label { 
+                display: block !important; 
+                font-size: 9px !important; 
+                color: #9ca3af !important; 
+                font-weight: 700 !important; 
+                text-transform: uppercase !important; 
+                letter-spacing: 0.05em !important;
+                margin-bottom: 2px !important;
+            }
+            .search-input {
+                font-size: 13px !important;
+            }
+            .mobile-search-grid .search-submit-btn {
+                grid-column: 1 / -1; 
+                width: 100%;
+                border-radius: 12px !important;
+                padding: 12px !important;
+                margin-top: 4px !important;
+                box-shadow: 0 4px 14px rgba(232, 25, 75, 0.25) !important;
+            }
+            
+            .search-category-pills { display: none !important; }
+            .cta-image-block { display: none !important; }
+        }
+       
+        @media (max-width: 768px) {
+            .section-title { font-size: 20px; }
+        }
       `}</style>
 
-            {/* ══════════════════════════════════════════════════
+            {/* Profile Overlay */}
+            {selectedArtistId && (
+                <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity duration-500 ${isClosingProfile ? 'opacity-0' : 'opacity-100'}`}>
+                    <div className={`max-w-5xl w-full h-full md:h-[95vh] md:max-h-[900px] md:rounded-2xl md:my-4 bg-white shadow-[0_0_60px_rgba(0,0,0,0.3)] overflow-hidden ${isClosingProfile ? 'animate-slide-down' : 'animate-slide-up'}`}>
+                        <ArtistProfileLanding
+                            id={selectedArtistId}
+                            onClose={handleCloseProfile}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Main Content */}
+            <div className={`transition-all duration-500 ${selectedArtistId ? 'blur-bg scale-[0.98]' : ''}`}>
+
+                {/* ══════════════════════════════════════════════════
           NAVBAR
       ══════════════════════════════════════════════════ */}
-            <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
-                {/* Logo */}
-                <div className="flex items-center gap-2">
-                    <div className="w-9 h-9 btn-pink rounded-xl flex items-center justify-center font-black text-white text-lg select-none">M</div>
-                </div>
+                <nav className="fixed top-0 left-0 right-0 z-50 w-full flex items-center justify-between px-4 sm:px-6 md:px-12 py-3 md:py-4 bg-white border-b border-gray-100">
+                    {/* Logo */}
+                    <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
+                        <Link to="/" className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                            <img
+                                src="/assets/logo/logo-navbar-light@3x.png"
+                                alt="Perfoma"
+                                className="h-8 sm:h-10 w-auto object-contain"
+                            />
+                        </Link>
+                    </div>
 
-                {/* Nav Links */}
-                <div className="hidden md:flex items-center gap-7">
-                    {NAV_LINKS.map(link => (
-                        <button key={link} className="nav-link">{link}</button>
-                    ))}
-                </div>
+                    {/* Nav Links */}
+                    <div className="hidden md:flex items-center gap-7 absolute left-1/2 transform -translate-x-1/2">
+                        <button onClick={() => scrollToSection('categories-section')} className="nav-link">Categories</button>
+                        <button onClick={() => scrollToSection('artists-section')} className="nav-link">Explore</button>
+                        <button onClick={() => scrollToSection('how-it-works')} className="nav-link">How it works</button>
+                        <button onClick={() => scrollToSection('join-section')} className="nav-link">Join as Artist</button>
+                        <button onClick={() => scrollToSection('contact-section')} className="nav-link">Contact Us</button>
+                        <button className="nav-link">Events</button>
+                    </div>
 
-                {/* Auth */}
-                <div className="flex items-center gap-3">
-                    <Link
-                        to="/loginCustomer"
-                        className="nav-link font-semibold text-sm px-3 py-1.5"
-                    >
-                        Log in
-                    </Link>
+                    {/* Action */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => scrollToSection('artists-section')}
+                            className="btn-pink text-xs sm:text-sm font-bold px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl shadow-lg shadow-pink-100"
+                        >
+                            <span className="hidden sm:inline">Explore Talent</span>
+                            <span className="sm:hidden">Explore</span>
+                        </button>
+                        <button
+                            type="button"
+                            className="md:hidden p-2 text-gray-600 hover:text-[#E8194B] transition-colors"
+                            onClick={() => setMobileMenuOpen(prev => !prev)}
+                            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                        >
+                            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                        </button>
+                    </div>
 
-                    <Link
-                        to="/signupCustomer"
-                        className="btn-pink text-sm font-bold px-5 py-2.5 rounded-xl"
-                    >
-                        Sign up
-                    </Link>
-                </div>
-            </nav>
+                    {mobileMenuOpen && (
+                        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-100 shadow-lg z-50 py-4 px-6 flex flex-col gap-1">
+                            <button onClick={() => scrollToSection('categories-section')} className="nav-link text-left py-3 border-b border-gray-50">Categories</button>
+                            <button onClick={() => scrollToSection('artists-section')} className="nav-link text-left py-3 border-b border-gray-50">Explore</button>
+                            <button onClick={() => scrollToSection('how-it-works')} className="nav-link text-left py-3 border-b border-gray-50">How it works</button>
+                            <button onClick={() => scrollToSection('join-section')} className="nav-link text-left py-3 border-b border-gray-50">Join as Artist</button>
+                            <button onClick={() => scrollToSection('contact-section')} className="nav-link text-left py-3 border-b border-gray-50">Contact Us</button>
+                            <button className="nav-link text-left py-3">Events</button>
+                        </div>
+                    )}
+                </nav>
 
-            {/* ══════════════════════════════════════════════════
+                {/* ══════════════════════════════════════════════════
           HERO SECTION
       ══════════════════════════════════════════════════ */}
-            <section className="relative w-full overflow-hidden bg-white pt-10 pb-0 px-6 md:px-12 lg:px-20">
-                {/* Pink dot background - top right */}
-                <div className="hero-bg-dots absolute top-0 right-0 w-72 h-72 opacity-60 pointer-events-none" />
+                <section id="hero-section"
+                         className="relative w-full overflow-hidden bg-cover bg-center py-10 sm:py-12 px-4 sm:px-6 md:px-12 lg:px-20 pt-28"
+                         style={{ backgroundImage: "url('/Cover7.jpg')" }}
+                >
+                    {/* Overlay for better text readability */}
+                    <div className="absolute inset-0 bg-black/40 z-0" />
 
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-                    {/* Left: Copy */}
-                    <div className="z-10">
-                        <p className="text-gray-500 text-base font-600 mb-1">Find & Book</p>
-                        <h1 className="font-black leading-tight text-gray-900" style={{ fontSize: "clamp(38px, 5vw, 62px)", lineHeight: 1.1 }}>
-                            Sri Lanka's<br />
-                            <span style={{ color: "#E8194B" }}>Best Artists</span>
-                        </h1>
-                        <p className="text-gray-500 mt-4 text-base leading-relaxed max-w-sm">
-                            DJs, musicians, dancers, MCs, sound systems<br className="hidden sm:block" />
-                            and event professionals – all in one platform.
-                        </p>
+                    {/* Pink dot background - top right */}
+                    <div className="hero-bg-dots absolute top-0 right-0 w-72 h-72 opacity-30 pointer-events-none z-10" />
 
-                        <div className="flex flex-wrap gap-3 mt-8">
-                            <Link
-                                to="/loginCustomer"
-                                className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
-                            >
-                                Explore Artists <ArrowRight size={16} />
-                            </Link>
+                    <div className="max-w-7xl mx-auto relative z-20">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                            {/* Left: Copy */}
+                            <div className="z-10">
+                                <p className="text-gray-200 text-base font-600 mb-1">Find & Book</p>
+                                <h1 className="font-black leading-tight text-white" style={{ fontSize: "clamp(38px, 5vw, 62px)", lineHeight: 1.1 }}>
+                                    Sri Lanka's<br />
+                                    <span style={{ color: "#E8194B" }}>Best Artists</span>
+                                </h1>
+                                <p className="text-gray-300 mt-4 text-base leading-relaxed max-w-sm">
+                                    DJs, musicians, dancers, MCs, sound systems<br className="hidden sm:block" />
+                                    and event professionals – all in one platform.
+                                </p>
 
-                            <Link
-                                to="/login"
-                                className="btn-dark flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
-                            >
-                                Join as Artist
-                            </Link>
-                        </div>
-
-                        {/* Social proof */}
-                        <div className="flex items-center gap-3 mt-7">
-                            <div className="flex -space-x-2">
-                                {[
-                                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&q=80",
-                                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=80",
-                                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=80",
-                                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=48&q=80",
-                                    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=80",
-                                ].map((src, i) => (
-                                    <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
-                                ))}
-                            </div>
-                            <p className="text-sm text-gray-500 font-500">1,200+ artists already joined</p>
-                        </div>
-                    </div>
-
-                    {/* Right: Collage */}
-                    <div className="relative h-[420px] lg:h-[480px] flex items-center justify-end">
-                        {/* Main large image */}
-                        <div className="absolute right-0 top-0 w-[58%] h-[75%] hero-image-card z-10" style={{ borderRadius: "20px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1571935441008-e42d7f4a8f65?w=600&q=80" className="w-full h-full object-cover" alt="DJ" />
-                        </div>
-
-                        {/* Top right image */}
-                        <div className="absolute right-[30%] top-[2%] w-[36%] h-[46%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80" className="w-full h-full object-cover" alt="Singer" />
-                        </div>
-
-                        {/* Middle right image */}
-                        <div className="absolute right-[28%] top-[48%] w-[34%] h-[42%] hero-image-card z-20" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80" className="w-full h-full object-cover" alt="Dancer" />
-                        </div>
-
-                        {/* Bottom right image */}
-                        <div className="absolute right-0 bottom-0 w-[40%] h-[35%] hero-image-card z-10" style={{ borderRadius: "16px", overflow: "hidden" }}>
-                            <img src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&q=80" className="w-full h-full object-cover" alt="Band" />
-                        </div>
-
-                        {/* Floating badge – Rating */}
-                        <div className="floating-badge absolute left-2 top-[10%] z-30 min-w-[130px]">
-                            <Star size={18} fill="#facc15" className="text-yellow-400 flex-shrink-0" />
-                            <div>
-                                <p className="font-black text-gray-900 text-base leading-none">4.9</p>
-                                <p className="text-gray-400 text-xs mt-0.5">Average Rating</p>
-                            </div>
-                        </div>
-
-                        {/* Floating badge – Artists */}
-                        <div className="floating-badge absolute left-2 top-[42%] z-30 min-w-[140px]">
-                            <div className="w-8 h-8 btn-pink rounded-lg flex items-center justify-center flex-shrink-0">
-                                <Users size={16} className="text-white" />
-                            </div>
-                            <div>
-                                <p className="font-black text-gray-900 text-base leading-none">1,200+</p>
-                                <p className="text-gray-400 text-xs mt-0.5">Professional Artists</p>
-                            </div>
-                        </div>
-
-                        {/* Floating badge – Events */}
-                        <div className="floating-badge absolute left-2 bottom-[12%] z-30 min-w-[140px]">
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#f0f0f0" }}>
-                                <TrendingUp size={16} className="text-gray-700" />
-                            </div>
-                            <div>
-                                <p className="font-black text-gray-900 text-base leading-none">3,400+</p>
-                                <p className="text-gray-400 text-xs mt-0.5">Events Booked</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ══════════════════════════════════════════════════
-          SEARCH BAR
-      ══════════════════════════════════════════════════ */}
-            <section className="w-full px-6 md:px-12 lg:px-20 mt-10">
-                <div className="max-w-7xl mx-auto">
-                    <div className="search-bar-wrap p-5">
-                        {/* Inputs row */}
-                        <div className="flex flex-col md:flex-row items-stretch gap-0 bg-white rounded-xl overflow-hidden">
-                            {/* What */}
-                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
-                                <Search size={18} className="text-gray-400 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-400 font-600">What are you looking for?</p>
-                                    <input
-                                        type="text"
-                                        placeholder="DJs, Singers, Bands..."
-                                        value={searchQuery}
-                                        onChange={e => setSearchQuery(e.target.value)}
-                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Location */}
-                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
-                                <MapPin size={18} className="text-gray-400 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-400 font-600">Location</p>
-                                    <input
-                                        type="text"
-                                        placeholder="All Sri Lanka ˅"
-                                        value={location}
-                                        onChange={e => setLocation(e.target.value)}
-                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Date */}
-                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
-                                <Calendar size={18} className="text-gray-400 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-400 font-600">Event Date</p>
-                                    <input
-                                        type="text"
-                                        placeholder="Pick a date ˅"
-                                        value={eventDate}
-                                        onChange={e => setEventDate(e.target.value)}
-                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Budget */}
-                            <div className="flex items-center gap-3 flex-1 px-5 py-3.5">
-                                <DollarSign size={18} className="text-gray-400 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-400 font-600">Budget</p>
-                                    <input
-                                        type="text"
-                                        placeholder="Any Budget ˅"
-                                        value={budget}
-                                        onChange={e => setBudget(e.target.value)}
-                                        className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Button */}
-                            <button className="btn-pink font-bold text-sm px-8 py-4 flex-shrink-0 md:rounded-r-xl">
-                                Search
-                            </button>
-                        </div>
-
-                        {/* Category tags */}
-                        <div className="flex flex-wrap gap-2 mt-4 px-1">
-                            {SEARCH_CATEGORIES.map(cat => (
-                                <button key={cat} className="tag-pill">
-                                    <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
-                                    {cat}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ══════════════════════════════════════════════════
-          POPULAR ARTISTS
-      ══════════════════════════════════════════════════ */}
-            <section className="w-full px-6 md:px-12 lg:px-20 mt-14">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="section-title">Popular Artists</h2>
-                        <button className="card-see-all">See all <ChevronRight size={16} /></button>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {POPULAR_ARTISTS.map(artist => (
-                            <div key={artist.id} className="artist-card cursor-pointer">
-                                {/* Image */}
-                                <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "3/4" }}>
-                                    <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
-                                    {/* Gradient overlay */}
-                                    <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
-
-                                    {/* Heart */}
-                                    <button
-                                        onClick={() => toggleLike(artist.id)}
-                                        className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all hover:scale-110"
+                                <div className="flex flex-wrap gap-3 mt-8">
+                                    <Link
+                                        to="/loginCustomer"
+                                        className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
                                     >
-                                        <Heart
-                                            size={15}
-                                            className={likedArtists.has(artist.id) ? "text-red-500" : "text-gray-500"}
-                                            fill={likedArtists.has(artist.id) ? "#ef4444" : "none"}
-                                        />
-                                    </button>
+                                        Explore Artists <ArrowRight size={16} />
+                                    </Link>
 
-                                    {/* Verified */}
-                                    {artist.verified && (
-                                        <div className="verified-dot">
-                                            <CheckCircle size={10} fill="white" strokeWidth={0} />
-                                        </div>
-                                    )}
+                                    <Link
+                                        to="/login"
+                                        className="bg-white text-black flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm border border-white hover:bg-gray-100 transition"
+                                    >
+                                        Join as Artist
+                                    </Link>
                                 </div>
 
-                                {/* Info */}
-                                <div className="mt-2.5 px-0.5">
-                                    <h3 className="font-800 text-gray-900 text-[15px] leading-tight truncate">{artist.name}</h3>
-                                    <p className="text-gray-400 text-xs mt-0.5">{artist.type}</p>
-                                    <div className="flex items-center gap-1 mt-1">
-                                        <MapPin size={11} className="text-gray-400" />
-                                        <span className="text-gray-400 text-xs">{artist.location}</span>
+                                {/* Social proof */}
+                                <div className="flex items-center gap-3 mt-7">
+                                    <div className="flex -space-x-2">
+                                        {((stats?.sample_avatars && Array.isArray(stats.sample_avatars) && stats.sample_avatars.length > 0) ? stats.sample_avatars : []).slice(0, 5).map((src, i) => (
+                                            <img key={i} src={src} className="w-8 h-8 rounded-full border-2 border-white object-cover" alt="" />
+                                        ))}
                                     </div>
-                                    <div className="flex items-center justify-between mt-2">
-                                        <div className="rating-row">
-                                            <Star size={12} fill="#facc15" className="text-yellow-400" />
-                                            <span className="text-xs font-700 text-gray-800">{artist.rating}</span>
-                                            <span className="text-xs text-gray-400">({artist.reviews})</span>
-                                        </div>
-                                        <span className="text-xs font-800 pink-text">{artist.price}</span>
-                                    </div>
+                                    <p className="text-sm text-gray-300 font-500">
+                                        {(stats?.total_artists ?? 0) > 100 ? "100+" : (stats?.total_artists ?? 0)} artists already joined
+                                    </p>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
 
-            {/* ══════════════════════════════════════════════════
+                            {/* Right: Collage — hidden on small screens */}
+                            <div className="hidden lg:block relative h-[480px] flex items-center justify-end">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ══════════════════════════════════════════════════
           BROWSE CATEGORIES
       ══════════════════════════════════════════════════ */}
-            <section className="w-full px-6 md:px-12 lg:px-20 mt-16">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="section-title">Browse Categories</h2>
-                        <button className="card-see-all">See all <ChevronRight size={16} /></button>
-                    </div>
+                <section id="categories-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 py-16 sm:py-24">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="section-title">Browse Categories</h2>
+                        </div>
 
-                    <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-3">
-                        {BROWSE_CATEGORIES.map(cat => (
-                            <button key={cat.id} className="cat-card rounded-2xl p-4 flex flex-col items-center gap-3 bg-gray-50 cursor-pointer">
-                                <span className="cat-icon text-gray-500 transition-colors">{cat.icon}</span>
-                                <span className="text-xs font-700 text-gray-700 text-center leading-tight">{cat.label}</span>
-                            </button>
-                        ))}
+                        {browseCategoriesLoading ? (
+                            <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
+                                {Array.from({ length: ALL_CATEGORIES_DATA.length }).map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className="w-full aspect-[3/4] rounded-2xl bg-gray-100 animate-pulse"
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
+                                {browseCategories.map(cat => (
+                                    <div
+                                        key={cat.name}
+                                        className="cat-card-modern group w-full"
+                                        onClick={() => filterBrowseArtistsByCategory(cat.name)}
+                                    >
+                                        <img
+                                            src={cat.image}
+                                            className="cat-img"
+                                            alt={cat.name}
+                                        />
+                                        <div className="cat-overlay">
+                                            <h3 className="text-white font-900 text-lg leading-tight">{cat.name}</h3>
+                                            <p className="text-white/80 text-[10px] mt-1 line-clamp-2 leading-relaxed">{cat.description}</p>
+                                            {/*<p className="text-white/60 text-[9px] mt-2 font-600 uppercase tracking-wider">Explore Artists</p>*/}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* ══════════════════════════════════════════════════
-          HOW IT WORKS
+
+                {/* ══════════════════════════════════════════════════
+          POPULAR ARTISTS
       ══════════════════════════════════════════════════ */}
-            <section className="w-full px-6 md:px-12 lg:px-20 mt-16 py-14 bg-gray-50">
-                <div className="max-w-5xl mx-auto">
-                    <h2 className="text-center section-title mb-14">How It Works</h2>
-
-                    <div className="flex flex-col md:flex-row items-center gap-0">
-                        {/* Step 1 */}
-                        <div className="flex flex-col items-center text-center flex-1 px-4">
-                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: "rgba(232,25,75,0.10)", border: "2px solid rgba(232,25,75,0.2)" }}>
-                                <RefreshCw size={26} style={{ color: "#E8194B" }} />
+                <section id="artists-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 py-16 sm:py-24 overflow-hidden">
+                    <div className="max-w-7xl mx-auto relative group">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="section-title">
+                                {hasActiveSearch ? "Search Results" : "Artists"}
+                            </h2>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => scrollPopular('left')}
+                                    className="carousel-btn"
+                                    aria-label="Previous"
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <button
+                                    onClick={() => scrollPopular('right')}
+                                    className="carousel-btn"
+                                    aria-label="Next"
+                                >
+                                    <ChevronRight size={20} />
+                                </button>
                             </div>
-                            <h3 className="font-800 text-gray-900 text-[17px] mb-2">Search</h3>
-                            <p className="text-gray-500 text-sm leading-relaxed">Find the perfect artists for your event.</p>
                         </div>
 
-                        {/* Connector */}
-                        <div className="step-connector hidden md:block" />
+                        <form
+                            className="search-bar-wrap p-3 sm:p-5 mb-6 sm:mb-10"
+                            onSubmit={e => {
+                                e.preventDefault();
+                                runSearch();
+                            }}
+                        >
+                            {/* Inputs row */}
+                            <div className="flex flex-col md:flex-row items-stretch gap-0 bg-white rounded-xl overflow-hidden mobile-search-grid">
+                                {/* What */}
+                                <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
+                                    <Search size={18} className="text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 font-600 search-field-label">What are you looking for?</p>
+                                        <input
+                                            type="text"
+                                            placeholder="DJs, Singers, Bands..."
+                                            value={searchQuery}
+                                            onChange={e => setSearchQuery(e.target.value)}
+                                            className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
+                                        />
+                                    </div>
+                                </div>
 
-                        {/* Step 2 */}
-                        <div className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0">
-                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: "rgba(232,25,75,0.10)", border: "2px solid rgba(232,25,75,0.2)" }}>
-                                <GitCompare size={26} style={{ color: "#E8194B" }} />
+                                {/* Location */}
+                                <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
+                                    <MapPin size={18} className="text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 font-600 search-field-label">Location</p>
+                                        <input
+                                            type="text"
+                                            placeholder="All Sri Lanka"
+                                            value={location}
+                                            onChange={e => setLocation(e.target.value)}
+                                            className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Date */}
+                                <div className="flex items-center gap-3 flex-1 px-5 py-3.5 border-b md:border-b-0 md:border-r border-gray-200">
+                                    <Calendar size={18} className="text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 font-600 search-field-label">Event Date</p>
+                                        <input
+                                            type="date"
+                                            value={eventDate}
+                                            min={new Date().toISOString().split("T")[0]}
+                                            onChange={e => setEventDate(e.target.value)}
+                                            className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Budget */}
+                                <div className="flex items-center gap-3 flex-1 px-5 py-3.5">
+                                    <DollarSign size={18} className="text-gray-400 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-400 font-600 search-field-label">Budget</p>
+                                        <input
+                                            type="text"
+                                            placeholder="Any Budget"
+                                            value={budget}
+                                            onChange={e => setBudget(e.target.value)}
+                                            className="search-input w-full text-sm text-gray-700 font-600 placeholder-gray-300 bg-transparent border-none"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Button */}
+                                <button
+                                    type="submit"
+                                    className="search-submit-btn btn-pink font-bold text-sm px-8 py-4 flex-shrink-0 md:rounded-r-xl"
+                                >
+                                    Search
+                                </button>
                             </div>
-                            <h3 className="font-800 text-gray-900 text-[17px] mb-2">Compare</h3>
-                            <p className="text-gray-500 text-sm leading-relaxed">View profiles, reviews and prices.</p>
-                        </div>
 
-                        {/* Connector */}
-                        <div className="step-connector hidden md:block" />
-
-                        {/* Step 3 */}
-                        <div className="flex flex-col items-center text-center flex-1 px-4 mt-8 md:mt-0">
-                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: "rgba(232,25,75,0.10)", border: "2px solid rgba(232,25,75,0.2)" }}>
-                                <BookOpen size={26} style={{ color: "#E8194B" }} />
+                            {/* Category tags */}
+                            <div className="flex flex-wrap gap-2 mt-4 px-1 search-category-pills">
+                                {browseCategoriesLoading ? (
+                                    <div className="flex flex-wrap gap-2 animate-pulse">
+                                        {[1, 2, 3, 4, 5, 6].map(i => (
+                                            <div key={i} className="h-8 w-20 bg-gray-100 rounded-full" />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSearchCategoryClick(null)}
+                                            className={`tag-pill${selectedSearchCategory === null ? " tag-pill-active" : ""}`}
+                                        >
+                                            <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
+                                            All
+                                        </button>
+                                        {browseCategories.map(cat => (
+                                            <button
+                                                key={cat.name}
+                                                type="button"
+                                                onClick={() => handleSearchCategoryClick(cat.name)}
+                                                className={`tag-pill${selectedSearchCategory === cat.name ? " tag-pill-active" : ""}`}
+                                            >
+                                                <span className="w-4 h-4 rounded-full inline-block" style={{ background: "rgba(232,25,75,0.15)" }} />
+                                                {cat.name}
+                                            </button>
+                                        ))}
+                                    </>
+                                )}
                             </div>
-                            <h3 className="font-800 text-gray-900 text-[17px] mb-2">Book</h3>
-                            <p className="text-gray-500 text-sm leading-relaxed">Contact and book your favourite artist.</p>
+                        </form>
+
+                        {popularArtistsLoading ? (
+                            <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2">
+                                {[1, 2, 3, 4, 5, 6].map(i => renderArtistSkeleton(i))}
+                            </div>
+                        ) : popularArtists.length === 0 ? (
+                            <p className="text-sm text-gray-400 py-6 text-center">
+                                {hasActiveSearch
+                                    ? "No artists match your search. Try different filters."
+                                    : "No artists found."}
+                            </p>
+                        ) : (
+                            <div
+                                ref={popularArtistsRef}
+                                className="flex gap-4 overflow-x-auto hide-scrollbar pb-8 pt-2"
+                            >
+                                {popularArtists.map(renderArtistCard)}
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+
+                {/* ══════════════════════════════════════════════════
+    HOW IT WORKS
+══════════════════════════════════════════════════ */}
+                <section id="how-it-works" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 py-16 sm:py-24" style={{ background: "#f5f3ef" }}>
+                    <div className="max-w-4xl mx-auto">
+                        <h2 className="text-center mb-3 text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900" style={{ fontFamily: "Georgia, serif" }}>
+                            How It Works
+                        </h2>
+                        <p className="text-center mb-14 text-sm leading-relaxed" style={{ color: "#999" }}>
+                            Booking your perfect artist takes just three steps. No agents, no<br className="hidden md:block" /> hidden fees, no hassle.
+                        </p>
+
+                        <div className="flex flex-row items-start justify-center gap-1 sm:gap-0 md:flex-row">
+                            {/* Step 1 */}
+                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-1 sm:px-4">
+                                <div className="w-[44px] h-[44px] sm:w-[72px] sm:h-[72px] rounded-full flex items-center justify-center mb-2 sm:mb-5 text-lg sm:text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
+                                    🔍
+                                </div>
+                                <h3 className="font-bold text-gray-900 text-[12px] sm:text-base mb-1 sm:mb-2">Search</h3>
+                                <p className="text-[10px] sm:text-sm leading-snug sm:leading-relaxed" style={{ color: "#999" }}>
+                                    Browse hundreds of verified artists by category, location, and budget.
+                                </p>
+                            </div>
+
+                            {/* Connector */}
+                            <div className="block flex-1 max-w-[40px] sm:max-w-[120px] mt-5 sm:mt-9 border-t-2 border-dashed" style={{ borderColor: "#f0a0b8" }} />
+
+                            {/* Step 2 */}
+                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-1 sm:px-4">
+                                <div className="w-[44px] h-[44px] sm:w-[72px] sm:h-[72px] rounded-full flex items-center justify-center mb-2 sm:mb-5 text-lg sm:text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
+                                    ⚖️
+                                </div>
+                                <h3 className="font-bold text-gray-900 text-[12px] sm:text-base mb-1 sm:mb-2">Compare</h3>
+                                <p className="text-[10px] sm:text-sm leading-snug sm:leading-relaxed" style={{ color: "#999" }}>
+                                    View profiles, compare prices and availability all in one place.
+                                </p>
+                            </div>
+
+                            {/* Connector */}
+                            <div className="block flex-1 max-w-[40px] sm:max-w-[120px] mt-5 sm:mt-9 border-t-2 border-dashed" style={{ borderColor: "#f0a0b8" }} />
+
+                            {/* Step 3 */}
+                            <div className="flex flex-col items-center text-center flex-1 max-w-[220px] mx-auto px-1 sm:px-4">
+                                <div className="w-[44px] h-[44px] sm:w-[72px] sm:h-[72px] rounded-full flex items-center justify-center mb-2 sm:mb-5 text-lg sm:text-3xl" style={{ background: "#fff", border: "1.5px solid #f0d0da" }}>
+                                    📅
+                                </div>
+                                <h3 className="font-bold text-gray-900 text-[12px] sm:text-base mb-1 sm:mb-2">Book</h3>
+                                <p className="text-[10px] sm:text-sm leading-snug sm:leading-relaxed" style={{ color: "#999" }}>
+                                    Contact and book directly. Secure payment in minutes.
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* ══════════════════════════════════════════════════
+                {/* ══════════════════════════════════════════════════
           CTA SECTION (dark)
       ══════════════════════════════════════════════════ */}
-            <section className="dark-section w-full px-6 md:px-12 lg:px-20 py-14 mt-0">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                <section id="join-section" className="dark-section w-full px-4 sm:px-6 md:px-12 lg:px-20 py-16 sm:py-24 mt-0">
+                    <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8 md:gap-8 items-center">
 
-                    {/* Left: Artists CTA */}
-                    <div>
-                        <p className="pink-text text-xs font-700 uppercase tracking-widest mb-2">For Artists</p>
-                        <h2 className="text-white font-black text-2xl md:text-3xl leading-tight mb-3">
-                            Turn Your Talent<br />Into a Business
-                        </h2>
-                        <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                            Join thousands of artists and grow your brand, reach more clients and get booked.
-                        </p>
+                        {/* Left: Artists CTA */}
+                        <div>
+                            <p className="pink-text text-[10px] sm:text-xs font-700 uppercase tracking-widest mb-2">For Artists</p>
+                            <h2 className="text-white font-black text-lg sm:text-2xl md:text-3xl leading-tight mb-3">
+                                Turn Your Talent<br />Into a Business
+                            </h2>
+                            <p className="text-gray-400 text-[11px] sm:text-sm leading-relaxed mb-6">
+                                Join thousands of artists and grow your brand, reach more clients and get booked.
+                            </p>
 
-                        <button
-                            onClick={() => navigate("/login")}
-                            className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm">
-                            Join as Artist <ArrowRight size={15} />
-                        </button>
-                    </div>
-
-                    {/* Center: Hero image + checklist card */}
-                    <div className="relative flex justify-center">
-                        <div className="relative rounded-2xl overflow-hidden" style={{ height: "260px", width: "100%" }}>
-                            <img
-                                src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80"
-                                className="w-full h-full object-cover object-top"
-                                alt="Artist"
-                                style={{ filter: "brightness(0.75)" }}
-                            />
+                            <button
+                                onClick={() => navigate("/login")}
+                                className="btn-pink flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-[11px] sm:text-sm">
+                                Join as Artist <ArrowRight size={15} />
+                            </button>
                         </div>
-                        {/* Checklist floating card */}
-                        <div className="cta-card absolute bottom-4 right-4 p-4 min-w-[180px]">
-                            <p className="text-white font-800 text-sm mb-3">Get More Bookings</p>
-                            {["Verified Profile", "Direct Leads", "Secure Payments", "Grow Your Fanbase"].map(item => (
-                                <div key={item} className="checklist-item">
-                                    <CheckCircle size={15} style={{ color: "#E8194B", flexShrink: 0 }} />
-                                    <span>{item}</span>
-                                </div>
-                            ))}
+
+                        {/* Center: Hero image + checklist card (hidden on mobile via .cta-image-block) */}
+                        <div className="relative flex justify-center order-first md:order-none mb-4 md:mb-0 cta-image-block">
+                            <div className="relative rounded-2xl overflow-hidden w-full" style={{ height: "220px" }}>
+                                <img
+                                    src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80"
+                                    className="w-full h-full object-cover object-top"
+                                    alt="Artist"
+                                    style={{ filter: "brightness(0.75)" }}
+                                />
+                            </div>
+                            {/* Checklist floating card */}
+                            <div className="cta-card absolute bottom-3 left-3 right-3 sm:left-auto sm:right-4 sm:bottom-4 p-3 sm:p-4 sm:min-w-[180px]">
+                                <p className="text-white font-800 text-sm mb-3">Get More Bookings</p>
+                                {["Verified Profile", "Direct Leads", "Secure Payments", "Grow Your Fanbase"].map(item => (
+                                    <div key={item} className="checklist-item">
+                                        <CheckCircle size={15} style={{ color: "#E8194B", flexShrink: 0 }} />
+                                        <span>{item}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Right: Customers CTA */}
+                        <div>
+                            <p className="pink-text text-[10px] sm:text-xs font-700 uppercase tracking-widest mb-2">For Customers</p>
+                            <h2 className="text-white font-black text-lg sm:text-2xl md:text-3xl leading-tight mb-3">
+                                Make Every Event<br />Unforgettable
+                            </h2>
+                            <p className="text-gray-400 text-[11px] sm:text-sm leading-relaxed mb-6">
+                                Book the best local talent for weddings, parties, corporate events and more.
+                            </p>
+                            <button
+                                onClick={() => navigate("/loginCustomer")}
+                                className="btn-pink flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-[11px] sm:text-sm">
+                                Find Artists <ArrowRight size={15} />
+                            </button>
                         </div>
                     </div>
+                </section>
 
-                    {/* Right: Customers CTA */}
-                    <div>
-                        <p className="pink-text text-xs font-700 uppercase tracking-widest mb-2">For Customers</p>
-                        <h2 className="text-white font-black text-2xl md:text-3xl leading-tight mb-3">
-                            Make Every Event<br />Unforgettable
-                        </h2>
-                        <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                            Book the best local talent for weddings, parties, corporate events and more.
-                        </p>
-                        <button
-                            onClick={() => navigate("/loginCustomer")}
-                            className="btn-pink flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm">
-                            Find Artists <ArrowRight size={15} />
-                        </button>
-                    </div>
-                </div>
-            </section>
+                {/*          /!* ══════════════════════════════════════════════════*/}
+                {/*    PARTNER LOGOS*/}
+                {/*══════════════════════════════════════════════════ *!/*/}
+                {/*          <section className="logo-strip w-full h-1 px-6 md:px-12 lg:px-20 py-8 bg-white">*/}
+                {/*              <div className="max-w-7xl mx-auto">*/}
+                {/*                  <p className="text-center text-gray-400 text-sm mb-6 font-500">*/}
+                {/*                      Trusted by event planners and companies across Sri Lanka*/}
+                {/*                  </p>*/}
+                {/*        /!*          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">*!/*/}
+                {/*        /!*              {PARTNER_LOGOS.map(logo => (*!/*/}
+                {/*        /!*                  <span key={logo} className="text-gray-400 font-800 text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">*!/*/}
+                {/*        /!*  {logo}*!/*/}
+                {/*        /!*</span>*!/*/}
+                {/*        /!*              ))}*!/*/}
+                {/*        /!*          </div>*!/*/}
+                {/*              </div>*/}
+                {/*          </section>*/}
 
-            {/* ══════════════════════════════════════════════════
-          PARTNER LOGOS
-      ══════════════════════════════════════════════════ */}
-            <section className="logo-strip w-full px-6 md:px-12 lg:px-20 py-8 bg-white">
-                <div className="max-w-7xl mx-auto">
-                    <p className="text-center text-gray-400 text-sm mb-6 font-500">
-                        Trusted by event planners and companies across Sri Lanka
-                    </p>
-                    <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-                        {PARTNER_LOGOS.map(logo => (
-                            <span key={logo} className="text-gray-400 font-800 text-sm md:text-base tracking-wide uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
-                {logo}
-              </span>
-                        ))}
-                    </div>
-                </div>
-            </section>
+                <Footer />
+            </div>
         </div>
     );
-}
+};

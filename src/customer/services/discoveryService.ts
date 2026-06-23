@@ -11,6 +11,7 @@ export interface ArtistCard {
   max_price: number | null
   tags: string[]
   short_bio: string | null
+  verification_status: string | null
 }
 
 export interface ArtistDetail extends ArtistCard {
@@ -37,6 +38,7 @@ export interface Media {
   id: string
   media_type: string
   url: string
+  title?: string | null
   is_external_link: boolean
 }
 
@@ -46,6 +48,7 @@ export interface Review {
   title: string | null
   body: string | null
   reviewer_name: string
+  reviewer_avatar?: string | null
   created_at: string
 }
 
@@ -59,11 +62,22 @@ export interface PaginatedMeta {
 export const getCategories = (): Promise<string[]> =>
   api.get('/discovery/categories').then(r => r.data.categories)
 
-export const getArtists = (params?: {
+export const getStats = (): Promise<{ total_artists: number; sample_avatars: string[] }> =>
+  api.get('/discovery/stats').then(r => r.data)
+
+export interface ArtistSearchParams {
   category?: string
   search?: string
+  location?: string
+  event_date?: string
+  max_budget?: number
   per_page?: number
-}): Promise<{ data: ArtistCard[]; meta: PaginatedMeta }> =>
+  page?: number
+}
+
+export const getArtists = (
+  params?: ArtistSearchParams,
+): Promise<{ data: ArtistCard[]; meta: PaginatedMeta }> =>
   api.get('/discovery/artists', { params }).then(r => r.data)
 
 export const getNearYou = (
@@ -80,3 +94,19 @@ export const submitReview = (
   payload: { rating: number; title?: string; body?: string },
 ): Promise<Review> =>
   api.post(`/discovery/artists/${artistId}/reviews`, payload).then(r => r.data.review)
+
+export interface CalendarEntry {
+  id: string
+  date: string
+  title: string
+  description?: string | null
+  source: 'booking' | 'manual'
+  status?: string
+  editable?: boolean
+}
+
+export const getArtistCalendar = (
+  artistId: string,
+  month: string,
+): Promise<CalendarEntry[]> =>
+  api.get(`/discovery/artists/${artistId}/calendar`, { params: { month } }).then(r => r.data.entries ?? [])

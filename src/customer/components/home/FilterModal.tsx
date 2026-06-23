@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 interface FilterModalProps {
   onClose: () => void
@@ -13,12 +14,25 @@ const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const days = Array.from({ length: 31 }, (_, i) => String(i + 1))
 
 export default function FilterModal({ onClose }: FilterModalProps) {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(0)
-  const [category, setCategory] = useState('')
-  const [city, setCity] = useState('')
+  const [category, setCategory] = useState(searchParams.get('category') ?? '')
+  const [city, setCity] = useState(searchParams.get('location') ?? '')
   const [year, setYear] = useState('2025')
   const [month, setMonth] = useState('August')
   const [day, setDay] = useState('28')
+
+  const handleApply = () => {
+    const next = new URLSearchParams(searchParams)
+    if (category) next.set('category', category)
+    else next.delete('category')
+    
+    if (city) next.set('location', city)
+    else next.delete('location')
+    
+    setSearchParams(next)
+    onClose()
+  }
 
   const categoryLabel = category || '(choose category)'
   const cityLabel = city || '(select the city)'
@@ -29,7 +43,7 @@ export default function FilterModal({ onClose }: FilterModalProps) {
       <div className="absolute inset-0 bg-red-900/20 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-[#f0f0f5] rounded-2xl w-[480px] max-w-[95vw] shadow-2xl overflow-hidden">
+      <div className="relative bg-[#f0f0f5] rounded-2xl w-full max-w-[480px] mx-4 shadow-2xl overflow-hidden">
 
         {/* Close button */}
         <button
@@ -173,7 +187,7 @@ export default function FilterModal({ onClose }: FilterModalProps) {
             Cancel
           </button>
           <button
-            onClick={onClose}
+            onClick={handleApply}
             className="px-10 py-3 rounded-full bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors"
           >
             Apply
@@ -183,3 +197,4 @@ export default function FilterModal({ onClose }: FilterModalProps) {
     </div>
   )
 }
+

@@ -1,10 +1,12 @@
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState } from 'react'
+import type { ReactNode } from 'react'
 import * as authService from '../services/authService'
 import type { AuthUser } from '../services/authService'
 
 interface AuthContextType {
   user: AuthUser | null
   token: string | null
+  setUser: (user: AuthUser | null) => void
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string, passwordConfirmation: string) => Promise<void>
   logout: () => void
@@ -13,11 +15,20 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => {
+  const [user, setUserState] = useState<AuthUser | null>(() => {
     const stored = localStorage.getItem('auth_user')
     return stored ? JSON.parse(stored) : null
   })
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('auth_token'))
+
+  const setUser = (user: AuthUser | null) => {
+    if (user) {
+      localStorage.setItem('auth_user', JSON.stringify(user))
+    } else {
+      localStorage.removeItem('auth_user')
+    }
+    setUserState(user)
+  }
 
   const login = async (email: string, password: string) => {
     const data = await authService.login(email, password)
@@ -30,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('auth_token', data.access_token)
     localStorage.setItem('auth_user', JSON.stringify(data.user))
     setToken(data.access_token)
-    setUser(data.user)
+    setUserState(data.user)
   }
 
   const register = async (name: string, email: string, password: string, passwordConfirmation: string) => {
@@ -38,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('auth_token', data.access_token)
     localStorage.setItem('auth_user', JSON.stringify(data.user))
     setToken(data.access_token)
-    setUser(data.user)
+    setUserState(data.user)
   }
 
   const logout = () => {
@@ -46,11 +57,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('auth_token')
     localStorage.removeItem('auth_user')
     setToken(null)
-    setUser(null)
+    setUserState(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, setUser, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   )

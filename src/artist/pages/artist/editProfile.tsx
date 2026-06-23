@@ -1,6 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { 
+    User, FileText, DollarSign, Image, Music, Music2, 
+    Link, Youtube, Facebook, Instagram, Check, AlertCircle, 
+    ArrowLeft, Save, X 
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 interface ProfileForm {
     stage_name: string;
@@ -32,19 +38,17 @@ const defaultForm: ProfileForm = {
     instagram_link: "", spotify_link: "",
 };
 
-const tabs = [
-    { id: "Basic Information", icon: "👤" },
-    { id: "Overview", icon: "📝" },
-    { id: "Pricing", icon: "💰" },
-    { id: "Gallery", icon: "🖼️" },
-    { id: "Audio & Video", icon: "🎵" },
-    { id: "Social & Web", icon: "🔗" },
+const sections = [
+    { id: "basic", label: "Basic Information", icon: <User size={18} /> },
+    { id: "overview", label: "Overview & Bio", icon: <FileText size={18} /> },
+    { id: "pricing", label: "Pricing", icon: <DollarSign size={18} /> },
+    { id: "gallery", label: "Photo Gallery", icon: <Image size={18} /> },
+    { id: "media", label: "Audio & Video", icon: <Music size={18} /> },
+    { id: "social", label: "Social & Web", icon: <Link size={18} /> },
 ];
 
 export default function EditProfile() {
-    useEffect(() => { window.scrollTo(0, 0); }, []);
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState("Basic Information");
     const [form, setForm] = useState<ProfileForm>(defaultForm);
     const [gallery, setGallery] = useState<{ id?: number; url: string; isNew?: boolean; file?: File }[]>([]);
     const [mediaEntries, setMediaEntries] = useState<MediaEntry[]>([
@@ -54,13 +58,15 @@ export default function EditProfile() {
     ]);
     const [loading, setLoading] = useState(false);
     const [fetchLoading, setFetchLoading] = useState(true);
-    const [success, setSuccess] = useState("");
-    const [error, setError] = useState("");
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [coverPreview, setCoverPreview] = useState<string | null>(null);
+    const [activeSection, setActiveSection] = useState("basic");
+    const [isDirty, setIsDirty] = useState(false);
+
     const avatarRef = useRef<HTMLInputElement>(null);
     const coverRef = useRef<HTMLInputElement>(null);
     const galleryRef = useRef<HTMLInputElement>(null);
+    const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -85,525 +91,531 @@ export default function EditProfile() {
                     spotify_link: p.spotify_link || "",
                 });
 
-                const avatarUrl =
-                    p.avatar_url || p.avatar || p.profile_image ||
-                    (data.media || []).find((m: any) =>
-                        ["avatar", "profile", "profile_picture", "profile_image"].includes(m.purpose)
-                    )?.url || null;
+                const avatarUrl = p.avatar_url || p.avatar || p.profile_image || null;
                 if (avatarUrl) setAvatarPreview(avatarUrl);
 
-                const coverUrl =
-                    p.cover_url || p.cover || p.cover_image ||
-                    (data.media || []).find((m: any) =>
-                        ["cover", "cover_photo", "cover_image", "banner"].includes(m.purpose)
-                    )?.url || null;
+                const coverUrl = p.cover_url || p.cover || p.cover_image || null;
                 if (coverUrl) setCoverPreview(coverUrl);
 
                 const imgs = (data.media || []).filter((m: any) =>
                     m.media_type === "image" &&
-                    !["verification_front", "verification_back", "selfie", "avatar", "profile", "profile_picture", "profile_image", "cover", "cover_photo", "cover_image", "banner"].includes(m.purpose)
+                    !["avatar", "profile", "cover", "banner", "verification_front", "verification_back", "selfie"].includes(m.purpose)
                 );
                 setGallery(imgs.map((m: any) => ({ id: m.id, url: m.url })));
 
                 const vids = (data.media || []).filter((m: any) => m.media_type === "video" && m.purpose === "talent_media" && m.is_external_link);
                 const loaded: MediaEntry[] = vids.map((m: any) => ({ link: m.url, title: m.title || "" }));
                 while (loaded.length < 3) loaded.push({ link: "", title: "" });
-                setMediaEntries(loaded.slice(0, Math.max(loaded.length, 3)));
-            } catch { /* silently fail */ }
-            finally { setFetchLoading(false); }
+                setMediaEntries(loaded);
+            } catch (err) {
+                toast.error("Failed to load profile data");
+            } finally {
+                setFetchLoading(false);
+            }
         };
         fetchProfile();
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        setIsDirty(true);
+    };
+
+    const scrollToSection = (id: string) => {
+        setActiveSection(id);
+        sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
     };
 
     const handleSave = async () => {
-        setLoading(true); setError(""); setSuccess("");
+        setLoading(true);
+        const saveToast = toast.loading("Saving your changes...");
         try {
             const payload: Record<string, any> = {};
             Object.entries(form).forEach(([k, v]) => { if (v !== "") payload[k] = v; });
             await api.put("/profile", payload);
 
-            if (activeTab === "Audio & Video") {
-                const validLinks = mediaEntries.filter(e => e.link.trim()).map(e => ({ url: e.link, title: e.title }));
-                if (validLinks.length > 0) {
-                    await api.post("/profile/sync-links", { links: validLinks });
-                }
+            // Audio & Video
+            const validLinks = mediaEntries.filter(e => e.link.trim()).map(e => ({ url: e.link, title: e.title }));
+            await api.post("/profile/sync-links", { links: validLinks });
+
+            // Gallery
+            const newImages = gallery.filter(g => g.isNew && g.file);
+            for (const img of newImages) {
+                const fd = new FormData();
+                fd.append("purpose", "performance");
+                fd.append("file", img.file!);
+                await api.post("/profile/gallery", fd, { headers: { "Content-Type": "multipart/form-data" } });
             }
 
-            if (activeTab === "Gallery") {
-                const newImages = gallery.filter(g => g.isNew && g.file);
-                for (const img of newImages) {
-                    const fd = new FormData();
-                    fd.append("purpose", "performance");
-                    fd.append("file", img.file!);
-                    await api.post("/profile/gallery", fd, { headers: { "Content-Type": "multipart/form-data" } });
-                }
-            }
-
-            setSuccess("Profile saved successfully!");
-            setTimeout(() => { setSuccess(""); navigate("/account"); }, 1500);
+            toast.success("Profile updated successfully!", { id: saveToast });
+            setIsDirty(false);
+            
+            // Refresh gallery to get real IDs
+            const { data } = await api.get("/profile");
+            const imgs = (data.media || []).filter((m: any) =>
+                m.media_type === "image" &&
+                !["avatar", "profile", "cover", "banner", "verification_front", "verification_back", "selfie"].includes(m.purpose)
+            );
+            setGallery(imgs.map((m: any) => ({ id: m.id, url: m.url })));
+            
         } catch (err: any) {
-            setError(err.response?.data?.message || "Failed to save profile.");
+            const errors = err.response?.data?.errors;
+            let errMsg = err.response?.data?.message || "Failed to save profile.";
+            if (errors) {
+                errMsg = Object.values(errors).flat().join(" ");
+            }
+            toast.error(errMsg, { id: saveToast });
         } finally {
             setLoading(false);
         }
     };
 
     const handleMediaUpload = async (type: "avatar" | "cover", file: File) => {
+        // Client-side validation
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error(`Failed to upload ${type}: File size exceeds 5MB limit.`);
+            return;
+        }
+
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        if (!extension || !allowedExtensions.includes(extension)) {
+            toast.error(`Failed to upload ${type}: Unsupported format. Allowed: JPG, PNG, GIF, WebP`);
+            return;
+        }
+
         const previewUrl = URL.createObjectURL(file);
         if (type === "avatar") setAvatarPreview(previewUrl);
         if (type === "cover") setCoverPreview(previewUrl);
+
+        const uploadToast = toast.loading(`Uploading ${type}...`);
         const fd = new FormData();
         fd.append("type", type);
         fd.append("file", file);
         try {
             await api.post("/profile/media", fd, { headers: { "Content-Type": "multipart/form-data" } });
-        } catch { /* ignore */ }
+            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} updated!`, { id: uploadToast });
+        } catch (err: any) {
+            const errors = err.response?.data?.errors;
+            let errMsg = err.response?.data?.message || `Failed to upload ${type}.`;
+            if (errors) {
+                errMsg = Object.values(errors).flat().join(" ");
+            }
+            toast.error(errMsg, { id: uploadToast });
+        }
     };
 
     const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
-        const newImages = files.map(file => ({ url: URL.createObjectURL(file), isNew: true, file }));
-        setGallery(prev => [...prev, ...newImages]);
+        const validFiles: { url: string; isNew: boolean; file: File }[] = [];
+        for (const file of files) {
+            if (file.size > 50 * 1024 * 1024) {
+                toast.error(`File "${file.name}" exceeds the 50MB limit and was skipped.`);
+                continue;
+            }
+            const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'avi'];
+            const extension = file.name.split('.').pop()?.toLowerCase();
+            if (!extension || !allowedExtensions.includes(extension)) {
+                toast.error(`File "${file.name}" has an unsupported format and was skipped. Allowed formats: JPG, PNG, GIF, WebP, MP4, MOV, AVI`);
+                continue;
+            }
+            validFiles.push({ url: URL.createObjectURL(file), isNew: true, file });
+        }
+        if (validFiles.length > 0) {
+            setGallery(prev => [...prev, ...validFiles]);
+            setIsDirty(true);
+        }
     };
 
     const deleteGalleryItem = async (item: { id?: number; url: string; isNew?: boolean }) => {
         if (item.id) {
-            try { await api.delete(`/profile/gallery/${item.id}`); } catch { /* ignore */ }
+            const delToast = toast.loading("Removing photo...");
+            try { 
+                await api.delete(`/profile/gallery/${item.id}`); 
+                toast.success("Photo removed", { id: delToast });
+            } catch (err: any) { 
+                toast.error(err.response?.data?.message || "Failed to remove photo", { id: delToast });
+                return;
+            }
         }
         setGallery(prev => prev.filter(g => g.url !== item.url));
+        setIsDirty(true);
     };
 
     const updateMediaEntry = (index: number, field: keyof MediaEntry, value: string) => {
         setMediaEntries(prev => prev.map((entry, i) => i === index ? { ...entry, [field]: value } : entry));
+        setIsDirty(true);
     };
 
     const addMediaEntry = () => {
         setMediaEntries(prev => [...prev, { link: "", title: "" }]);
+        setIsDirty(true);
     };
 
     const removeMediaEntry = (index: number) => {
         setMediaEntries(prev => prev.filter((_, i) => i !== index));
+        setIsDirty(true);
     };
 
     if (fetchLoading) return (
-        <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f0f0f" }}>
-            <div style={{ textAlign: "center" }}>
-                <div style={{
-                    width: 48, height: 48, border: "3px solid #DB0000",
-                    borderTopColor: "transparent", borderRadius: "50%",
-                    animation: "spin 0.8s linear infinite", margin: "0 auto 16px"
-                }} />
-                <p style={{ color: "#666", fontSize: 14, fontFamily: "sans-serif" }}>Loading your profile...</p>
+        <div className="min-h-screen flex items-center justify-center bg-black">
+            <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+                <p className="text-gray-400 font-medium">Loading your profile...</p>
             </div>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
     );
 
     return (
-        <div style={{ minHeight: "100vh", background: "#F5F5F7", fontFamily: "'Inter', -apple-system, sans-serif" }}>
+        <div className="min-h-screen bg-[#F8F9FA] text-[#1A202C] font-sans">
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-                * { box-sizing: border-box; }
-                .tab-item { transition: all 0.2s ease; }
-                .tab-item:hover { background: #f9f9f9; }
-                .tab-active { background: #fff0f0 !important; color: #DB0000 !important; font-weight: 600; }
-                .field-input {
-                    width: 100%; border: 1.5px solid #E8E8E8; border-radius: 10px;
-                    padding: 11px 14px; font-size: 14px; outline: none;
-                    transition: border-color 0.2s, box-shadow 0.2s;
-                    background: #FAFAFA; color: #1a1a1a; font-family: inherit;
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+                * { font-family: 'Inter', sans-serif; }
+                .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); }
+                .input-field { 
+                    width: 100%; padding: 12px 16px; border-radius: 12px; border: 1.5px solid #E2E8F0;
+                    transition: all 0.2s; outline: none; background: #fff;
                 }
-                .field-input:focus { border-color: #DB0000; box-shadow: 0 0 0 3px rgba(219,0,0,0.08); background: #fff; }
-                .field-input::placeholder { color: #bbb; }
-                .gallery-card { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 1; }
-                .gallery-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
-                .gallery-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); opacity: 0; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-                .gallery-card:hover .gallery-overlay { opacity: 1; }
-                .media-card { background: #fff; border: 1.5px solid #EBEBEB; border-radius: 14px; padding: 18px; margin-bottom: 12px; }
-                .btn-primary {
-                    background: linear-gradient(135deg, #DB0000, #a50000);
-                    color: white; border: none; padding: 11px 28px;
-                    border-radius: 10px; font-size: 14px; font-weight: 600;
-                    cursor: pointer; transition: all 0.2s; font-family: inherit;
+                .input-field:focus { border-color: #DB0000; box-shadow: 0 0 0 4px rgba(219,0,0,0.1); }
+                .section-card { background: #fff; border-radius: 24px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01); }
+                @media (min-width: 640px) {
+                    .section-card { padding: 32px; }
                 }
-                .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(219,0,0,0.3); }
-                .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-                .btn-ghost { background: none; border: 1.5px solid #E0E0E0; color: #666; padding: 11px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; }
-                .btn-ghost:hover { border-color: #ccc; color: #333; }
-                .btn-danger { background: #fff0f0; border: 1.5px solid #ffd4d4; color: #DB0000; padding: 7px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; }
-                .btn-danger:hover { background: #ffe4e4; }
-                .btn-add { background: #f8f8f8; border: 1.5px dashed #D0D0D0; color: #888; padding: 11px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; width: 100%; }
-                .btn-add:hover { border-color: #DB0000; color: #DB0000; background: #fff8f8; }
-                .select-field {
-                    width: 100%; border: 1.5px solid #E8E8E8; border-radius: 10px;
-                    padding: 11px 14px; font-size: 14px; outline: none; background: #FAFAFA;
-                    color: #1a1a1a; font-family: inherit; appearance: none;
-                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-                    background-repeat: no-repeat; background-position: right 14px center;
-                    cursor: pointer;
+                @media (min-width: 1024px) {
+                    .section-card { padding: 40px; }
                 }
-                .select-field:focus { border-color: #DB0000; box-shadow: 0 0 0 3px rgba(219,0,0,0.08); }
-                .upload-zone { border: 2px dashed #E0E0E0; border-radius: 12px; padding: 28px; text-align: center; cursor: pointer; transition: all 0.2s; }
-                .upload-zone:hover { border-color: #DB0000; background: #fff8f8; }
-                .cover-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5)); }
-                .avatar-ring { border: 4px solid #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-                @media (max-width: 768px) {
-                    .sidebar { display: none; }
-                    .mobile-tabs { display: flex !important; }
+                .sidebar-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+                .sidebar-btn:hover { background: #F1F5F9; transform: translateX(4px); }
+                .sidebar-active { background: #fff !important; color: #DB0000 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+                .sticky-save-bar { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 50; width: calc(100% - 32px); max-width: 400px; }
+                @media (min-width: 640px) {
+                    .sticky-save-bar { bottom: 32px; width: auto; min-width: 320px; }
                 }
-                .mobile-tabs { display: none; overflow-x: auto; gap: 8px; padding-bottom: 4px; }
-                .mobile-tab { white-space: nowrap; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1.5px solid #E0E0E0; background: #fff; color: #666; cursor: pointer; }
-                .mobile-tab-active { background: #DB0000; color: #fff; border-color: #DB0000; }
             `}</style>
 
-            {/* HERO / COVER */}
-            <div style={{ position: "relative", height: 280, width: "100%" }}>
-                <img
-                    src={coverPreview ?? "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=1400"}
-                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                    alt="cover"
-                />
-                <div className="cover-overlay" />
-
-                {/* Cover change button */}
-                <button
-                    onClick={() => coverRef.current?.click()}
-                    style={{
-                        position: "absolute", top: 20, right: 20,
-                        background: "rgba(255,255,255,0.95)", border: "none",
-                        borderRadius: 10, padding: "9px 18px", fontSize: 13,
-                        fontWeight: 600, cursor: "pointer", display: "flex",
-                        alignItems: "center", gap: 7, color: "#222",
-                        boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
-                        fontFamily: "inherit"
-                    }}
-                >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                        <circle cx="12" cy="13" r="4"/>
-                    </svg>
-                    Change Cover
-                </button>
-                <input ref={coverRef} type="file" accept="image/*" style={{ display: "none" }}
-                       onChange={e => { const f = e.target.files?.[0]; if (f) handleMediaUpload("cover", f); }} />
-
-                {/* Avatar */}
-                <div
-                    onClick={() => avatarRef.current?.click()}
-                    style={{
-                        position: "absolute", bottom: -52, left: 40,
-                        cursor: "pointer", zIndex: 10
-                    }}
-                >
-                    <div style={{ position: "relative" }}>
-                        <img
-                            src={avatarPreview ?? "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200"}
-                            className="avatar-ring"
-                            style={{ width: 110, height: 110, borderRadius: "50%", objectFit: "cover", display: "block" }}
-                            alt="avatar"
-                        />
-                        <div style={{
-                            position: "absolute", bottom: 4, right: 4,
-                            background: "#DB0000", borderRadius: "50%",
-                            width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center",
-                            border: "2.5px solid #fff"
-                        }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                                <circle cx="12" cy="13" r="4"/>
-                            </svg>
-                        </div>
+            {/* TOP HEADER */}
+            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-bottom border-[#EDF2F7] px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <button onClick={() => navigate("/account")} className="p-2 hover:bg-gray-100 rounded-full transition-colors shrink-0">
+                        <ArrowLeft size={20} />
+                    </button>
+                    <div className="min-w-0">
+                        <h1 className="text-lg sm:text-xl font-bold tracking-tight truncate">Profile Editor</h1>
+                        <p className="text-xs text-gray-500 font-medium hidden sm:block">Manage your public artist identity</p>
                     </div>
-                    <input ref={avatarRef} type="file" accept="image/*" style={{ display: "none" }}
-                           onChange={e => { const f = e.target.files?.[0]; if (f) handleMediaUpload("avatar", f); }} />
                 </div>
-            </div>
-
-            {/* Name bar below cover */}
-            <div style={{ background: "#fff", borderBottom: "1px solid #F0F0F0", paddingLeft: 168, paddingRight: 40, paddingTop: 16, paddingBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                    <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#1a1a1a" }}>{form.stage_name || "Your Name"}</p>
-                    <p style={{ margin: 0, fontSize: 13, color: "#888", marginTop: 2 }}>{form.category} {form.location ? `· ${form.location}` : ""}</p>
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                    <button 
+                        onClick={() => navigate("/account")}
+                        className="hidden sm:inline-flex px-5 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                        Exit
+                    </button>
+                    <button 
+                        onClick={handleSave}
+                        disabled={loading || !isDirty}
+                        className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
+                            isDirty 
+                            ? "bg-[#DB0000] text-white shadow-lg shadow-red-200 hover:scale-105 active:scale-95" 
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        }`}
+                    >
+                        <Save size={16} />
+                        <span className="hidden sm:inline">{loading ? "Saving..." : "Save All Changes"}</span>
+                        <span className="sm:hidden">{loading ? "..." : "Save"}</span>
+                    </button>
                 </div>
-                <button onClick={() => navigate("/account")} className="btn-ghost" style={{ fontSize: 13, padding: "8px 16px" }}>
-                    ← Back to Profile
-                </button>
-            </div>
+            </header>
 
-            {/* Mobile tabs */}
-            <div style={{ padding: "14px 16px 0", background: "#F5F5F7" }}>
-                <div className="mobile-tabs">
-                    {tabs.map(t => (
-                        <button key={t.id} onClick={() => setActiveTab(t.id)}
-                                className={`mobile-tab ${activeTab === t.id ? "mobile-tab-active" : ""}`}>
-                            {t.icon} {t.id}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 20px 60px", display: "grid", gridTemplateColumns: "260px 1fr", gap: 24 }}>
-
-                {/* SIDEBAR */}
-                <div className="sidebar" style={{ alignSelf: "start", position: "sticky", top: 24 }}>
-                    <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-                        <div style={{ padding: "16px 20px", borderBottom: "1px solid #F4F4F4" }}>
-                            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "#999", textTransform: "uppercase" }}>Edit Sections</p>
-                        </div>
-                        {tabs.map((tab, i) => (
-                            <div key={tab.id} onClick={() => setActiveTab(tab.id)}
-                                 className={`tab-item ${activeTab === tab.id ? "tab-active" : ""}`}
-                                 style={{
-                                     display: "flex", alignItems: "center", gap: 12,
-                                     padding: "13px 20px", cursor: "pointer", color: "#555",
-                                     fontSize: 14, fontWeight: 500,
-                                     borderBottom: i < tabs.length - 1 ? "1px solid #F8F8F8" : "none",
-                                 }}
+            <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 lg:gap-12 p-4 sm:p-6 lg:p-10">
+                
+                {/* LEFT SIDEBAR NAVIGATION */}
+                <aside className="lg:sticky lg:top-32 h-fit">
+                    <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 hide-scrollbar">
+                        <p className="hidden lg:block px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Edit Sections</p>
+                        {sections.map((s) => (
+                            <button
+                                key={s.id}
+                                onClick={() => scrollToSection(s.id)}
+                                className={`sidebar-btn flex-shrink-0 lg:w-full flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-4 rounded-2xl text-sm font-semibold text-gray-500 text-left ${
+                                    activeSection === s.id ? "sidebar-active" : ""
+                                }`}
                             >
-                                <span style={{ fontSize: 16 }}>{tab.icon}</span>
-                                {tab.id}
-                                {activeTab === tab.id && (
-                                    <span style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#DB0000" }} />
-                                )}
-                            </div>
+                                <span className={activeSection === s.id ? "text-red-600" : "text-gray-300"}>{s.icon}</span>
+                                {s.label}
+                            </button>
                         ))}
                     </div>
-                </div>
 
-                {/* CONTENT */}
-                <div>
-                    {/* Alerts */}
-                    {success && (
-                        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "12px 16px", marginBottom: 20, fontSize: 14, color: "#166534", display: "flex", alignItems: "center", gap: 8 }}>
-                            <span>✅</span> {success}
+                    <div className="hidden lg:block mt-12 p-6 bg-red-50 rounded-3xl border border-red-100">
+                        <p className="text-xs font-bold text-red-600 uppercase mb-2">Live Status</p>
+                        <p className="text-[13px] text-red-800 leading-relaxed font-medium">
+                            Changes saved here appear immediately on your public profile.
+                        </p>
+                    </div>
+                </aside>
+
+                {/* MAIN CONTENT AREA */}
+                <main className="pb-40">
+                    
+                    {/* MEDIA HEADER (Avatar & Cover) */}
+                    <div className="mb-12 relative group">
+                        <div className="h-48 sm:h-64 rounded-[24px] sm:rounded-[32px] overflow-hidden relative">
+                            <img 
+                                src={coverPreview ?? "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=1400"} 
+                                className="w-full h-full object-cover" 
+                                alt="cover"
+                            />
+                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all" />
+                            <button 
+                                onClick={() => coverRef.current?.click()}
+                                className="absolute bottom-6 right-8 bg-white/90 backdrop-blur shadow-xl border-0 rounded-xl px-4 py-2.5 text-xs font-bold flex items-center gap-2 hover:bg-white transition-all"
+                            >
+                                <Image size={14} /> Change Cover
+                            </button>
+                            <input ref={coverRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && handleMediaUpload("cover", e.target.files[0])} />
                         </div>
-                    )}
-                    {error && (
-                        <div style={{ background: "#fff0f0", border: "1.5px solid #fecaca", borderRadius: 10, padding: "12px 16px", marginBottom: 20, fontSize: 14, color: "#991b1b", display: "flex", alignItems: "center", gap: 8 }}>
-                            <span>⚠️</span> {error}
-                        </div>
-                    )}
 
-                    <div style={{ background: "#fff", borderRadius: 18, padding: 32, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-                        {/* Tab title */}
-                        <div style={{ marginBottom: 28 }}>
-                            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#1a1a1a" }}>
-                                {tabs.find(t => t.id === activeTab)?.icon} {activeTab}
-                            </h2>
-                            <div style={{ width: 36, height: 3, background: "#DB0000", borderRadius: 2, marginTop: 8 }} />
-                        </div>
-
-                        {/* Basic Information */}
-                        {activeTab === "Basic Information" && (
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-                                <Field label="Stage Name">
-                                    <input className="field-input" name="stage_name" value={form.stage_name} onChange={handleChange} placeholder="Alex Jean" />
-                                </Field>
-                                <Field label="Category">
-                                    <select className="select-field" name="category" value={form.category} onChange={handleChange}>
-                                        <option>Musician</option>
-                                        <option>Producer</option>
-                                        <option>DJ</option>
-                                        <option>Singer</option>
-                                        <option>Live Band</option>
-                                        <option>Dancer</option>
-                                        <option>MC</option>
-                                        <option>Photographer</option>
-                                    </select>
-                                </Field>
-                                <Field label="Location">
-                                    <input className="field-input" name="location" value={form.location} onChange={handleChange} placeholder="Colombo, Sri Lanka" />
-                                </Field>
-                                <Field label="Phone Number">
-                                    <input className="field-input" name="phone_number" value={form.phone_number} onChange={handleChange} placeholder="+94 777 123 456" />
-                                </Field>
-                                <Field label="Email Address" style={{ gridColumn: "1 / -1" }}>
-                                    <input className="field-input" name="email" value={form.email} onChange={handleChange} placeholder="alex@email.com" />
-                                </Field>
-                                <Field label="Short Bio" style={{ gridColumn: "1 / -1" }}>
-                                    <input className="field-input" name="short_bio" value={form.short_bio} onChange={handleChange} placeholder="A short tagline about yourself..." />
-                                </Field>
-                            </div>
-                        )}
-
-                        {/* Overview */}
-                        {activeTab === "Overview" && (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                                <Field label="Biography — Part 1">
-                                    <textarea className="field-input" name="bio_1" value={form.bio_1} onChange={handleChange} rows={4} style={{ resize: "vertical" }} placeholder="Write about your background and experience..." />
-                                </Field>
-                                <Field label="Biography — Part 2">
-                                    <textarea className="field-input" name="bio_2" value={form.bio_2} onChange={handleChange} rows={4} style={{ resize: "vertical" }} placeholder="Continue your story..." />
-                                </Field>
-                                <Field label="Additional Paragraph">
-                                    <textarea className="field-input" name="paragraph" value={form.paragraph} onChange={handleChange} rows={4} style={{ resize: "vertical" }} placeholder="Any other info you'd like to share..." />
-                                </Field>
-                            </div>
-                        )}
-
-                        {/* Pricing */}
-                        {activeTab === "Pricing" && (
-                            <div>
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-                                    <Field label="Starting Price (Rs.)">
-                                        <input className="field-input" name="starting_price" value={form.starting_price} onChange={handleChange} placeholder="35,000" />
-                                    </Field>
-                                    <Field label="Maximum Price (Rs.)">
-                                        <input className="field-input" name="max_price" value={form.max_price} onChange={handleChange} placeholder="75,000" />
-                                    </Field>
-                                </div>
-                                <div style={{ marginTop: 20, background: "#fff8f8", border: "1.5px solid #fdd", borderRadius: 12, padding: "16px 18px", display: "flex", gap: 12, alignItems: "flex-start" }}>
-                                    <span style={{ fontSize: 18 }}>💡</span>
-                                    <div>
-                                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#DB0000" }}>Pricing Visibility</p>
-                                        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#888", lineHeight: 1.5 }}>
-                                            Clients will see your price range (e.g. Rs. 35,000+) when browsing your profile and making booking decisions.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Gallery */}
-                        {activeTab === "Gallery" && (
-                            <div>
-                                <div className="upload-zone" onClick={() => galleryRef.current?.click()}>
-                                    <div style={{ fontSize: 32, marginBottom: 8 }}>📸</div>
-                                    <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#333" }}>Click to upload photos</p>
-                                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "#999" }}>PNG, JPG, WEBP up to 10MB each</p>
-                                    <input ref={galleryRef} type="file" multiple accept="image/*" style={{ display: "none" }} onChange={handleGalleryUpload} />
-                                </div>
-
-                                {gallery.length > 0 && (
-                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginTop: 20 }}>
-                                        {gallery.map((img, index) => (
-                                            <div key={index} className="gallery-card">
-                                                <img src={img.url} alt="gallery" />
-                                                <div className="gallery-overlay">
-                                                    <button onClick={() => deleteGalleryItem(img)}
-                                                            style={{ background: "#DB0000", border: "none", color: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit" }}>
-                                                        Remove
-                                                    </button>
-                                                </div>
-                                                {img.isNew && (
-                                                    <div style={{ position: "absolute", top: 8, left: 8, background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 20 }}>
-                                                        NEW
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {gallery.length === 0 && (
-                                    <p style={{ textAlign: "center", color: "#bbb", fontSize: 13, marginTop: 16 }}>No photos uploaded yet</p>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Audio & Video */}
-                        {activeTab === "Audio & Video" && (
-                            <div>
-                                <p style={{ margin: "0 0 20px", fontSize: 13, color: "#888", lineHeight: 1.6 }}>
-                                    Add links to your YouTube videos, SoundCloud tracks, or Spotify songs. Include a title so clients know what they're listening to.
-                                </p>
-
-                                {mediaEntries.map((entry, i) => (
-                                    <div key={i} className="media-card">
-                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                                <div style={{ width: 28, height: 28, background: "#fff0f0", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
-                                                    🎵
-                                                </div>
-                                                <span style={{ fontSize: 13, fontWeight: 600, color: "#333" }}>Track {i + 1}</span>
-                                            </div>
-                                            <button className="btn-danger" onClick={() => removeMediaEntry(i)}>
-                                                ✕ Remove
-                                            </button>
-                                        </div>
-                                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                                            <Field label="Song / Video Title">
-                                                <input
-                                                    className="field-input"
-                                                    value={entry.title}
-                                                    onChange={e => updateMediaEntry(i, "title", e.target.value)}
-                                                    placeholder="e.g. Oba Nisa – Live at Nelum Pokuna"
-                                                />
-                                            </Field>
-                                            <Field label="Media Link">
-                                                <input
-                                                    className="field-input"
-                                                    value={entry.link}
-                                                    onChange={e => updateMediaEntry(i, "link", e.target.value)}
-                                                    placeholder="https://youtube.com/watch?v=..."
-                                                />
-                                            </Field>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                <button className="btn-add" onClick={addMediaEntry}>
-                                    + Add Another Track / Video
+                        <div className="absolute -bottom-8 sm:-bottom-10 left-4 sm:left-12 flex items-end gap-4 sm:gap-6">
+                            <div className="relative group/avatar">
+                                <img 
+                                    src={avatarPreview ?? "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200"} 
+                                    className="w-20 h-20 sm:w-32 sm:h-32 rounded-[28px] sm:rounded-[40px] border-[4px] sm:border-[6px] border-[#F8F9FA] object-cover shadow-2xl" 
+                                    alt="avatar"
+                                />
+                                <button 
+                                    onClick={() => avatarRef.current?.click()}
+                                    className="absolute bottom-1 right-1 bg-red-600 text-white p-2.5 rounded-2xl border-4 border-[#F8F9FA] shadow-lg hover:scale-110 transition-all"
+                                >
+                                    <Image size={14} />
                                 </button>
+                                <input ref={avatarRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && handleMediaUpload("avatar", e.target.files[0])} />
                             </div>
-                        )}
-
-                        {/* Social & Web */}
-                        {activeTab === "Social & Web" && (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                                {[
-                                    { label: "YouTube Channel", name: "youtube_link", placeholder: "https://youtube.com/@yourhandle", icon: "▶️" },
-                                    { label: "Facebook Page", name: "facebook_link", placeholder: "https://facebook.com/yourpage", icon: "📘" },
-                                    { label: "Instagram", name: "instagram_link", placeholder: "https://instagram.com/yourhandle", icon: "📷" },
-                                    { label: "Spotify Artist", name: "spotify_link", placeholder: "https://open.spotify.com/artist/...", icon: "🎧" },
-                                ].map(({ label, name, placeholder, icon }) => (
-                                    <div key={name} style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
-                                        <div style={{ width: 42, height: 42, background: "#F5F5F7", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
-                                            {icon}
-                                        </div>
-                                        <Field label={label} style={{ flex: 1 }}>
-                                            <input
-                                                className="field-input"
-                                                name={name}
-                                                value={(form as any)[name]}
-                                                onChange={handleChange}
-                                                placeholder={placeholder}
-                                            />
-                                        </Field>
-                                    </div>
-                                ))}
+                            <div className="pb-8 sm:pb-12 min-w-0">
+                                <h2 className="text-lg sm:text-2xl font-black tracking-tight truncate">{form.stage_name || "New Artist"}</h2>
+                                <p className="text-sm text-gray-500 font-semibold">{form.category} · {form.location}</p>
                             </div>
-                        )}
-
-                        {/* Action buttons */}
-                        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 28, marginTop: 28, borderTop: "1px solid #F4F4F4" }}>
-                            <button onClick={() => navigate("/account")} className="btn-ghost">
-                                Discard
-                            </button>
-                            <button onClick={handleSave} disabled={loading} className="btn-primary">
-                                {loading ? (
-                                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                        <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
-                                        Saving...
-                                    </span>
-                                ) : "Save Changes"}
-                            </button>
                         </div>
                     </div>
-                </div>
+
+                    {/* SECTIONS */}
+                    <div className="space-y-8 mt-20">
+                        
+                        {/* Basic Info */}
+                        <div ref={el => sectionRefs.current["basic"] = el} className="section-card">
+                            <h3 className="text-lg font-bold mb-8 flex items-center gap-3">
+                                <span className="p-2 bg-blue-50 text-blue-600 rounded-lg"><User size={20} /></span>
+                                Basic Information
+                            </h3>
+                            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                                <Field label="Stage Name">
+                                    <input className="input-field" name="stage_name" value={form.stage_name} onChange={handleChange} placeholder="Alex Jean" />
+                                </Field>
+                                <Field label="Category">
+                                    <select className="input-field cursor-pointer" name="category" value={form.category} onChange={handleChange}>
+                                        <option>Musician</option>
+                                        <option>Singer</option>
+                                        <option>Rapper</option>
+                                        <option>DJ</option>
+                                        <option>Live Band</option>
+                                        <option>Producer</option>
+                                        <option>Dance Group</option>
+                                        <option>Dancer</option>
+                                        <option>MC</option>
+                                        <option>Sound System</option>
+                                        <option>Lighting System</option>
+                                        <option>Photographer</option>
+                                        <option>Videographer</option>
+                                    </select>
+                                </Field>
+                                <Field label="Performance Location">
+                                    <input className="input-field" name="location" value={form.location} onChange={handleChange} placeholder="Colombo, Sri Lanka" />
+                                </Field>
+                                <Field label="Contact Phone">
+                                    <input className="input-field" name="phone_number" value={form.phone_number} onChange={handleChange} placeholder="+94 777 123 456" />
+                                </Field>
+                                <Field label="Business Email" className="col-span-2">
+                                    <input className="input-field" name="email" value={form.email} onChange={handleChange} placeholder="alex@email.com" />
+                                </Field>
+                                <Field label="Short Catchphrase (Tagline)" className="col-span-2">
+                                    <input className="input-field font-medium" name="short_bio" value={form.short_bio} onChange={handleChange} placeholder="Bringing life to your events with premium sound..." />
+                                </Field>
+                            </div>
+                        </div>
+
+                        {/* Overview & Bio */}
+                        <div ref={el => sectionRefs.current["overview"] = el} className="section-card">
+                            <h3 className="text-lg font-bold mb-8 flex items-center gap-3">
+                                <span className="p-2 bg-purple-50 text-purple-600 rounded-lg"><FileText size={20} /></span>
+                                Biography & Experience
+                            </h3>
+                            <div className="space-y-6">
+                                <Field label="The Introduction (Part 1)">
+                                    <textarea className="input-field min-h-[140px]" name="bio_1" value={form.bio_1} onChange={handleChange} placeholder="Describe your journey and what makes you unique..." />
+                                </Field>
+                                <Field label="The Details (Part 2)">
+                                    <textarea className="input-field min-h-[140px]" name="bio_2" value={form.bio_2} onChange={handleChange} placeholder="Talk about your achievements, famous gigs, and musical style..." />
+                                </Field>
+                                <Field label="Extra Information">
+                                    <textarea className="input-field min-h-[100px]" name="paragraph" value={form.paragraph} onChange={handleChange} placeholder="Equipment list, special requirements, or anything else..." />
+                                </Field>
+                            </div>
+                        </div>
+
+                        {/* Pricing */}
+                        <div ref={el => sectionRefs.current["pricing"] = el} className="section-card">
+                            <h3 className="text-lg font-bold mb-8 flex items-center gap-3">
+                                <span className="p-2 bg-green-50 text-green-600 rounded-lg"><DollarSign size={20} /></span>
+                                Pricing Structure
+                            </h3>
+                            <div className="grid grid-cols-2 gap-8">
+                                <Field label="Starting Price (LKR)">
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">Rs.</span>
+                                        <input className="input-field pl-12" name="starting_price" value={form.starting_price} onChange={handleChange} placeholder="35,000" />
+                                    </div>
+                                </Field>
+                                <Field label="Maximum Price (LKR)">
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">Rs.</span>
+                                        <input className="input-field pl-12" name="max_price" value={form.max_price} onChange={handleChange} placeholder="75,000" />
+                                    </div>
+                                </Field>
+                            </div>
+                            <div className="mt-8 p-6 bg-gray-50 rounded-2xl flex gap-4">
+                                <div className="text-xl">💡</div>
+                                <p className="text-sm text-gray-500 leading-relaxed">
+                                    Your pricing will be displayed as a range (e.g. <b>Rs. 35,000 - 75,000</b>). This helps customers understand your value before reaching out.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Gallery */}
+                        <div ref={el => sectionRefs.current["gallery"] = el} className="section-card">
+                            <div className="flex items-center justify-between mb-8">
+                                <h3 className="text-lg font-bold flex items-center gap-3">
+                                    <span className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Image size={20} /></span>
+                                    Performance Gallery
+                                </h3>
+                                <button 
+                                    onClick={() => galleryRef.current?.click()}
+                                    className="px-4 py-2 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-all"
+                                >
+                                    Upload Photos
+                                </button>
+                                <input ref={galleryRef} type="file" multiple className="hidden" onChange={handleGalleryUpload} />
+                            </div>
+
+                            {gallery.length > 0 ? (
+                                <div className="grid grid-cols-3 gap-6">
+                                    {gallery.map((img, i) => (
+                                        <div key={i} className="group relative aspect-square rounded-[24px] overflow-hidden shadow-sm">
+                                            <img src={img.url} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="gallery" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <button 
+                                                    onClick={() => deleteGalleryItem(img)}
+                                                    className="bg-white text-red-600 p-3 rounded-2xl hover:bg-red-50 transition-all"
+                                                >
+                                                    <X size={18} />
+                                                </button>
+                                            </div>
+                                            {img.isNew && (
+                                                <div className="absolute top-4 left-4 bg-green-500 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">
+                                                    New
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="py-12 border-2 border-dashed border-gray-100 rounded-[32px] text-center">
+                                    <p className="text-sm text-gray-400 font-medium">No photos yet. Showcase your past events here.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Audio & Video */}
+                        <div ref={el => sectionRefs.current["media"] = el} className="section-card">
+                            <h3 className="text-lg font-bold mb-8 flex items-center gap-3">
+                                <span className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Music size={20} /></span>
+                                Audio & Video Samples
+                            </h3>
+                            <div className="space-y-4">
+                                {mediaEntries.map((entry, i) => (
+                                    <div key={i} className="p-6 bg-gray-50 rounded-[24px] border border-gray-100 relative group">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Entry #{i + 1}</p>
+                                            <button 
+                                                onClick={() => removeMediaEntry(i)}
+                                                className="text-gray-300 hover:text-red-500 transition-colors"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <Field label="Sample Title">
+                                                <input className="input-field" value={entry.title} onChange={e => updateMediaEntry(i, "title", e.target.value)} placeholder="e.g. Live at Coke Red" />
+                                            </Field>
+                                            <Field label="Link (YouTube / Spotify)">
+                                                <input className="input-field" value={entry.link} onChange={e => updateMediaEntry(i, "link", e.target.value)} placeholder="https://..." />
+                                            </Field>
+                                        </div>
+                                    </div>
+                                ))}
+                                <button 
+                                    onClick={addMediaEntry}
+                                    className="w-full py-4 border-2 border-dashed border-gray-200 rounded-[24px] text-gray-400 text-sm font-bold hover:border-red-200 hover:text-red-600 transition-all"
+                                >
+                                    + Add More Samples
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Social Links */}
+                        <div ref={el => sectionRefs.current["social"] = el} className="section-card">
+                            <h3 className="text-lg font-bold mb-8 flex items-center gap-3">
+                                <span className="p-2 bg-red-50 text-red-600 rounded-lg"><Link size={20} /></span>
+                                Social & Web Presence
+                            </h3>
+                            <div className="grid grid-cols-2 gap-8">
+                                <div className="flex items-center gap-5">
+                                    <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center text-red-600"><Youtube size={24} /></div>
+                                    <Field label="YouTube" className="flex-1">
+                                        <input className="input-field" name="youtube_link" value={form.youtube_link} onChange={handleChange} placeholder="@handle" />
+                                    </Field>
+                                </div>
+                                <div className="flex items-center gap-5">
+                                    <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600"><Facebook size={24} /></div>
+                                    <Field label="Facebook" className="flex-1">
+                                        <input className="input-field" name="facebook_link" value={form.facebook_link} onChange={handleChange} placeholder="fb.com/..." />
+                                    </Field>
+                                </div>
+                                <div className="flex items-center gap-5">
+                                    <div className="w-12 h-12 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-600"><Instagram size={24} /></div>
+                                    <Field label="Instagram" className="flex-1">
+                                        <input className="input-field" name="instagram_link" value={form.instagram_link} onChange={handleChange} placeholder="@username" />
+                                    </Field>
+                                </div>
+                                <div className="flex items-center gap-5">
+                                    <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center text-green-600"><Music2 size={24} /></div>
+                                    <Field label="Spotify" className="flex-1">
+                                        <input className="input-field" name="spotify_link" value={form.spotify_link} onChange={handleChange} placeholder="artist url" />
+                                    </Field>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </main>
             </div>
         </div>
     );
 }
 
-function Field({ label, children, style }: { label: string; children: React.ReactNode; style?: React.CSSProperties }) {
+function Field({ label, children, className = "", style }: { label: string; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
     return (
-        <div style={style}>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 6, letterSpacing: "0.02em", textTransform: "uppercase" }}>
+        <div className={className} style={style}>
+            <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">
                 {label}
             </label>
             {children}

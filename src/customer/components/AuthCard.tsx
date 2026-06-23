@@ -31,20 +31,20 @@ export default function AuthCard({ children }: AuthCardProps) {
 
   return (
     <div
-      className="min-h-screen w-full bg-cover bg-center bg-no-repeat flex flex-col items-center justify-center relative"
+      className="min-h-screen w-full bg-cover bg-center bg-no-repeat flex flex-col items-center justify-center relative px-4 py-6 sm:py-8"
       style={{ backgroundImage: "url('/bg-login.png')" }}
     >
       {/* Center Card */}
-      <div className="bg-[#f2f2f2] rounded-2xl flex w-[860px] max-w-[95vw] min-h-[560px] overflow-hidden shadow-2xl">
+      <div className="bg-[#f2f2f2] rounded-2xl flex flex-col lg:flex-row w-full max-w-[860px] min-h-0 lg:min-h-[560px] overflow-hidden shadow-2xl">
 
         {/* Left: Form slot */}
-        <div className="flex flex-col flex-1 px-12 py-8">
+        <div className="flex flex-col flex-1 px-5 sm:px-8 lg:px-12 py-6 sm:py-8">
           {children}
         </div>
 
-        {/* Right: Image card */}
-        <div className="w-[340px] p-4 flex-shrink-0">
-          <div className="relative w-full h-full rounded-2xl overflow-hidden">
+        {/* Right: Image card — hidden on mobile/tablet portrait */}
+        <div className="hidden lg:block w-[340px] p-4 flex-shrink-0">
+          <div className="relative w-full h-full min-h-[480px] rounded-2xl overflow-hidden">
 
             {/* Slides */}
             {slides.map((slide, i) => (
@@ -93,12 +93,12 @@ export default function AuthCard({ children }: AuthCardProps) {
       </div>
 
       {/* Footer */}
-      <div className="mt-6 flex items-center gap-4 text-sm text-white/80">
+      <div className="mt-4 sm:mt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm text-white/80">
         <a href="#" className="hover:text-white transition-colors">Contact</a>
-        <span className="opacity-50">|</span>
+        <span className="opacity-50 hidden sm:inline">|</span>
         <a href="#" className="hover:text-white transition-colors">Privacy</a>
-        <span className="opacity-50">|</span>
-        <a href="#" className="hover:text-white transition-colors">Terms & Conditions</a>
+        <span className="opacity-50 hidden sm:inline">|</span>
+        <a href="#" className="hover:text-white transition-colors"><span className="sm:hidden">Terms</span><span className="hidden sm:inline">Terms & Conditions</span></a>
       </div>
     </div>
   )

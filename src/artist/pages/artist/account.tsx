@@ -2,10 +2,11 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Heart, MoreHorizontal, Play, Music, MapPin, Users, Star,
-    Instagram, Facebook, Twitter, Mail,
+    Instagram, Facebook, Twitter, Mail, Youtube, Music2, Home, LogOut
 } from "lucide-react";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
+import ArtistOwnCalendar from "../../../components/ArtistOwnCalendar";
 
 interface Profile {
     full_name?: string;
@@ -44,12 +45,160 @@ interface Rating {
         id: number;
         rating: number;
         reviewer_name: string;
+        reviewer_avatar?: string;
         body: string;
         created_at: string;
     }[];
 }
 
-const HERO_HEIGHT = 280; // px — matches the tallest hero breakpoint
+// ── Media preview helpers ──────────────────────────────────────────────────
+
+function getYouTubeId(url: string): string | null {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/))([^&?/]+)/);
+    return match ? match[1] : null;
+}
+
+function getSpotifyEmbedUrl(url: string): string | null {
+    const match = url.match(/open\.spotify\.com\/(track|album|playlist|episode)\/([^?]+)/);
+    return match ? `https://open.spotify.com/embed/${match[1]}/${match[2]}` : null;
+}
+
+function isDirectVideo(url: string): boolean {
+    return /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+}
+
+// ── Fetch YouTube title via oEmbed (no API key required) ──────────────────
+async function fetchYouTubeTitle(ytId: string): Promise<string> {
+    const res = await fetch(
+        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ytId}&format=json`
+    );
+    if (!res.ok) throw new Error("oEmbed fetch failed");
+    const data = await res.json();
+    return data.title as string;
+}
+
+function MediaPreviewCard({ item, onDelete, isPlaying, onPlay }: { 
+    item: Media; 
+    onDelete: (id: number) => void;
+    isPlaying: boolean;
+    onPlay: () => void;
+}) {
+    const [resolvedTitle, setResolvedTitle] = useState<string>(item.title || "");
+
+    const ytId = getYouTubeId(item.url);
+    const spotifyEmbed = getSpotifyEmbedUrl(item.url);
+
+    // Auto-fetch YouTube title if not provided by the backend
+    useEffect(() => {
+        if (ytId && !item.title) {
+            fetchYouTubeTitle(ytId)
+                .then(setResolvedTitle)
+                .catch(() => setResolvedTitle("YouTube Video"));
+        }
+    }, [ytId, item.title]);
+
+    // Keep resolvedTitle in sync if item.title changes
+    useEffect(() => {
+        if (item.title) setResolvedTitle(item.title);
+    }, [item.title]);
+
+    const renderFooter = () => (
+        <div className="flex items-center justify-between mt-2 px-1">
+            <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-medium text-gray-700 truncate">
+                    {resolvedTitle || (ytId ? "YouTube Video" : spotifyEmbed ? "Spotify" : "Media")}
+                </p>
+                <p className="text-[11px] text-gray-400">
+                    {ytId ? "YouTube" : spotifyEmbed ? "Spotify" : "External Link"}
+                </p>
+            </div>
+            <button
+                onClick={() => onDelete(item.id)}
+                className="ml-4 shrink-0 text-[11px] text-red-500 hover:text-red-700 font-medium transition"
+            >
+                Remove
+            </button>
+        </div>
+    );
+
+    if (ytId) {
+        return (
+            <div className="flex flex-col h-full group">
+                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div className="aspect-video w-full bg-black relative group cursor-pointer" onClick={onPlay}>
+                        {!isPlaying ? (
+                            <>
+                                <img
+                                    src={`https://i.ytimg.com/vi/${ytId}/maxresdefault.jpg`}
+                                    className="w-full h-full object-cover"
+                                    alt={resolvedTitle || "YouTube Video"}
+                                    onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).src = `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
+                                        (e.currentTarget as HTMLImageElement).onerror = (ev) => {
+                                            (ev.currentTarget as HTMLImageElement).src = `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg`;
+                                        };
+                                    }}
+                                />
+                                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-lg group-hover:scale-110 transition-transform">
+                                        <Play size={24} fill="currentColor" />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <iframe
+                                width="100%"
+                                height="100%"
+                                src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+                                title="YouTube video player"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowFullScreen
+                            ></iframe>
+                        )}
+                    </div>
+                </div>
+                {renderFooter()}
+            </div>
+        );
+    }
+
+    if (spotifyEmbed) {
+        return (
+            <div className="flex flex-col h-full">
+                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div className="w-full h-[152px]">
+                        <iframe
+                            src={spotifyEmbed}
+                            width="100%"
+                            height="100%"
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                            loading="lazy"
+                            className="border-0"
+                        />
+                    </div>
+                </div>
+                {renderFooter()}
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col h-full">
+            <a
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 flex-grow"
+            >
+                <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
+                    <Play size={32} className="text-gray-400" />
+                </div>
+            </a>
+            {renderFooter()}
+        </div>
+    );
+}
 
 export default function ArtistProfile() {
     const navigate = useNavigate();
@@ -57,39 +206,16 @@ export default function ArtistProfile() {
     const [profile, setProfile] = useState<Profile | null>(null);
     const [media, setMedia] = useState<Media[]>([]);
     const [rating, setRating] = useState<Rating | null>(null);
+    const [artistStats, setArtistStats] = useState<{ total: number } | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
-    // Scroll-driven hero/avatar values
-    const [scrollY, setScrollY] = useState(0);
-    const leftColRef = useRef<HTMLDivElement>(null);
-    const [leftTop, setLeftTop] = useState(0);
+    const [playingVideoId, setPlayingVideoId] = useState<number | null>(null);
 
     useEffect(() => {
         window.scrollTo(0, 0);
         fetchProfile();
+        fetchStats();
     }, []);
-
-    // Track scroll for hero parallax + sticky left panel
-    useEffect(() => {
-        const onScroll = () => setScrollY(window.scrollY);
-        window.addEventListener("scroll", onScroll, { passive: true });
-        return () => window.removeEventListener("scroll", onScroll);
-    }, []);
-
-    // Calculate sticky offset for left column
-    useEffect(() => {
-        const measure = () => {
-            if (leftColRef.current) {
-                const rect = leftColRef.current.getBoundingClientRect();
-                // initial distance from viewport top when scroll=0
-                setLeftTop(rect.top + window.scrollY);
-            }
-        };
-        measure();
-        window.addEventListener("resize", measure);
-        return () => window.removeEventListener("resize", measure);
-    }, [loading]);
 
     const fetchProfile = async () => {
         try {
@@ -105,6 +231,15 @@ export default function ArtistProfile() {
             }
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchStats = async () => {
+        try {
+            const { data } = await api.get("/bookings/dashboard");
+            setArtistStats(data.stats);
+        } catch (err) {
+            console.error("Failed to load stats", err);
         }
     };
 
@@ -140,73 +275,59 @@ export default function ArtistProfile() {
 
     const displayName = profile?.stage_name || profile?.full_name || "Artist";
 
-    // Hero parallax: scroll fraction 0→1 over first HERO_HEIGHT px
-    const heroFraction = Math.min(scrollY / HERO_HEIGHT, 1);
-    // Avatar: starts fading a little later, disappears by 60% of hero
-    const avatarFraction = Math.min(scrollY / (HERO_HEIGHT * 0.6), 1);
-
-    const heroStyle: React.CSSProperties = {
-        opacity: 1 - heroFraction,
-        transform: `translateY(${-scrollY * 0.35}px)`,
-        willChange: "transform, opacity",
-        transition: "opacity 0.05s linear",
-    };
-
-    const avatarStyle: React.CSSProperties = {
-        opacity: 1 - avatarFraction,
-        transform: `translateY(${-scrollY * 0.2}px) scale(${1 - avatarFraction * 0.25})`,
-        willChange: "transform, opacity",
-        transition: "opacity 0.05s linear",
-        pointerEvents: avatarFraction >= 1 ? "none" : "auto",
-    };
-
-    // Sticky left: once scroll passes the initial top offset, fix it
-    const isLeftSticky = scrollY >= leftTop - 24; // 24px breathing room from top
-
     return (
         <div className="min-h-screen bg-[#F4F1F5] pb-20">
 
-            {/* HERO */}
-            <div className="relative h-[220px] w-full overflow-hidden">
+            {/* HERO — overflow-visible so avatar can bleed below */}
+            <div className="relative h-[220px] w-full overflow-visible">
                 <img
                     src={profile?.cover_url || "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e"}
-                    className="w-full h-full object-cover"
+                    className="w-full h-[220px] object-cover"
                     alt="cover"
                 />
+                <div className="absolute inset-0 h-[220px] bg-black/20" />
 
-                <div className="absolute inset-0 bg-black/20"></div>
+                {/* TOP BUTTONS */}
+                <button
+                    onClick={() => navigate("/artistHome")}
+                    className="absolute top-5 left-5 w-10 h-10 bg-white/90 backdrop-blur-sm text-black rounded-full flex items-center justify-center shadow-md hover:scale-110 transition z-20"
+                    title="Go Back"
+                >
+                    <Home size={20} />
+                </button>
 
-                {/* TOP RIGHT BUTTONS */}
                 <div className="absolute top-5 right-5 flex gap-3 z-20">
                     <button
                         onClick={handleLogout}
-                        className="bg-black text-white rounded-full px-4 py-2 text-sm font-semibold shadow-md hover:scale-105 transition"
+                        className="bg-black/80 backdrop-blur-sm text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md hover:scale-110 transition"
+                        title="Logout"
                     >
-                        Logout
+                        <LogOut size={18} />
                     </button>
+                </div>
+
+                {/* AVATAR — half inside hero, half below */}
+                <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+120px)] lg:translate-x-0 z-30">
+                    <img
+                        src={profile?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"}
+                        className="w-32 h-32 rounded-full border-[5px] border-white object-cover shadow-lg"
+                        alt="avatar"
+                    />
                 </div>
             </div>
 
-            {/* MAIN WRAPPER */}
-            <div className="max-w-6xl mx-auto px-4 -mt-20 relative z-20">
+            {/* MAIN WRAPPER — mt-4 (no negative margin; hero overlap handled by avatar position) */}
+            <div className="max-w-6xl mx-auto px-4 mt-4 relative z-20">
 
                 <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
 
                     {/* LEFT PANEL */}
                     <div className="space-y-5">
 
-                        <div className="bg-white border border-gray-200 rounded-sm overflow-hidden shadow-sm">
+                        {/* Main card — rounded-2xl, pt-20 to clear the overlapping avatar */}
+                        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
 
-                            {/* AVATAR */}
-                            <div className="flex justify-center pt-6">
-                                <img
-                                    src={profile?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"}
-                                    className="w-32 h-32 rounded-full border-[5px] border-white object-cover shadow-lg"
-                                    alt="avatar"
-                                />
-                            </div>
-
-                            <div className="px-6 pb-7 text-center">
+                            <div className="px-6 pb-7 text-center pt-20">
                                 <h1 className="text-[42px] font-bold text-black leading-none mt-4">
                                     {displayName}
                                 </h1>
@@ -216,11 +337,11 @@ export default function ArtistProfile() {
                                     <div className="flex items-center justify-center gap-1 mt-2 text-[13px]">
                                         <Star size={14} className="text-yellow-500 fill-yellow-400" />
                                         <span className="font-semibold text-gray-700">
-                                        {rating.average}
-                                    </span>
+                                            {rating.average}
+                                        </span>
                                         <span className="text-gray-400">
-                                        ({rating.total} reviews)
-                                    </span>
+                                            ({rating.total} reviews)
+                                        </span>
                                     </div>
                                 )}
 
@@ -230,10 +351,10 @@ export default function ArtistProfile() {
                                         {profile.tags.map((tag, i) => (
                                             <span
                                                 key={i}
-                                                className="bg-[#EEE8FF] text-[#7A57F2] text-[10px] px-2 py-1 rounded-sm capitalize"
+                                                className="bg-[#EEE8FF] text-[#7A57F2] text-[10px] px-3 py-1 rounded-full capitalize"
                                             >
-                                            {tag}
-                                        </span>
+                                                {tag}
+                                            </span>
                                         ))}
                                     </div>
                                 )}
@@ -251,10 +372,9 @@ export default function ArtistProfile() {
                                         <div className="text-[#FF2B6B] font-bold text-[28px] leading-none">
                                             ${profile.starting_price}
                                             <span className="text-gray-600 text-[15px] font-medium ml-2">
-                                            starting price
-                                        </span>
+                                                starting price
+                                            </span>
                                         </div>
-
                                         {profile.max_price && (
                                             <p className="text-[11px] text-gray-400 mt-1">
                                                 Range: ${profile.starting_price} - ${profile.max_price} depending on event type and duration
@@ -267,10 +387,10 @@ export default function ArtistProfile() {
                                 <div className="flex gap-3 mt-7">
                                     <button
                                         onClick={() => navigate("/bookingRequests")}
-                                        className="flex-1 bg-[#FF2B6B] hover:bg-[#ff1b60] transition text-white py-3 rounded-full font-semibold text-sm shadow-md">
-                                        Booking ({rating?.total ?? 0})
+                                        className="flex-1 bg-[#FF2B6B] hover:bg-[#ff1b60] transition text-white py-3 rounded-full font-semibold text-sm shadow-md"
+                                    >
+                                        My Bookings ({artistStats?.total ?? 0})
                                     </button>
-
                                     <button
                                         onClick={() => navigate("/editProfile")}
                                         className="flex-1 border border-gray-300 py-3 rounded-full font-semibold text-sm hover:bg-gray-50 transition"
@@ -281,55 +401,47 @@ export default function ArtistProfile() {
                             </div>
                         </div>
 
-                        {/* SOCIAL */}
-                        <div className="bg-white border border-gray-200 rounded-sm p-7 shadow-sm text-center">
+                        {/* SOCIAL — rounded-2xl */}
+                        <div className="bg-white border border-gray-200 rounded-2xl p-7 shadow-sm text-center">
                             <h3 className="text-[20px] font-semibold text-gray-700 mb-5">
                                 Social & Web
                             </h3>
-
                             <div className="flex justify-center gap-4">
                                 {profile?.instagram_link && (
-                                    <a
-                                        href={profile.instagram_link}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200"
-                                    >
+                                    <a href={profile.instagram_link} target="_blank" rel="noreferrer"
+                                       className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200">
                                         <Instagram size={18} />
                                     </a>
                                 )}
-
                                 {profile?.facebook_link && (
-                                    <a
-                                        href={profile.facebook_link}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200"
-                                    >
+                                    <a href={profile.facebook_link} target="_blank" rel="noreferrer"
+                                       className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200">
                                         <Facebook size={18} />
                                     </a>
                                 )}
-
                                 {profile?.youtube_link && (
-                                    <a
-                                        href={profile.youtube_link}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200"
-                                    >
-                                        <Twitter size={18} />
+                                    <a href={profile.youtube_link} target="_blank" rel="noreferrer"
+                                       className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200">
+                                        <Youtube size={18} />
                                     </a>
                                 )}
-
+                                {profile?.spotify_link && (
+                                    <a href={profile.spotify_link} target="_blank" rel="noreferrer"
+                                       className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200">
+                                        <Music2 size={18} />
+                                    </a>
+                                )}
                                 <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200 cursor-pointer">
                                     <Mail size={18} />
                                 </div>
                             </div>
                         </div>
+
+                        <ArtistOwnCalendar />
                     </div>
 
-                    {/* RIGHT PANEL */}
-                    <div className="bg-white border border-gray-200 rounded-sm p-8 shadow-sm">
+                    {/* RIGHT PANEL — rounded-2xl */}
+                    <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
 
                         {/* TOP SECTION */}
                         <div className="flex items-start justify-between">
@@ -337,28 +449,23 @@ export default function ArtistProfile() {
                                 <h2 className="text-[26px] font-bold text-gray-900">
                                     Overview
                                 </h2>
-
                                 <div className="flex flex-wrap gap-5 mt-2 text-[13px] text-gray-500">
                                     {profile?.category && (
                                         <span className="flex items-center gap-1">
-                                        <Music size={13} /> {profile.category}
-                                    </span>
+                                            <Music size={13} /> {profile.category}
+                                        </span>
                                     )}
-
                                     {profile?.location && (
                                         <span className="flex items-center gap-1">
-                                        <MapPin size={13} /> {profile.location}
-                                    </span>
+                                            <MapPin size={13} /> {profile.location}
+                                        </span>
                                     )}
-
                                 </div>
                             </div>
-
                             <div className="flex gap-2">
                                 <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50">
                                     <Heart size={18} />
                                 </button>
-
                                 <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50">
                                     <MoreHorizontal size={18} />
                                 </button>
@@ -376,65 +483,100 @@ export default function ArtistProfile() {
                             )}
                         </div>
 
-                        {/* GALLERY */}
+                        {/* GALLERY — images rounded-xl */}
                         {galleryImages.length > 0 && (
                             <>
-                                <h3 className="text-[24px] font-bold mt-10 mb-5">
-                                    Gallery
-                                </h3>
-
+                                <h3 className="text-[24px] font-bold mt-10 mb-5">Gallery</h3>
                                 <div className="grid grid-cols-3 gap-3">
                                     {galleryImages.slice(0, 3).map((img) => (
                                         <img
                                             key={img.id}
                                             src={img.url}
                                             alt="gallery"
-                                            className="w-full h-[180px] object-cover rounded-sm"
+                                            className="w-full h-[180px] object-cover rounded-xl"
                                         />
                                     ))}
                                 </div>
                             </>
                         )}
 
-                        {/* AUDIO VIDEO */}
+                        {/* AUDIO & VIDEO */}
                         {videoLinks.length > 0 && (
                             <>
-                                <h3 className="text-[24px] font-bold mt-10 mb-5">
-                                    Audio & Video
-                                </h3>
-
-                                <div className="space-y-4">
+                                <h3 className="text-[24px] font-bold mt-10 mb-5">Audio & Video</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {videoLinks.map((item) => (
-                                        <div key={item.id} className="flex items-center justify-between border-b pb-4">
-                                            <a
-                                                href={item.url}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="flex items-center gap-4 hover:opacity-80 transition flex-1 min-w-0"
-                                            >
-                                                <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                                                    <Play size={16} className="text-gray-600" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-[14px] font-medium text-gray-700">
-                                                        {item.title || "Untitled"}
-                                                    </p>
-                                                    <p className="text-[12px] text-gray-400 truncate max-w-[220px]">
-                                                        {item.url}
-                                                    </p>
-                                                </div>
-                                            </a>
-                                            <button
-                                                onClick={() => handleDeleteVideo(item.id)}
-                                                className="ml-4 shrink-0 text-[12px] text-red-500 hover:text-red-700 font-medium transition"
-                                            >
-                                                Remove
-                                            </button>
-                                        </div>
+                                        <MediaPreviewCard
+                                            key={item.id}
+                                            item={item}
+                                            onDelete={handleDeleteVideo}
+                                            isPlaying={playingVideoId === item.id}
+                                            onPlay={() => setPlayingVideoId(item.id)}
+                                        />
                                     ))}
                                 </div>
                             </>
                         )}
+
+                        {/* REVIEWS */}
+                        <h3 className="text-lg font-bold mt-12 mb-6">Reviews</h3>
+                        {rating && (
+                            <div className="grid md:grid-cols-2 gap-8 mb-10">
+                                <div className="text-center">
+                                    <h2 className="text-4xl font-bold">{rating.average ?? "—"}</h2>
+                                    <div className="flex justify-center text-yellow-400 mt-2">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star key={i} size={20} fill="currentColor" />
+                                        ))}
+                                    </div>
+                                    <p className="text-gray-400 text-xs mt-1">{rating.total} Reviews</p>
+                                </div>
+                                <div className="space-y-2">
+                                    {[5, 4, 3, 2, 1].map((star) => (
+                                        <div key={star} className="flex items-center gap-2 text-sm">
+                                            <span>{star}</span>
+                                            <Star size={14} />
+                                            <div className="flex-1 h-2 bg-gray-200 rounded-full">
+                                                <div
+                                                    className="h-2 bg-yellow-400 rounded-full"
+                                                    style={{ width: `${rating.total ? (rating.distribution[star] / rating.total) * 100 : 0}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="space-y-4">
+                            {rating?.recent_reviews.map(r => (
+                                <div key={r.id} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                    <div className="flex justify-between">
+                                        <div className="flex gap-3 items-center">
+                                            <img
+                                                src={r.reviewer_avatar || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"}
+                                                className="w-8 h-8 rounded-full object-cover"
+                                                alt={r.reviewer_name}
+                                            />
+                                            <div>
+                                                <p className="text-xs font-bold uppercase">{r.reviewer_name}</p>
+                                                <p className="text-[10px] text-gray-400">{r.created_at}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex text-yellow-400">
+                                            {[...Array(r.rating)].map((_, i) => (
+                                                <Star key={i} size={12} fill="currentColor" />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-3">{r.body}</p>
+                                </div>
+                            ))}
+                            {(!rating?.recent_reviews || rating.recent_reviews.length === 0) && (
+                                <p className="text-sm text-gray-400 text-center py-6">No reviews yet.</p>
+                            )}
+                        </div>
+
                     </div>
                 </div>
             </div>

@@ -7,8 +7,8 @@ function normaliseCustomer(c, stats = null) {
     ...c,
     name: c.name || '—',
     email: c.email || '—',
-    status: c.status || 'active',
-    avatar: c.avatar || `https://i.pravatar.cc/150?u=${c.id}`,
+    status: c.is_banned ? 'banned' : 'active',
+    avatar: c.avatar_url || c.avatar || `https://i.pravatar.cc/150?u=${c.id}`,
     joined: c.created_at
       ? new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
       : '—',
