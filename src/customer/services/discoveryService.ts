@@ -94,3 +94,19 @@ export const submitReview = (
   payload: { rating: number; title?: string; body?: string },
 ): Promise<Review> =>
   api.post(`/discovery/artists/${artistId}/reviews`, payload).then(r => r.data.review)
+
+export interface CalendarEntry {
+  id: string
+  date: string
+  title: string
+  description?: string | null
+  source: 'booking' | 'manual'
+  status?: string
+  editable?: boolean
+}
+
+export const getArtistCalendar = (
+  artistId: string,
+  month: string,
+): Promise<CalendarEntry[]> =>
+  api.get(`/discovery/artists/${artistId}/calendar`, { params: { month } }).then(r => r.data.entries ?? [])

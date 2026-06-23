@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
+import ArtistOwnCalendar from "../../../components/ArtistOwnCalendar";
 
 interface Profile {
     full_name?: string;
@@ -435,6 +436,8 @@ export default function ArtistProfile() {
                                 </div>
                             </div>
                         </div>
+
+                        <ArtistOwnCalendar />
                     </div>
 
                     {/* RIGHT PANEL — rounded-2xl */}

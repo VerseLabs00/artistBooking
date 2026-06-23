@@ -10,6 +10,7 @@ import BookingModal from "../components/booking/BookingModal";
 import { getArtist, submitReview } from "../services/discoveryService";
 import type { ArtistDetail } from "../services/discoveryService";
 import { useAuth } from "../context/AuthContext";
+import { PublicArtistCalendar } from "../../components/PublicArtistCalendar";
 
 // ── Media preview helpers ──────────────────────────────────────────────────
 
@@ -489,6 +490,8 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                                     </div>
                                 </div>
                             )}
+
+                            <PublicArtistCalendar artistId={artist.id} />
                         </div>
 
                         {/* RIGHT PANEL */}
