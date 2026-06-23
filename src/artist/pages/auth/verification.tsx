@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Upload, Camera, AlertCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import stage from "../../../../public/bg-login.png";
 import api from "../../api/axios";
 import { compressImage } from "../../utils/compressImage";
@@ -27,6 +27,8 @@ const keyToField = (key: string): Field | null => {
 
 const Verification: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const resuming = (location.state as any)?.resuming === true;
     const [docType, setDocType] = useState<DocType>("National ID");
     const [frontFile, setFrontFile] = useState<File | null>(null);
     const [backFile, setBackFile] = useState<File | null>(null);
@@ -103,7 +105,7 @@ const Verification: React.FC = () => {
                 },
             });
             window.scrollTo(0, 0);
-            navigate("/talent");
+            navigate("/talent", { state: { resuming } });
         } catch (err: any) {
             const errors = err.response?.data?.errors;
             if (errors) {
@@ -185,6 +187,16 @@ const Verification: React.FC = () => {
 
                         <h2 className="text-xl font-semibold mb-2">Upload your document</h2>
                         <p className="text-gray-600 text-sm mb-6">Select a document type and upload a clear, unedited photo.</p>
+
+                        {resuming && (
+                            <div className="mb-4 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                                <span className="text-amber-500 text-lg leading-none mt-0.5">⚠</span>
+                                <div>
+                                    <p className="text-sm font-semibold text-amber-800">Complete your registration</p>
+                                    <p className="text-xs text-amber-700 mt-0.5">You left before finishing. Upload your documents to continue activating your artist account.</p>
+                                </div>
+                            </div>
+                        )}
 
                         {error && (
                             <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</div>

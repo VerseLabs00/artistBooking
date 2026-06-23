@@ -72,7 +72,13 @@ export default function SignUp() {
             navigate("/information");
         } catch (err: any) {
             const errors = err.response?.data?.errors;
-            if (errors) {
+            const emailTaken = errors?.email?.some((msg: string) =>
+                msg.toLowerCase().includes("already been taken") || msg.toLowerCase().includes("already taken")
+            );
+
+            if (emailTaken) {
+                setError("An account with this email already exists. Please log in.");
+            } else if (errors) {
                 setError(Object.values(errors).flat().join(" "));
             } else {
                 setError(err.response?.data?.message || "Registration failed. Please try again.");

@@ -49,8 +49,10 @@ function normaliseVerification(a) {
       { label: 'Selfie with Document', uploaded: !!selfieDoc, url: selfieDoc?.url },
     ],
     portfolio: {
-      images: a.gallery_images || [],
-      video:  a.youtube_link   || null,
+      // Talent photos uploaded during onboarding (admin-only, not shown publicly)
+      images: (a.user?.artist_media || [])
+        .filter(m => m.purpose === 'talent_media')
+        .map(m => m.url),
     },
     pricing: a.starting_price ? {
       basePrice:    parseFloat(a.starting_price),

@@ -74,7 +74,24 @@ export default function LoginPage() {
 
             setAuth(data.user, data.access_token)
             window.scrollTo(0, 0)
-            navigate('/artistHome')
+
+            // Check if artist completed all 3 onboarding steps
+            try {
+                const { data: status } = await api.get('/onboarding/status')
+                const resumeState = { resuming: true }
+
+                if (!status.basic_info_done) {
+                    navigate('/information', { state: resumeState })
+                } else if (!status.verification_done) {
+                    navigate('/verification', { state: resumeState })
+                } else if (!status.talent_done) {
+                    navigate('/talent', { state: resumeState })
+                } else {
+                    navigate('/artistHome')
+                }
+            } catch {
+                navigate('/artistHome')
+            }
 
         } catch (err: any) {
             setError(

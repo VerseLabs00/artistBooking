@@ -1,19 +1,23 @@
 import React, { useState } from "react";
 import { MapPin, Calendar, Music2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import stage from "../../../../public/bg-login.png";
 import api from "../../api/axios";
+import { useAuth } from "../../context/AuthContext";
 
 const Information: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const resuming = (location.state as any)?.resuming === true;
+    const { user } = useAuth();
 
     const [form, setForm] = useState({
-        full_name: "",
+        full_name: user?.name || "",
         stage_name: "",
         location: "",
         phone_number: "",
         dob: "",
-        email: "",
+        email: user?.email || "",
         category: "Singer",
     });
     const [loading, setLoading] = useState(false);
@@ -32,7 +36,7 @@ const Information: React.FC = () => {
         try {
             await api.post("/onboarding/basic-info", form);
             window.scrollTo(0, 0);
-            navigate("/verification");
+            navigate("/verification", { state: { resuming } });
         } catch (err: any) {
             const errors = err.response?.data?.errors;
             if (errors) {
@@ -127,6 +131,16 @@ const Information: React.FC = () => {
                                 Talent Show Case
                             </div>
                         </div>
+
+                        {resuming && (
+                            <div className="mb-4 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                                <span className="text-amber-500 text-lg leading-none mt-0.5">⚠</span>
+                                <div>
+                                    <p className="text-sm font-semibold text-amber-800">Complete your registration</p>
+                                    <p className="text-xs text-amber-700 mt-0.5">You left before finishing. Pick up where you left off to activate your artist account.</p>
+                                </div>
+                            </div>
+                        )}
 
                         {error && (
                             <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</div>
