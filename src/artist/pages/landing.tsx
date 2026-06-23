@@ -789,7 +789,7 @@ export default function HomePage() {
           HERO SECTION
       ══════════════════════════════════════════════════ */}
                 <section id="hero-section"
-                         className="relative w-full overflow-hidden bg-cover bg-center pt-28 pb-16 sm:pt-36 sm:pb-24 px-4 sm:px-6 md:px-12 lg:px-20 min-h-[480px] sm:min-h-[540px] flex items-center"
+                         className="relative w-full overflow-hidden bg-cover bg-center py-10 sm:py-12 px-4 sm:px-6 md:px-12 lg:px-20 pt-28"
                          style={{ backgroundImage: "url('/Cover7.jpg')" }}
                 >
                     {/* Overlay for better text readability */}

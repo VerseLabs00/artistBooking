@@ -21,21 +21,23 @@ const Verification: React.FC = () => {
     const backRef = useRef<HTMLInputElement>(null);
     const selfieRef = useRef<HTMLInputElement>(null);
 
-    const validateFile = (file: File | null, maxSizeMB: number, allowedTypes: string[]): string | null => {
+    const validateFile = (file: File | null, maxSizeMB: number, allowPdf = false): string | null => {
         if (!file) return null;
 
-        const extension = file.name.split('.').pop()?.toLowerCase();
-        const mimeType = file.type;
+        const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+        const mimeType = file.type.toLowerCase();
 
-        const isAllowedType = allowedTypes.some(type => {
-            if (type.startsWith('.')) {
-                return extension === type.slice(1);
-            }
-            return mimeType === type || mimeType.startsWith(type.replace('*', ''));
-        });
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'bmp', 'tif', 'tiff', 'avif'];
+        const isImage =
+            mimeType.startsWith('image/') ||
+            imageExtensions.includes(extension) ||
+            /\.(heic|heif)$/i.test(file.name);
 
-        if (!isAllowedType) {
-            return `File "${file.name}" has an unsupported format. Allowed formats: ${allowedTypes.join(', ').toUpperCase().replace(/\./g, '')}`;
+        const isPdf = extension === 'pdf' || mimeType === 'application/pdf';
+
+        if (!isImage && !(allowPdf && isPdf)) {
+            const formats = allowPdf ? 'photos (JPG, PNG, HEIC, etc.) or PDF' : 'photos (JPG, PNG, HEIC, etc.)';
+            return `File "${file.name}" is not supported. Please upload ${formats}.`;
         }
 
         if (file.size > maxSizeMB * 1024 * 1024) {
@@ -47,7 +49,7 @@ const Verification: React.FC = () => {
     const handleFrontChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
         if (file) {
-            const err = validateFile(file, 10, ['.jpg', '.jpeg', '.png', '.pdf']);
+            const err = validateFile(file, 10, true);
             if (err) {
                 setError(err);
                 setFrontFile(null);
@@ -62,7 +64,7 @@ const Verification: React.FC = () => {
     const handleBackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
         if (file) {
-            const err = validateFile(file, 10, ['.jpg', '.jpeg', '.png', '.pdf']);
+            const err = validateFile(file, 10, true);
             if (err) {
                 setError(err);
                 setBackFile(null);
@@ -77,7 +79,7 @@ const Verification: React.FC = () => {
     const handleSelfieChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
         if (file) {
-            const err = validateFile(file, 10, ['.jpg', '.jpeg', '.png']);
+            const err = validateFile(file, 10, false);
             if (err) {
                 setError(err);
                 setSelfieFile(null);
@@ -196,9 +198,9 @@ const Verification: React.FC = () => {
                                      className={`border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${frontFile ? "border-green-400" : ""}`}>
                                     <Upload className="w-6 h-6 text-red-500 mb-2" />
                                     <p className="text-sm">{frontFile ? "Change front" : "Upload front"}</p>
-                                    <p className="text-xs text-gray-400">JPG, PNG or PDF</p>
+                                    <p className="text-xs text-gray-400">Photos or PDF (incl. iPhone HEIC)</p>
                                 </div>
-                                <input ref={frontRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={handleFrontChange} />
+                                <input ref={frontRef} type="file" accept="image/*,.pdf,application/pdf" capture="environment" className="hidden" onChange={handleFrontChange} />
                                 <FileLabel file={frontFile} />
                             </div>
                             <div>
@@ -207,9 +209,9 @@ const Verification: React.FC = () => {
                                      className={`border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${backFile ? "border-green-400" : ""}`}>
                                     <Upload className="w-6 h-6 text-red-500 mb-2" />
                                     <p className="text-sm">{backFile ? "Change back" : "Upload back"}</p>
-                                    <p className="text-xs text-gray-400">JPG, PNG or PDF</p>
+                                    <p className="text-xs text-gray-400">Photos or PDF (incl. iPhone HEIC)</p>
                                 </div>
-                                <input ref={backRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={handleBackChange} />
+                                <input ref={backRef} type="file" accept="image/*,.pdf,application/pdf" capture="environment" className="hidden" onChange={handleBackChange} />
                                 <FileLabel file={backFile} />
                             </div>
                         </div>
@@ -223,12 +225,12 @@ const Verification: React.FC = () => {
                                     <Camera className="w-6 h-6 text-gray-500" />
                                     <div>
                                         <p className="text-sm font-medium">{selfieFile ? selfieFile.name : "Selfie with document"}</p>
-                                        <p className="text-xs text-gray-400">Hold your document next to your face. JPG or PNG</p>
+                                        <p className="text-xs text-gray-400">Hold your document next to your face. All photo formats accepted.</p>
                                     </div>
                                 </div>
                                 <Upload className="w-5 h-5 text-red-500" />
                             </div>
-                            <input ref={selfieRef} type="file" accept=".jpg,.jpeg,.png" className="hidden" onChange={handleSelfieChange} />
+                            <input ref={selfieRef} type="file" accept="image/*" capture="user" className="hidden" onChange={handleSelfieChange} />
                         </div>
 
                         {/* Agreement */}
