@@ -4,7 +4,7 @@ import api from "../../api/axios";
 import {
     User, FileText, DollarSign, Image, Music, Music2,
     Link, Youtube, Facebook, Instagram, AlertCircle,
-    ArrowLeft, ArrowRight, Save, X, Plus, SkipForward
+    ArrowLeft, ArrowRight, Save, X, Plus
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -294,7 +294,7 @@ export default function EditProfile() {
             `}</style>
 
             {/* TOP HEADER */}
-            <header className="sticky top-0 z-50 bg-[#0B0B0D]/90 backdrop-blur-md border-b border-[#1D1D20] px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between gap-3">
+            <header className="sticky top-0 z-50 bg-[#0B0B0D]/90 backdrop-blur-md border-b border-[#1D1D20] px-4 sm:px-8 py-3 sm:py-4 grid grid-cols-3 items-center gap-3">
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     <button onClick={() => navigate("/account")} className="p-2 hover:bg-[#1A1A1D] rounded-full transition-colors shrink-0 text-[#F4F1EC]">
                         <X size={18} />
@@ -305,8 +305,7 @@ export default function EditProfile() {
                     </div>
                 </div>
 
-                {/* progress dots */}
-                <div className="hidden sm:flex items-center gap-2">
+                <div className="hidden sm:flex items-center justify-center gap-2">
                     {steps.map((s, i) => (
                         <div
                             key={s.id}
@@ -317,14 +316,16 @@ export default function EditProfile() {
                     ))}
                 </div>
 
-                <span className="text-[11px] font-bold text-gray-500 shrink-0 sm:hidden">{stepIndex + 1}/{steps.length}</span>
+                <div className="flex justify-end">
+                    <span className="text-[11px] font-bold text-gray-500 shrink-0 sm:hidden">{stepIndex + 1}/{steps.length}</span>
+                </div>
             </header>
 
             <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-32">
 
                 {/* ===== STEP: COVER + AVATAR ===== */}
                 {activeSection === "cover" && (
-                    <div className="fade-in">
+                    <div className="fade-in pb-8">
                         <SlideHeader
                             icon={<Image size={20} />}
                             title="Your photos"
@@ -437,13 +438,13 @@ export default function EditProfile() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             <Field label="Starting price (LKR)">
                                 <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-500 text-sm">Rs.</span>
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-500 text-sm"></span>
                                     <input className="ed-input pl-12" name="starting_price" value={form.starting_price} onChange={handleChange} placeholder="35,000" />
                                 </div>
                             </Field>
                             <Field label="Maximum price (LKR)">
                                 <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-500 text-sm">Rs.</span>
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-500 text-sm"></span>
                                     <input className="ed-input pl-12" name="max_price" value={form.max_price} onChange={handleChange} placeholder="75,000" />
                                 </div>
                             </Field>
@@ -451,7 +452,7 @@ export default function EditProfile() {
                         <div className="mt-6 p-5 bg-[#1A1A1D] rounded-2xl flex gap-3 items-start border border-[#232326]">
                             <AlertCircle size={16} className="text-[#E0263A] mt-0.5 shrink-0" />
                             <p className="text-sm text-gray-400 leading-relaxed">
-                                Your pricing shows as a range, e.g. <span className="text-gray-200 font-semibold">Rs. 35,000 – 75,000</span>, so customers know your value before reaching out.
+                                Your pricing shows as a range, e.g. <span className="text-gray-200 font-semibold">Rs. {form.starting_price || "35,000"} – {form.max_price || "75,000"}</span>, so customers know your value before reaching out.
                             </p>
                         </div>
                     </div>
@@ -584,15 +585,6 @@ export default function EditProfile() {
                     </button>
 
                     <div className="flex items-center gap-2 sm:gap-3">
-                        {!isLastStep && (
-                            <button
-                                onClick={goNext}
-                                className="px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-sm font-bold text-gray-400 hover:text-gray-200 hover:bg-[#1A1A1D] transition-all flex items-center gap-2"
-                            >
-                                <SkipForward size={15} /> Skip
-                            </button>
-                        )}
-
                         {isLastStep ? (
                             <button
                                 onClick={handleSave}
