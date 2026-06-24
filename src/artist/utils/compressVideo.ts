@@ -136,8 +136,46 @@ async function compressWithBitrate(
 
     console.log(`Using MIME type: ${supportedMimeType} at ${bitrate}bps`);
 
-    const stream = canvas.captureStream(30);
-    const mediaRecorder = new MediaRecorder(stream, {
+    // Capture video from canvas
+    const canvasStream = canvas.captureStream(30);
+    
+    // Try to capture audio from the video element
+    let audioTrack: MediaStreamTrack | null = null;
+    try {
+        // Capture audio using captureStream() if the video element supports it
+        if ((video as any).captureStream) {
+            const videoStream = (video as any).captureStream();
+            const audioTracks = videoStream.getAudioTracks();
+            if (audioTracks.length > 0) {
+                audioTrack = audioTracks[0];
+                console.log('Audio track captured from video element');
+            }
+        }
+        
+        // Fallback: try Web Audio API
+        if (!audioTrack) {
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const source = audioContext.createMediaElementSource(video);
+            const destination = audioContext.createMediaStreamDestination();
+            source.connect(destination);
+            source.connect(audioContext.destination); // Also connect to speakers so we can hear it during playback
+            audioTrack = destination.stream.getAudioTracks()[0] || null;
+            if (audioTrack) {
+                console.log('Audio track captured via Web Audio API');
+            }
+        }
+    } catch (error) {
+        console.warn('Could not capture audio track:', error);
+    }
+
+    // Combine video and audio tracks
+    const tracks = [...canvasStream.getVideoTracks()];
+    if (audioTrack) {
+        tracks.push(audioTrack);
+    }
+    const combinedStream = new MediaStream(tracks);
+
+    const mediaRecorder = new MediaRecorder(combinedStream, {
         mimeType: supportedMimeType,
         videoBitsPerSecond: bitrate
     });
