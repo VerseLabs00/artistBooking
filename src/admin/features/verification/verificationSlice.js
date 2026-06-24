@@ -51,7 +51,11 @@ function normaliseVerification(a) {
     portfolio: {
       // Talent photos uploaded during onboarding (admin-only, not shown publicly)
       images: (a.user?.artist_media || [])
-        .filter(m => m.purpose === 'talent_media')
+        .filter(m => m.purpose === 'talent_media' && m.media_type === 'image')
+        .map(m => m.url),
+      // Talent videos uploaded during onboarding (admin-only, not shown publicly)
+      videos: (a.user?.artist_media || [])
+        .filter(m => m.purpose === 'talent_media' && m.media_type === 'video')
         .map(m => m.url),
     },
     pricing: a.starting_price ? {

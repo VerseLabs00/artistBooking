@@ -276,7 +276,10 @@ export default function ArtistProfile() {
     const displayName = profile?.stage_name || profile?.full_name || "Artist";
 
     return (
-        <div className="min-h-screen bg-[#F4F1F5] pb-20">
+        <div className="min-h-screen bg-[#F4F1F5] pb-20 overflow-x-hidden" style={{ fontFamily: "'Fraunces', serif" }}>
+            <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
+            `}</style>
 
             {/* HERO — overflow-visible so avatar can bleed below */}
             <div className="relative h-[220px] w-full overflow-visible">

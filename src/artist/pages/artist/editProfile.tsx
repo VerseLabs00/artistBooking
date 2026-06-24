@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
-import { 
-    User, FileText, DollarSign, Image, Music, Music2, 
-    Link, Youtube, Facebook, Instagram, Check, AlertCircle, 
-    ArrowLeft, Save, X 
+import {
+    User, FileText, DollarSign, Image, Music, Music2,
+    Link, Youtube, Facebook, Instagram, AlertCircle,
+    ArrowLeft, ArrowRight, Save, X, Plus
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -38,7 +38,8 @@ const defaultForm: ProfileForm = {
     instagram_link: "", spotify_link: "",
 };
 
-const sections = [
+const steps = [
+    { id: "cover", label: "Photos", icon: <Image size={18} /> },
     { id: "basic", label: "Basic Information", icon: <User size={18} /> },
     { id: "overview", label: "Overview & Bio", icon: <FileText size={18} /> },
     { id: "pricing", label: "Pricing", icon: <DollarSign size={18} /> },
@@ -60,13 +61,16 @@ export default function EditProfile() {
     const [fetchLoading, setFetchLoading] = useState(true);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [coverPreview, setCoverPreview] = useState<string | null>(null);
-    const [activeSection, setActiveSection] = useState("basic");
+    const [stepIndex, setStepIndex] = useState(0);
     const [isDirty, setIsDirty] = useState(false);
 
     const avatarRef = useRef<HTMLInputElement>(null);
     const coverRef = useRef<HTMLInputElement>(null);
     const galleryRef = useRef<HTMLInputElement>(null);
-    const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+    const activeSection = steps[stepIndex].id;
+    const isFirstStep = stepIndex === 0;
+    const isLastStep = stepIndex === steps.length - 1;
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -121,10 +125,8 @@ export default function EditProfile() {
         setIsDirty(true);
     };
 
-    const scrollToSection = (id: string) => {
-        setActiveSection(id);
-        sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
-    };
+    const goNext = () => setStepIndex(i => Math.min(i + 1, steps.length - 1));
+    const goBack = () => setStepIndex(i => Math.max(i - 1, 0));
 
     const handleSave = async () => {
         setLoading(true);
@@ -149,7 +151,7 @@ export default function EditProfile() {
 
             toast.success("Profile updated successfully!", { id: saveToast });
             setIsDirty(false);
-            
+
             // Refresh gallery to get real IDs
             const { data } = await api.get("/profile");
             const imgs = (data.media || []).filter((m: any) =>
@@ -157,7 +159,7 @@ export default function EditProfile() {
                 !["avatar", "profile", "cover", "banner", "verification_front", "verification_back", "selfie"].includes(m.purpose)
             );
             setGallery(imgs.map((m: any) => ({ id: m.id, url: m.url })));
-            
+
         } catch (err: any) {
             const errors = err.response?.data?.errors;
             let errMsg = err.response?.data?.message || "Failed to save profile.";
@@ -230,10 +232,10 @@ export default function EditProfile() {
     const deleteGalleryItem = async (item: { id?: number; url: string; isNew?: boolean }) => {
         if (item.id) {
             const delToast = toast.loading("Removing photo...");
-            try { 
-                await api.delete(`/profile/gallery/${item.id}`); 
+            try {
+                await api.delete(`/profile/gallery/${item.id}`);
                 toast.success("Photo removed", { id: delToast });
-            } catch (err: any) { 
+            } catch (err: any) {
                 toast.error(err.response?.data?.message || "Failed to remove photo", { id: delToast });
                 return;
             }
@@ -258,364 +260,375 @@ export default function EditProfile() {
     };
 
     if (fetchLoading) return (
-        <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="min-h-screen flex items-center justify-center bg-[#0B0B0D]">
             <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
-                <p className="text-gray-400 font-medium">Loading your profile...</p>
+                <div className="w-10 h-10 border-[3px] border-[#E0263A] border-t-transparent rounded-full animate-spin" />
+                <p className="text-gray-400 text-sm font-medium tracking-wide">Loading your profile…</p>
             </div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-[#F8F9FA] text-[#1A202C] font-sans">
+        <div className="min-h-screen bg-[#0B0B0D] text-[#F4F1EC] font-sans">
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
                 * { font-family: 'Inter', sans-serif; }
-                .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); }
-                .input-field { 
-                    width: 100%; padding: 12px 16px; border-radius: 12px; border: 1.5px solid #E2E8F0;
-                    transition: all 0.2s; outline: none; background: #fff;
+                .ed-display { font-family: 'Fraunces', serif; }
+                .ed-input {
+                    width: 100%; padding: 14px 16px; border-radius: 14px; border: 1.5px solid #2A2A2E;
+                    transition: all 0.18s ease; outline: none; background: #161618; color: #F4F1EC;
                 }
-                .input-field:focus { border-color: #DB0000; box-shadow: 0 0 0 4px rgba(219,0,0,0.1); }
-                .section-card { background: #fff; border-radius: 24px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01); }
-                @media (min-width: 640px) {
-                    .section-card { padding: 32px; }
+                .ed-input::placeholder { color: #6B6B70; }
+                .ed-input:focus { border-color: #E0263A; box-shadow: 0 0 0 4px rgba(224,38,58,0.16); }
+                .ed-card {
+                    background: #131315; border: 1px solid #232326; border-radius: 28px;
+                    padding: 28px 22px;
                 }
-                @media (min-width: 1024px) {
-                    .section-card { padding: 40px; }
-                }
-                .sidebar-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-                .sidebar-btn:hover { background: #F1F5F9; transform: translateX(4px); }
-                .sidebar-active { background: #fff !important; color: #DB0000 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-                .sticky-save-bar { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 50; width: calc(100% - 32px); max-width: 400px; }
-                @media (min-width: 640px) {
-                    .sticky-save-bar { bottom: 32px; width: auto; min-width: 320px; }
-                }
+                @media (min-width: 640px) { .ed-card { padding: 40px 36px; } }
+                @media (min-width: 1024px) { .ed-card { padding: 52px 56px; } }
+                .ed-progress-dot { transition: all 0.25s ease; }
+                .ed-step-btn { transition: all 0.18s ease; }
+                .ed-step-btn:hover { color: #F4F1EC; }
+                .fade-in { animation: edFadeIn 0.35s ease; }
+                @keyframes edFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
             `}</style>
 
             {/* TOP HEADER */}
-            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-bottom border-[#EDF2F7] px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between gap-3">
+            <header className="sticky top-0 z-50 bg-[#0B0B0D]/90 backdrop-blur-md border-b border-[#1D1D20] px-4 sm:px-8 py-3 sm:py-4 grid grid-cols-3 items-center gap-3">
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                    <button onClick={() => navigate("/account")} className="p-2 hover:bg-gray-100 rounded-full transition-colors shrink-0">
-                        <ArrowLeft size={20} />
+                    <button onClick={() => navigate("/account")} className="p-2 hover:bg-[#1A1A1D] rounded-full transition-colors shrink-0 text-[#F4F1EC]">
+                        <X size={18} />
                     </button>
                     <div className="min-w-0">
-                        <h1 className="text-lg sm:text-xl font-bold tracking-tight truncate">Profile Editor</h1>
-                        <p className="text-xs text-gray-500 font-medium hidden sm:block">Manage your public artist identity</p>
+                        <p className="ed-display text-base sm:text-lg font-semibold tracking-tight truncate">Edit your profile</p>
+                        <p className="text-[11px] text-gray-500 font-medium hidden sm:block">Step {stepIndex + 1} of {steps.length} · {steps[stepIndex].label}</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                    <button 
-                        onClick={() => navigate("/account")}
-                        className="hidden sm:inline-flex px-5 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
-                    >
-                        Exit
-                    </button>
-                    <button 
-                        onClick={handleSave}
-                        disabled={loading || !isDirty}
-                        className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
-                            isDirty 
-                            ? "bg-[#DB0000] text-white shadow-lg shadow-red-200 hover:scale-105 active:scale-95" 
-                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        }`}
-                    >
-                        <Save size={16} />
-                        <span className="hidden sm:inline">{loading ? "Saving..." : "Save All Changes"}</span>
-                        <span className="sm:hidden">{loading ? "..." : "Save"}</span>
-                    </button>
+
+                <div className="hidden sm:flex items-center justify-center gap-2">
+                    {steps.map((s, i) => (
+                        <div
+                            key={s.id}
+                            className={`ed-progress-dot h-1.5 rounded-full ${
+                                i === stepIndex ? "w-7 bg-[#E0263A]" : i < stepIndex ? "w-3 bg-[#E0263A]/40" : "w-3 bg-[#2A2A2E]"
+                            }`}
+                        />
+                    ))}
+                </div>
+
+                <div className="flex justify-end">
+                    <span className="text-[11px] font-bold text-gray-500 shrink-0 sm:hidden">{stepIndex + 1}/{steps.length}</span>
                 </div>
             </header>
 
-            <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 lg:gap-12 p-4 sm:p-6 lg:p-10">
-                
-                {/* LEFT SIDEBAR NAVIGATION */}
-                <aside className="lg:sticky lg:top-32 h-fit">
-                    <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 hide-scrollbar">
-                        <p className="hidden lg:block px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Edit Sections</p>
-                        {sections.map((s) => (
-                            <button
-                                key={s.id}
-                                onClick={() => scrollToSection(s.id)}
-                                className={`sidebar-btn flex-shrink-0 lg:w-full flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-4 rounded-2xl text-sm font-semibold text-gray-500 text-left ${
-                                    activeSection === s.id ? "sidebar-active" : ""
-                                }`}
-                            >
-                                <span className={activeSection === s.id ? "text-red-600" : "text-gray-300"}>{s.icon}</span>
-                                {s.label}
-                            </button>
-                        ))}
-                    </div>
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-32">
 
-                    <div className="hidden lg:block mt-12 p-6 bg-red-50 rounded-3xl border border-red-100">
-                        <p className="text-xs font-bold text-red-600 uppercase mb-2">Live Status</p>
-                        <p className="text-[13px] text-red-800 leading-relaxed font-medium">
-                            Changes saved here appear immediately on your public profile.
-                        </p>
-                    </div>
-                </aside>
-
-                {/* MAIN CONTENT AREA */}
-                <main className="pb-40">
-                    
-                    {/* MEDIA HEADER (Avatar & Cover) */}
-                    <div className="mb-12 relative group">
-                        <div className="h-48 sm:h-64 rounded-[24px] sm:rounded-[32px] overflow-hidden relative">
-                            <img 
-                                src={coverPreview ?? "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=1400"} 
-                                className="w-full h-full object-cover" 
-                                alt="cover"
-                            />
-                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all" />
-                            <button 
-                                onClick={() => coverRef.current?.click()}
-                                className="absolute bottom-6 right-8 bg-white/90 backdrop-blur shadow-xl border-0 rounded-xl px-4 py-2.5 text-xs font-bold flex items-center gap-2 hover:bg-white transition-all"
-                            >
-                                <Image size={14} /> Change Cover
-                            </button>
-                            <input ref={coverRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && handleMediaUpload("cover", e.target.files[0])} />
-                        </div>
-
-                        <div className="absolute -bottom-8 sm:-bottom-10 left-4 sm:left-12 flex items-end gap-4 sm:gap-6">
-                            <div className="relative group/avatar">
-                                <img 
-                                    src={avatarPreview ?? "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200"} 
-                                    className="w-20 h-20 sm:w-32 sm:h-32 rounded-[28px] sm:rounded-[40px] border-[4px] sm:border-[6px] border-[#F8F9FA] object-cover shadow-2xl" 
-                                    alt="avatar"
+                {/* ===== STEP: COVER + AVATAR ===== */}
+                {activeSection === "cover" && (
+                    <div className="fade-in pb-8">
+                        <SlideHeader
+                            icon={<Image size={20} />}
+                            title="Your photos"
+                            subtitle="First impressions matter — set a cover banner and profile photo."
+                        />
+                        <div className="relative">
+                            <div className="h-44 sm:h-60 rounded-[28px] overflow-hidden relative">
+                                <img
+                                    src={coverPreview ?? "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=1400"}
+                                    className="w-full h-full object-cover"
+                                    alt="cover"
                                 />
-                                <button 
-                                    onClick={() => avatarRef.current?.click()}
-                                    className="absolute bottom-1 right-1 bg-red-600 text-white p-2.5 rounded-2xl border-4 border-[#F8F9FA] shadow-lg hover:scale-110 transition-all"
+                                <div className="absolute inset-0 bg-black/30" />
+                                <button
+                                    onClick={() => coverRef.current?.click()}
+                                    className="absolute bottom-5 right-5 bg-[#0B0B0D]/80 backdrop-blur border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold flex items-center gap-2 hover:bg-[#0B0B0D] transition-all"
                                 >
-                                    <Image size={14} />
+                                    <Image size={14} /> Change cover
                                 </button>
-                                <input ref={avatarRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && handleMediaUpload("avatar", e.target.files[0])} />
+                                <input ref={coverRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && handleMediaUpload("cover", e.target.files[0])} />
                             </div>
-                            <div className="pb-8 sm:pb-12 min-w-0">
-                                <h2 className="text-lg sm:text-2xl font-black tracking-tight truncate">{form.stage_name || "New Artist"}</h2>
-                                <p className="text-sm text-gray-500 font-semibold">{form.category} · {form.location}</p>
+
+                            <div className="flex items-end gap-5 px-2 -mt-10 sm:-mt-12">
+                                <div className="relative group/avatar shrink-0">
+                                    <img
+                                        src={avatarPreview ?? "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200"}
+                                        className="w-24 h-24 sm:w-32 sm:h-32 rounded-[28px] border-[5px] border-[#0B0B0D] object-cover shadow-2xl"
+                                        alt="avatar"
+                                    />
+                                    <button
+                                        onClick={() => avatarRef.current?.click()}
+                                        className="absolute -bottom-1 -right-1 bg-[#E0263A] text-white p-2.5 rounded-2xl border-4 border-[#0B0B0D] shadow-lg hover:scale-105 transition-all"
+                                    >
+                                        <Image size={14} />
+                                    </button>
+                                    <input ref={avatarRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && handleMediaUpload("avatar", e.target.files[0])} />
+                                </div>
+                                <div className="pb-2 min-w-0">
+                                    <p className="ed-display text-xl sm:text-2xl font-semibold truncate">{form.stage_name || "Your stage name"}</p>
+                                    <p className="text-sm text-gray-500 font-medium">{form.category}{form.location ? ` · ${form.location}` : ""}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
+                )}
 
-                    {/* SECTIONS */}
-                    <div className="space-y-8 mt-20">
-                        
-                        {/* Basic Info */}
-                        <div ref={el => sectionRefs.current["basic"] = el} className="section-card">
-                            <h3 className="text-lg font-bold mb-8 flex items-center gap-3">
-                                <span className="p-2 bg-blue-50 text-blue-600 rounded-lg"><User size={20} /></span>
-                                Basic Information
-                            </h3>
-                            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                                <Field label="Stage Name">
-                                    <input className="input-field" name="stage_name" value={form.stage_name} onChange={handleChange} placeholder="Alex Jean" />
-                                </Field>
-                                <Field label="Category">
-                                    <select className="input-field cursor-pointer" name="category" value={form.category} onChange={handleChange}>
-                                        <option>Musician</option>
-                                        <option>Singer</option>
-                                        <option>Rapper</option>
-                                        <option>DJ</option>
-                                        <option>Live Band</option>
-                                        <option>Producer</option>
-                                        <option>Dance Group</option>
-                                        <option>Dancer</option>
-                                        <option>MC</option>
-                                        <option>Sound System</option>
-                                        <option>Lighting System</option>
-                                        <option>Photographer</option>
-                                        <option>Videographer</option>
-                                    </select>
-                                </Field>
-                                <Field label="Performance Location">
-                                    <input className="input-field" name="location" value={form.location} onChange={handleChange} placeholder="Colombo, Sri Lanka" />
-                                </Field>
-                                <Field label="Contact Phone">
-                                    <input className="input-field" name="phone_number" value={form.phone_number} onChange={handleChange} placeholder="+94 777 123 456" />
-                                </Field>
-                                <Field label="Business Email" className="col-span-2">
-                                    <input className="input-field" name="email" value={form.email} onChange={handleChange} placeholder="alex@email.com" />
-                                </Field>
-                                <Field label="Short Catchphrase (Tagline)" className="col-span-2">
-                                    <input className="input-field font-medium" name="short_bio" value={form.short_bio} onChange={handleChange} placeholder="Bringing life to your events with premium sound..." />
-                                </Field>
-                            </div>
+                {/* ===== STEP: BASIC INFO ===== */}
+                {activeSection === "basic" && (
+                    <div className="fade-in ed-card">
+                        <SlideHeader icon={<User size={20} />} title="Basic information" subtitle="The essentials customers see first." />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <Field label="Stage name">
+                                <input className="ed-input" name="stage_name" value={form.stage_name} onChange={handleChange} placeholder="Alex Jean" />
+                            </Field>
+                            <Field label="Category">
+                                <select className="ed-input cursor-pointer" name="category" value={form.category} onChange={handleChange}>
+                                    <option>Musician</option>
+                                    <option>Singer</option>
+                                    <option>Rapper</option>
+                                    <option>DJ</option>
+                                    <option>Live Band</option>
+                                    <option>Producer</option>
+                                    <option>Dance Group</option>
+                                    <option>Dancer</option>
+                                    <option>MC</option>
+                                    <option>Sound System</option>
+                                    <option>Lighting System</option>
+                                    <option>Photographer</option>
+                                    <option>Videographer</option>
+                                </select>
+                            </Field>
+                            <Field label="Performance location">
+                                <input className="ed-input" name="location" value={form.location} onChange={handleChange} placeholder="Colombo, Sri Lanka" />
+                            </Field>
+                            <Field label="Contact phone">
+                                <input className="ed-input" name="phone_number" value={form.phone_number} onChange={handleChange} placeholder="+94 777 123 456" />
+                            </Field>
+                            <Field label="Business email" className="sm:col-span-2">
+                                <input className="ed-input" name="email" value={form.email} onChange={handleChange} placeholder="alex@email.com" />
+                            </Field>
+                            <Field label="Tagline" className="sm:col-span-2">
+                                <input className="ed-input" name="short_bio" value={form.short_bio} onChange={handleChange} placeholder="Bringing life to your events with premium sound..." />
+                            </Field>
                         </div>
+                    </div>
+                )}
 
-                        {/* Overview & Bio */}
-                        <div ref={el => sectionRefs.current["overview"] = el} className="section-card">
-                            <h3 className="text-lg font-bold mb-8 flex items-center gap-3">
-                                <span className="p-2 bg-purple-50 text-purple-600 rounded-lg"><FileText size={20} /></span>
-                                Biography & Experience
-                            </h3>
-                            <div className="space-y-6">
-                                <Field label="The Introduction (Part 1)">
-                                    <textarea className="input-field min-h-[140px]" name="bio_1" value={form.bio_1} onChange={handleChange} placeholder="Describe your journey and what makes you unique..." />
-                                </Field>
-                                <Field label="The Details (Part 2)">
-                                    <textarea className="input-field min-h-[140px]" name="bio_2" value={form.bio_2} onChange={handleChange} placeholder="Talk about your achievements, famous gigs, and musical style..." />
-                                </Field>
-                                <Field label="Extra Information">
-                                    <textarea className="input-field min-h-[100px]" name="paragraph" value={form.paragraph} onChange={handleChange} placeholder="Equipment list, special requirements, or anything else..." />
-                                </Field>
-                            </div>
+                {/* ===== STEP: OVERVIEW & BIO ===== */}
+                {activeSection === "overview" && (
+                    <div className="fade-in ed-card">
+                        <SlideHeader icon={<FileText size={20} />} title="Biography & experience" subtitle="Tell your story — this builds trust with new clients." />
+                        <div className="space-y-5">
+                            <Field label="The introduction">
+                                <textarea className="ed-input min-h-[130px]" name="bio_1" value={form.bio_1} onChange={handleChange} placeholder="Describe your journey and what makes you unique..." />
+                            </Field>
+                            <Field label="The details">
+                                <textarea className="ed-input min-h-[130px]" name="bio_2" value={form.bio_2} onChange={handleChange} placeholder="Talk about your achievements, famous gigs, and musical style..." />
+                            </Field>
+                            <Field label="Extra information">
+                                <textarea className="ed-input min-h-[100px]" name="paragraph" value={form.paragraph} onChange={handleChange} placeholder="Equipment list, special requirements, or anything else..." />
+                            </Field>
                         </div>
+                    </div>
+                )}
 
-                        {/* Pricing */}
-                        <div ref={el => sectionRefs.current["pricing"] = el} className="section-card">
-                            <h3 className="text-lg font-bold mb-8 flex items-center gap-3">
-                                <span className="p-2 bg-green-50 text-green-600 rounded-lg"><DollarSign size={20} /></span>
-                                Pricing Structure
-                            </h3>
-                            <div className="grid grid-cols-2 gap-8">
-                                <Field label="Starting Price (LKR)">
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">Rs.</span>
-                                        <input className="input-field pl-12" name="starting_price" value={form.starting_price} onChange={handleChange} placeholder="35,000" />
-                                    </div>
-                                </Field>
-                                <Field label="Maximum Price (LKR)">
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">Rs.</span>
-                                        <input className="input-field pl-12" name="max_price" value={form.max_price} onChange={handleChange} placeholder="75,000" />
-                                    </div>
-                                </Field>
-                            </div>
-                            <div className="mt-8 p-6 bg-gray-50 rounded-2xl flex gap-4">
-                                <div className="text-xl">💡</div>
-                                <p className="text-sm text-gray-500 leading-relaxed">
-                                    Your pricing will be displayed as a range (e.g. <b>Rs. 35,000 - 75,000</b>). This helps customers understand your value before reaching out.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Gallery */}
-                        <div ref={el => sectionRefs.current["gallery"] = el} className="section-card">
-                            <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-lg font-bold flex items-center gap-3">
-                                    <span className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Image size={20} /></span>
-                                    Performance Gallery
-                                </h3>
-                                <button 
-                                    onClick={() => galleryRef.current?.click()}
-                                    className="px-4 py-2 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-all"
-                                >
-                                    Upload Photos
-                                </button>
-                                <input ref={galleryRef} type="file" multiple className="hidden" onChange={handleGalleryUpload} />
-                            </div>
-
-                            {gallery.length > 0 ? (
-                                <div className="grid grid-cols-3 gap-6">
-                                    {gallery.map((img, i) => (
-                                        <div key={i} className="group relative aspect-square rounded-[24px] overflow-hidden shadow-sm">
-                                            <img src={img.url} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="gallery" />
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <button 
-                                                    onClick={() => deleteGalleryItem(img)}
-                                                    className="bg-white text-red-600 p-3 rounded-2xl hover:bg-red-50 transition-all"
-                                                >
-                                                    <X size={18} />
-                                                </button>
-                                            </div>
-                                            {img.isNew && (
-                                                <div className="absolute top-4 left-4 bg-green-500 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">
-                                                    New
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                {/* ===== STEP: PRICING ===== */}
+                {activeSection === "pricing" && (
+                    <div className="fade-in ed-card">
+                        <SlideHeader icon={<DollarSign size={20} />} title="Pricing structure" subtitle="Give clients a clear sense of your rates." />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <Field label="Starting price (LKR)">
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-500 text-sm"></span>
+                                    <input className="ed-input pl-12" name="starting_price" value={form.starting_price} onChange={handleChange} placeholder="35,000" />
                                 </div>
-                            ) : (
-                                <div className="py-12 border-2 border-dashed border-gray-100 rounded-[32px] text-center">
-                                    <p className="text-sm text-gray-400 font-medium">No photos yet. Showcase your past events here.</p>
+                            </Field>
+                            <Field label="Maximum price (LKR)">
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-500 text-sm"></span>
+                                    <input className="ed-input pl-12" name="max_price" value={form.max_price} onChange={handleChange} placeholder="75,000" />
                                 </div>
-                            )}
+                            </Field>
+                        </div>
+                        <div className="mt-6 p-5 bg-[#1A1A1D] rounded-2xl flex gap-3 items-start border border-[#232326]">
+                            <AlertCircle size={16} className="text-[#E0263A] mt-0.5 shrink-0" />
+                            <p className="text-sm text-gray-400 leading-relaxed">
+                                Your pricing shows as a range, e.g. <span className="text-gray-200 font-semibold">Rs. {form.starting_price || "35,000"} – {form.max_price || "75,000"}</span>, so customers know your value before reaching out.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* ===== STEP: GALLERY ===== */}
+                {activeSection === "gallery" && (
+                    <div className="fade-in ed-card">
+                        <div className="flex items-center justify-between mb-2">
+                            <SlideHeader icon={<Image size={20} />} title="Performance gallery" subtitle="Showcase your best moments on stage." noMargin />
+                            <button
+                                onClick={() => galleryRef.current?.click()}
+                                className="px-4 py-2.5 bg-[#F4F1EC] text-[#0B0B0D] rounded-xl text-xs font-bold hover:bg-white transition-all shrink-0"
+                            >
+                                Upload
+                            </button>
+                            <input ref={galleryRef} type="file" multiple className="hidden" onChange={handleGalleryUpload} />
                         </div>
 
-                        {/* Audio & Video */}
-                        <div ref={el => sectionRefs.current["media"] = el} className="section-card">
-                            <h3 className="text-lg font-bold mb-8 flex items-center gap-3">
-                                <span className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Music size={20} /></span>
-                                Audio & Video Samples
-                            </h3>
-                            <div className="space-y-4">
-                                {mediaEntries.map((entry, i) => (
-                                    <div key={i} className="p-6 bg-gray-50 rounded-[24px] border border-gray-100 relative group">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Entry #{i + 1}</p>
-                                            <button 
-                                                onClick={() => removeMediaEntry(i)}
-                                                className="text-gray-300 hover:text-red-500 transition-colors"
+                        {gallery.length > 0 ? (
+                            <div className="grid grid-cols-3 gap-4 mt-6">
+                                {gallery.map((img, i) => (
+                                    <div key={i} className="group relative aspect-square rounded-[20px] overflow-hidden border border-[#232326]">
+                                        <img src={img.url} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="gallery" />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <button
+                                                onClick={() => deleteGalleryItem(img)}
+                                                className="bg-[#F4F1EC] text-[#E0263A] p-2.5 rounded-xl hover:bg-white transition-all"
                                             >
                                                 <X size={16} />
                                             </button>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-6">
-                                            <Field label="Sample Title">
-                                                <input className="input-field" value={entry.title} onChange={e => updateMediaEntry(i, "title", e.target.value)} placeholder="e.g. Live at Coke Red" />
-                                            </Field>
-                                            <Field label="Link (YouTube / Spotify)">
-                                                <input className="input-field" value={entry.link} onChange={e => updateMediaEntry(i, "link", e.target.value)} placeholder="https://..." />
-                                            </Field>
-                                        </div>
+                                        {img.isNew && (
+                                            <div className="absolute top-3 left-3 bg-[#2ECC71] text-[#0B0B0D] text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
+                                                New
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
-                                <button 
-                                    onClick={addMediaEntry}
-                                    className="w-full py-4 border-2 border-dashed border-gray-200 rounded-[24px] text-gray-400 text-sm font-bold hover:border-red-200 hover:text-red-600 transition-all"
-                                >
-                                    + Add More Samples
-                                </button>
                             </div>
-                        </div>
-
-                        {/* Social Links */}
-                        <div ref={el => sectionRefs.current["social"] = el} className="section-card">
-                            <h3 className="text-lg font-bold mb-8 flex items-center gap-3">
-                                <span className="p-2 bg-red-50 text-red-600 rounded-lg"><Link size={20} /></span>
-                                Social & Web Presence
-                            </h3>
-                            <div className="grid grid-cols-2 gap-8">
-                                <div className="flex items-center gap-5">
-                                    <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center text-red-600"><Youtube size={24} /></div>
-                                    <Field label="YouTube" className="flex-1">
-                                        <input className="input-field" name="youtube_link" value={form.youtube_link} onChange={handleChange} placeholder="@handle" />
-                                    </Field>
-                                </div>
-                                <div className="flex items-center gap-5">
-                                    <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600"><Facebook size={24} /></div>
-                                    <Field label="Facebook" className="flex-1">
-                                        <input className="input-field" name="facebook_link" value={form.facebook_link} onChange={handleChange} placeholder="fb.com/..." />
-                                    </Field>
-                                </div>
-                                <div className="flex items-center gap-5">
-                                    <div className="w-12 h-12 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-600"><Instagram size={24} /></div>
-                                    <Field label="Instagram" className="flex-1">
-                                        <input className="input-field" name="instagram_link" value={form.instagram_link} onChange={handleChange} placeholder="@username" />
-                                    </Field>
-                                </div>
-                                <div className="flex items-center gap-5">
-                                    <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center text-green-600"><Music2 size={24} /></div>
-                                    <Field label="Spotify" className="flex-1">
-                                        <input className="input-field" name="spotify_link" value={form.spotify_link} onChange={handleChange} placeholder="artist url" />
-                                    </Field>
-                                </div>
+                        ) : (
+                            <div className="mt-6 py-14 border-2 border-dashed border-[#232326] rounded-[24px] text-center">
+                                <p className="text-sm text-gray-500 font-medium">No photos yet. Showcase your past events here.</p>
                             </div>
-                        </div>
-
+                        )}
                     </div>
-                </main>
+                )}
+
+                {/* ===== STEP: AUDIO & VIDEO ===== */}
+                {activeSection === "media" && (
+                    <div className="fade-in ed-card">
+                        <SlideHeader icon={<Music size={20} />} title="Audio & video samples" subtitle="Share links so clients can hear or see you perform." />
+                        <div className="space-y-3">
+                            {mediaEntries.map((entry, i) => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <input
+                                        className="ed-input"
+                                        value={entry.link}
+                                        onChange={e => updateMediaEntry(i, "link", e.target.value)}
+                                        placeholder="https://youtube.com/... or spotify link"
+                                    />
+                                    {mediaEntries.length > 1 && (
+                                        <button
+                                            onClick={() => removeMediaEntry(i)}
+                                            className="text-gray-500 hover:text-[#E0263A] transition-colors shrink-0 p-2"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+
+                            {mediaEntries[mediaEntries.length - 1]?.link.trim() && (
+                                <button
+                                    onClick={addMediaEntry}
+                                    className="w-full py-3.5 border-2 border-dashed border-[#2A2A2E] rounded-[18px] text-gray-500 text-sm font-bold hover:border-[#E0263A]/40 hover:text-[#E0263A] transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Plus size={15} /> Add another link
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ===== STEP: SOCIAL ===== */}
+                {activeSection === "social" && (
+                    <div className="fade-in ed-card">
+                        <SlideHeader icon={<Link size={20} />} title="Social & web presence" subtitle="Help fans and clients find you elsewhere." />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div className="flex items-center gap-4">
+                                <div className="w-11 h-11 bg-[#1A1A1D] border border-[#232326] rounded-xl flex items-center justify-center text-[#E0263A] shrink-0"><Youtube size={20} /></div>
+                                <Field label="YouTube" className="flex-1">
+                                    <input className="ed-input" name="youtube_link" value={form.youtube_link} onChange={handleChange} placeholder="@handle" />
+                                </Field>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-11 h-11 bg-[#1A1A1D] border border-[#232326] rounded-xl flex items-center justify-center text-[#3B82F6] shrink-0"><Facebook size={20} /></div>
+                                <Field label="Facebook" className="flex-1">
+                                    <input className="ed-input" name="facebook_link" value={form.facebook_link} onChange={handleChange} placeholder="fb.com/..." />
+                                </Field>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-11 h-11 bg-[#1A1A1D] border border-[#232326] rounded-xl flex items-center justify-center text-[#EC4899] shrink-0"><Instagram size={20} /></div>
+                                <Field label="Instagram" className="flex-1">
+                                    <input className="ed-input" name="instagram_link" value={form.instagram_link} onChange={handleChange} placeholder="@username" />
+                                </Field>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-11 h-11 bg-[#1A1A1D] border border-[#232326] rounded-xl flex items-center justify-center text-[#2ECC71] shrink-0"><Music2 size={20} /></div>
+                                <Field label="Spotify" className="flex-1">
+                                    <input className="ed-input" name="spotify_link" value={form.spotify_link} onChange={handleChange} placeholder="artist url" />
+                                </Field>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* ===== BOTTOM NAV BAR ===== */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0B0B0D]/95 backdrop-blur-md border-t border-[#1D1D20]">
+                <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between gap-3">
+                    <button
+                        onClick={goBack}
+                        disabled={isFirstStep}
+                        className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${
+                            isFirstStep ? "text-gray-600 cursor-not-allowed" : "text-gray-300 hover:bg-[#1A1A1D]"
+                        }`}
+                    >
+                        <ArrowLeft size={16} /> <span className="hidden sm:inline">Back</span>
+                    </button>
+
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        {isLastStep ? (
+                            <button
+                                onClick={handleSave}
+                                disabled={loading || !isDirty}
+                                className={`px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${
+                                    isDirty
+                                        ? "bg-[#E0263A] text-white shadow-lg shadow-[#E0263A]/20 hover:brightness-110 active:scale-95"
+                                        : "bg-[#1A1A1D] text-gray-600 cursor-not-allowed"
+                                }`}
+                            >
+                                <Save size={16} />
+                                {loading ? "Saving..." : "Save all changes"}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={goNext}
+                                className="px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl text-sm font-bold bg-[#F4F1EC] text-[#0B0B0D] hover:bg-white transition-all flex items-center gap-2 active:scale-95"
+                            >
+                                Next <ArrowRight size={16} />
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );
 }
 
-function Field({ label, children, className = "", style }: { label: string; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+function SlideHeader({ icon, title, subtitle, noMargin = false }: { icon: React.ReactNode; title: string; subtitle: string; noMargin?: boolean }) {
     return (
-        <div className={className} style={style}>
-            <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">
+        <div className={noMargin ? "mb-0" : "mb-8"}>
+            <div className="flex items-center gap-3 mb-2">
+                <span className="p-2 bg-[#1A1A1D] border border-[#232326] text-[#E0263A] rounded-lg">{icon}</span>
+                <h3 className="ed-display text-lg sm:text-xl font-semibold">{title}</h3>
+            </div>
+            <p className="text-sm text-gray-500">{subtitle}</p>
+        </div>
+    );
+}
+
+function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+    return (
+        <div className={className}>
+            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
                 {label}
             </label>
             {children}

@@ -1,80 +1,77 @@
 import React, { useState, useRef, useCallback } from "react";
-import { Upload, X, CheckCircle2, AlertCircle, ImagePlus } from "lucide-react";
+import { X, CheckCircle2, AlertCircle, Video } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import stage from "../../../../public/bg-login.png";
 import api from "../../api/axios";
 
-const MAX_FILE_MB    = 10;
-const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
-const MAX_PHOTOS     = 6;
-const MIN_PHOTOS     = 1;
-const ALLOWED_TYPES  = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+const MAX_VIDEO_MB    = 100;
+const MAX_VIDEO_BYTES = MAX_VIDEO_MB * 1024 * 1024;
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/x-msvideo", "video/x-matroska", "video/webm", "video/x-flv", "video/x-ms-wmv", "video/mp4v-es", "video/3gpp"];
 
-interface PhotoEntry {
+interface VideoEntry {
     file: File;
     preview: string;
 }
+
+const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
 
 const Talent: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const resuming = (location.state as any)?.resuming === true;
 
-    const [photos,   setPhotos]   = useState<PhotoEntry[]>([]);
+    const [video,    setVideo]    = useState<VideoEntry | null>(null);
     const [loading,  setLoading]  = useState(false);
     const [uploadPct, setUploadPct] = useState(0);
     const [error,    setError]    = useState("");
-    const fileRef = useRef<HTMLInputElement>(null);
+    const videoRef = useRef<HTMLInputElement>(null);
 
-    const handleFilesSelected = useCallback((files: FileList | null) => {
-        if (!files) return;
+    const handleVideoSelected = useCallback((files: FileList | null) => {
+        if (!files || files.length === 0) return;
+        if (files.length > 1) {
+            setError("Please upload only one video.");
+            return;
+        }
         setError("");
 
-        const incoming = Array.from(files);
-        const remaining = MAX_PHOTOS - photos.length;
-
-        if (incoming.length > remaining) {
-            setError(`You can upload a maximum of ${MAX_PHOTOS} photos. ${photos.length} already added.`);
+        const file = files[0];
+        if (!ALLOWED_VIDEO_TYPES.some(type => type === file.type || file.type.startsWith("video/"))) {
+            setError(`"${file.name}" is not a supported video format.`);
+            return;
+        }
+        if (file.size > MAX_VIDEO_BYTES) {
+            setError(`"${file.name}" exceeds ${MAX_VIDEO_MB} MB limit for videos (${formatBytes(file.size)}). Please use a smaller video.`);
             return;
         }
 
-        const valid: PhotoEntry[] = [];
-        for (const file of incoming) {
-            if (!ALLOWED_TYPES.includes(file.type)) {
-                setError(`"${file.name}" is not supported. Use JPG, PNG, or WebP.`);
-                return;
-            }
-            if (file.size > MAX_FILE_BYTES) {
-                setError(`"${file.name}" exceeds ${MAX_FILE_MB} MB. Please use a smaller image.`);
-                return;
-            }
-            valid.push({ file, preview: URL.createObjectURL(file) });
+        setVideo({ file, preview: URL.createObjectURL(file) });
+    }, []);
+
+    const removeVideo = () => {
+        if (video) {
+            URL.revokeObjectURL(video.preview);
         }
-
-        setPhotos(prev => [...prev, ...valid]);
-    }, [photos.length]);
-
-    const removePhoto = (index: number) => {
-        setPhotos(prev => {
-            URL.revokeObjectURL(prev[index].preview);
-            return prev.filter((_, i) => i !== index);
-        });
+        setVideo(null);
         setError("");
     };
 
     const handleContinue = async () => {
         setError("");
-        if (photos.length < MIN_PHOTOS) {
-            setError(`Please upload at least ${MIN_PHOTOS} photo of your work to continue.`);
-            return;
-        }
 
         setLoading(true);
         setUploadPct(0);
 
         try {
             const formData = new FormData();
-            photos.forEach(p => formData.append("photos[]", p.file));
+            if (video) {
+                formData.append("video", video.file);
+            }
 
             await api.post("/onboarding/talent", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
@@ -115,17 +112,16 @@ const Talent: React.FC = () => {
                         <div className="absolute inset-0 bg-white" />
                         <div className="relative z-10">
                             <h1 className="text-4xl lg:text-5xl font-semibold leading-tight">
-                                Show us<br />your work
+                                Show us<br />your talent
                             </h1>
                             <p className="mt-6 max-w-md leading-relaxed text-gray-600">
-                                Upload photos from your concerts, gigs, events or studio sessions.
-                                Our team reviews these to verify your talent before approving your profile.
+                                Upload a short video showcasing your performance. Our team reviews this to verify your talent before approving your profile.
                             </p>
                             <div className="mt-8 space-y-2">
                                 {[
-                                    ["Photos",   `${MIN_PHOTOS}–${MAX_PHOTOS} images required`],
-                                    ["Formats",  "JPG, PNG, WebP"],
-                                    ["Max size", `${MAX_FILE_MB} MB per photo`],
+                                    ["Video",    "Required talent video"],
+                                    ["Formats",  "MP4, MOV, AVI, MKV, WebM"],
+                                    ["Max size", `${MAX_VIDEO_MB} MB`],
                                 ].map(([label, value]) => (
                                     <div key={label} className="flex items-center gap-2 text-sm text-gray-600">
                                         <span className="font-semibold text-gray-800 w-20 shrink-0">{label}</span>
@@ -152,7 +148,7 @@ const Talent: React.FC = () => {
                     <div className="p-4 sm:p-8 lg:p-16 h-full overflow-y-auto scroll-smooth pb-10 sm:pb-12">
                         {/* Step indicator */}
                         <div className="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm mb-6 sm:mb-8 mt-6 md:mt-0 flex-wrap">
-                            {["Basic Info", "Verification", "Talent Show Case"].map(label => (
+                            {["Basic Info", "Verification", "Talent Video"].map(label => (
                                 <div key={label} className="flex items-center gap-2 text-green-600 font-medium">
                                     <div className="w-5 h-5 rounded-full border border-green-600 flex items-center justify-center text-xs">✓</div>
                                     {label}
@@ -161,11 +157,10 @@ const Talent: React.FC = () => {
                         </div>
 
                         <h2 className="text-lg sm:text-xl font-semibold mb-1">
-                            Performance Photos <span className="text-red-500">*</span>
+                            Talent Video <span className="text-red-500">*</span>
                         </h2>
                         <p className="text-gray-500 text-xs mb-6">
-                            Upload {MIN_PHOTOS}–{MAX_PHOTOS} photos from your concerts, gigs or events.
-                            These are reviewed by our team and are <span className="font-medium text-gray-700">not shown publicly</span>.
+                            Upload a short video showcasing your talent. This is reviewed by our team and is <span className="font-medium text-gray-700">not shown publicly</span>.
                         </p>
 
                         {/* Resume banner */}
@@ -175,7 +170,7 @@ const Talent: React.FC = () => {
                                 <div>
                                     <p className="text-sm font-semibold text-amber-800">One last step!</p>
                                     <p className="text-xs text-amber-700 mt-0.5">
-                                        Upload your performance photos to complete registration and submit for approval.
+                                        Upload your talent video to complete registration and submit for approval.
                                     </p>
                                 </div>
                             </div>
@@ -189,56 +184,54 @@ const Talent: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Photo grid */}
-                        <div className="grid grid-cols-3 gap-3 mb-4">
-                            {photos.map((p, i) => (
-                                <div key={i} className="relative aspect-square rounded-xl overflow-hidden group">
-                                    <img src={p.preview} className="w-full h-full object-cover" alt="" />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
+                        {!video ? (
+                            <div
+                                onClick={() => videoRef.current?.click()}
+                                className="aspect-video rounded-xl border-2 border-dashed border-gray-300 hover:border-red-500 flex flex-col items-center justify-center cursor-pointer transition group mb-6"
+                            >
+                                <Video size={32} className="text-gray-400 group-hover:text-red-500 transition mb-2" />
+                                <p className="text-xs text-gray-400 group-hover:text-red-500 transition text-center leading-tight px-2">
+                                    Upload a talent video (max {MAX_VIDEO_MB} MB)
+                                </p>
+                                <p className="text-[10px] text-gray-300 mt-1">MP4, MOV, AVI, MKV, WebM supported</p>
+                            </div>
+                        ) : (
+                            <div className="mb-6">
+                                <div className="relative rounded-xl overflow-hidden bg-black group">
+                                    <video
+                                        src={video.preview}
+                                        controls
+                                        className="w-full max-h-[300px] object-contain"
+                                    />
                                     <button
-                                        onClick={() => removePhoto(i)}
-                                        className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                                        onClick={removeVideo}
+                                        className="absolute top-2 right-2 w-8 h-8 bg-black/60 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                                     >
-                                        <X size={12} className="text-white" />
+                                        <X size={14} className="text-white" />
                                     </button>
-                                    <div className="absolute bottom-1.5 right-1.5">
+                                    <div className="absolute bottom-2 right-2">
                                         <CheckCircle2 size={16} className="text-green-400 drop-shadow" />
                                     </div>
                                 </div>
-                            ))}
-
-                            {/* Add more slot */}
-                            {photos.length < MAX_PHOTOS && (
-                                <div
-                                    onClick={() => fileRef.current?.click()}
-                                    className="aspect-square rounded-xl border-2 border-dashed border-gray-300 hover:border-red-500 flex flex-col items-center justify-center cursor-pointer transition group"
-                                >
-                                    <ImagePlus size={22} className="text-gray-400 group-hover:text-red-500 transition mb-1" />
-                                    <p className="text-[10px] text-gray-400 group-hover:text-red-500 transition text-center leading-tight px-1">
-                                        {photos.length === 0 ? "Add photos" : "Add more"}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        <p className="text-xs text-gray-400 mb-6">
-                            {photos.length}/{MAX_PHOTOS} photos added
-                        </p>
+                                <p className="text-[10px] text-gray-400 mt-1.5 ml-1">
+                                    {video.file.name} · {formatBytes(video.file.size)}
+                                </p>
+                            </div>
+                        )}
 
                         <input
-                            ref={fileRef}
+                            ref={videoRef}
                             type="file"
-                            accept=".jpg,.jpeg,.png,.webp,image/*"
-                            multiple
+                            accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm,video/x-flv,video/x-ms-wmv,video/*"
                             className="hidden"
-                            onChange={e => handleFilesSelected(e.target.files)}
+                            onChange={e => handleVideoSelected(e.target.files)}
                         />
 
                         {/* Upload progress */}
                         {loading && (
                             <div className="mb-4">
                                 <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                    <span>Uploading photos…</span>
+                                    <span>Uploading…</span>
                                     <span>{uploadPct}%</span>
                                 </div>
                                 <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -254,11 +247,11 @@ const Talent: React.FC = () => {
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                             <div>
                                 <p className="text-sm font-medium">Step 3 of 3</p>
-                                <p className="text-xs text-gray-500">Upload your performance photos to complete registration</p>
+                                <p className="text-xs text-gray-500">Upload your talent video to complete registration</p>
                             </div>
                             <button
                                 onClick={handleContinue}
-                                disabled={loading || photos.length < MIN_PHOTOS}
+                                disabled={loading || !video}
                                 className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-full font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                                 {loading ? "Uploading…" : "Continue →"}
