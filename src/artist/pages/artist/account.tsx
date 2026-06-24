@@ -487,21 +487,21 @@ export default function ArtistProfile() {
                         </div>
 
                         {/* GALLERY — images rounded-xl */}
-                        {galleryImages.length > 0 && (
-                            <>
-                                <h3 className="text-[24px] font-bold mt-10 mb-5">Gallery</h3>
-                                <div className="grid grid-cols-3 gap-3">
-                                    {galleryImages.slice(0, 3).map((img) => (
-                                        <img
-                                            key={img.id}
-                                            src={img.url}
-                                            alt="gallery"
-                                            className="w-full h-[180px] object-cover rounded-xl"
-                                        />
-                                    ))}
-                                </div>
-                            </>
-                        )}
+{galleryImages.length > 0 && (
+                             <>
+                                 <h3 className="text-[24px] font-bold mt-10 mb-5">Gallery</h3>
+                                 <div className="grid grid-cols-3 gap-3">
+                                     {galleryImages.map((img) => (
+                                         <img
+                                             key={img.id}
+                                             src={img.url}
+                                             alt="gallery"
+                                             className="w-full h-[180px] object-cover rounded-xl"
+                                         />
+                                     ))}
+                                 </div>
+                             </>
+                         )}
 
                         {/* AUDIO & VIDEO */}
                         {videoLinks.length > 0 && (

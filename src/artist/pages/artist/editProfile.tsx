@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { compressImage } from "../../utils/compressImage";
 import {
     User, FileText, DollarSign, Image, Music, Music2,
     Link, Youtube, Facebook, Instagram, AlertCircle,
@@ -120,8 +121,17 @@ export default function EditProfile() {
         fetchProfile();
     }, []);
 
+    const formatPriceInput = (value: string) => {
+        return value.replace(/[^0-9]/g, "");
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        if (name === "starting_price" || name === "max_price") {
+            setForm(prev => ({ ...prev, [name]: formatPriceInput(value) }));
+        } else {
+            setForm(prev => ({ ...prev, [name]: value }));
+        }
         setIsDirty(true);
     };
 
@@ -191,10 +201,12 @@ export default function EditProfile() {
         if (type === "cover") setCoverPreview(previewUrl);
 
         const uploadToast = toast.loading(`Uploading ${type}...`);
-        const fd = new FormData();
-        fd.append("type", type);
-        fd.append("file", file);
         try {
+            // Compress image to handle mobile formats (HEIC/HEIF) and reduce file size
+            const processedFile = await compressImage(file);
+            const fd = new FormData();
+            fd.append("type", type);
+            fd.append("file", processedFile);
             await api.post("/profile/media", fd, { headers: { "Content-Type": "multipart/form-data" } });
             toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} updated!`, { id: uploadToast });
         } catch (err: any) {
@@ -207,10 +219,18 @@ export default function EditProfile() {
         }
     };
 
-    const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
+        const existingCount = gallery.length;
+        const remainingSlots = 3 - existingCount;
+        const filesToProcess = files.slice(0, remainingSlots);
+
+        if (files.length > remainingSlots) {
+            toast.error(`You can only upload up to 3 images. ${files.length - remainingSlots} file(s) were skipped.`);
+        }
+        
         const validFiles: { url: string; isNew: boolean; file: File }[] = [];
-        for (const file of files) {
+        for (const file of filesToProcess) {
             if (file.size > 50 * 1024 * 1024) {
                 toast.error(`File "${file.name}" exceeds the 50MB limit and was skipped.`);
                 continue;
@@ -221,7 +241,9 @@ export default function EditProfile() {
                 toast.error(`File "${file.name}" has an unsupported format and was skipped. Allowed formats: JPG, PNG, GIF, WebP, MP4, MOV, AVI`);
                 continue;
             }
-            validFiles.push({ url: URL.createObjectURL(file), isNew: true, file });
+            // Compress images to handle mobile formats (HEIC/HEIF) and reduce file size
+            const processedFile = file.type.startsWith('image/') ? await compressImage(file) : file;
+            validFiles.push({ url: URL.createObjectURL(processedFile), isNew: true, file: processedFile });
         }
         if (validFiles.length > 0) {
             setGallery(prev => [...prev, ...validFiles]);
@@ -465,10 +487,18 @@ export default function EditProfile() {
                             <SlideHeader icon={<Image size={20} />} title="Performance gallery" subtitle="Showcase your best moments on stage." noMargin />
                             <button
                                 onClick={() => galleryRef.current?.click()}
-                                className="px-4 py-2.5 bg-[#F4F1EC] text-[#0B0B0D] rounded-xl text-xs font-bold hover:bg-white transition-all shrink-0"
+                                disabled={gallery.length >= 3}
+                                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                                    gallery.length >= 3
+                                        ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                                        : "bg-[#F4F1EC] text-[#0B0B0D] hover:bg-white"
+                                }`}
                             >
                                 Upload
                             </button>
+                            <p className="text-xs text-gray-500 mt-2">
+                                {gallery.length}/3 images uploaded
+                            </p>
                             <input ref={galleryRef} type="file" multiple className="hidden" onChange={handleGalleryUpload} />
                         </div>
 
