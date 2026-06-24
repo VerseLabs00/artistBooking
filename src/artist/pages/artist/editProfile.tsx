@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { compressImage } from "../../utils/compressImage";
 import {
     User, FileText, DollarSign, Image, Music, Music2,
     Link, Youtube, Facebook, Instagram, AlertCircle,
@@ -120,8 +121,17 @@ export default function EditProfile() {
         fetchProfile();
     }, []);
 
+    const formatPriceInput = (value: string) => {
+        return value.replace(/[^0-9]/g, "");
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        if (name === "starting_price" || name === "max_price") {
+            setForm(prev => ({ ...prev, [name]: formatPriceInput(value) }));
+        } else {
+            setForm(prev => ({ ...prev, [name]: value }));
+        }
         setIsDirty(true);
     };
 
@@ -191,10 +201,12 @@ export default function EditProfile() {
         if (type === "cover") setCoverPreview(previewUrl);
 
         const uploadToast = toast.loading(`Uploading ${type}...`);
-        const fd = new FormData();
-        fd.append("type", type);
-        fd.append("file", file);
         try {
+            // Compress image to handle mobile formats (HEIC/HEIF) and reduce file size
+            const processedFile = await compressImage(file);
+            const fd = new FormData();
+            fd.append("type", type);
+            fd.append("file", processedFile);
             await api.post("/profile/media", fd, { headers: { "Content-Type": "multipart/form-data" } });
             toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} updated!`, { id: uploadToast });
         } catch (err: any) {
@@ -207,7 +219,7 @@ export default function EditProfile() {
         }
     };
 
-    const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         const validFiles: { url: string; isNew: boolean; file: File }[] = [];
         for (const file of files) {
@@ -221,7 +233,9 @@ export default function EditProfile() {
                 toast.error(`File "${file.name}" has an unsupported format and was skipped. Allowed formats: JPG, PNG, GIF, WebP, MP4, MOV, AVI`);
                 continue;
             }
-            validFiles.push({ url: URL.createObjectURL(file), isNew: true, file });
+            // Compress images to handle mobile formats (HEIC/HEIF) and reduce file size
+            const processedFile = file.type.startsWith('image/') ? await compressImage(file) : file;
+            validFiles.push({ url: URL.createObjectURL(processedFile), isNew: true, file: processedFile });
         }
         if (validFiles.length > 0) {
             setGallery(prev => [...prev, ...validFiles]);
