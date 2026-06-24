@@ -22,46 +22,70 @@ export async function compressImage(file: File): Promise<File> {
 
     if (!isImage) return file;
 
+    // For HEIC files, if the browser doesn't support them natively,
+    // we need to ensure the MIME type is correctly set for the backend
+    if (/\.(heic|heif)$/i.test(file.name) && !file.type.startsWith("image/")) {
+        // Create a new File object with correct MIME type for HEIC
+        const correctedFile = new File([file], file.name, {
+            type: "image/heic",
+            lastModified: file.lastModified,
+        });
+        // Try to convert, but if it fails, return the corrected file
+        const objectUrl = URL.createObjectURL(correctedFile);
+        try {
+            const img = await loadImage(objectUrl);
+            URL.revokeObjectURL(objectUrl);
+            return await processImage(img, file);
+        } catch {
+            URL.revokeObjectURL(objectUrl);
+            return correctedFile;
+        }
+    }
+
     const objectUrl = URL.createObjectURL(file);
 
     try {
         const img = await loadImage(objectUrl);
-
-        let { width, height } = img;
-        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-            if (width >= height) {
-                height = Math.round((height * MAX_DIMENSION) / width);
-                width = MAX_DIMENSION;
-            } else {
-                width = Math.round((width * MAX_DIMENSION) / height);
-                height = MAX_DIMENSION;
-            }
-        }
-
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return file;
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const blob: Blob | null = await new Promise((resolve) =>
-            canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY)
-        );
-
-        // If conversion failed or somehow produced a bigger file, keep original.
-        if (!blob || blob.size >= file.size) return file;
-
-        const newName = file.name.replace(/\.[^.]+$/, "") + ".jpg";
-        return new File([blob], newName, {
-            type: "image/jpeg",
-            lastModified: Date.now(),
-        });
-    } catch {
-        // If the browser can't decode the image (e.g. HEIC on some Androids),
+        return await processImage(img, file);
+    } catch (error) {
+        console.warn("Image compression failed:", error);
+        // If the browser can't decode the image (e.g. HEIC on some browsers),
         // fall back to the original file and let the server handle it.
         return file;
     } finally {
         URL.revokeObjectURL(objectUrl);
     }
+}
+
+async function processImage(img: HTMLImageElement, originalFile: File): Promise<File> {
+    let { width, height } = img;
+    if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        if (width >= height) {
+            height = Math.round((height * MAX_DIMENSION) / width);
+            width = MAX_DIMENSION;
+        } else {
+            width = Math.round((width * MAX_DIMENSION) / height);
+            height = MAX_DIMENSION;
+        }
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return originalFile;
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY)
+    );
+
+    // If conversion failed or somehow produced a bigger file, keep original.
+    if (!blob || blob.size >= originalFile.size) return originalFile;
+
+    const newName = originalFile.name.replace(/\.[^.]+$/, "") + ".jpg";
+    return new File([blob], newName, {
+        type: "image/jpeg",
+        lastModified: Date.now(),
+    });
 }

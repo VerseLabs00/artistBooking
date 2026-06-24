@@ -3,6 +3,7 @@ import { X, CheckCircle2, AlertCircle, Video } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import stage from "../../../../public/bg-login.png";
 import api from "../../api/axios";
+import { compressVideo } from "../../utils/compressVideo";
 
 const MAX_VIDEO_MB    = 100;
 const MAX_VIDEO_BYTES = MAX_VIDEO_MB * 1024 * 1024;
@@ -70,7 +71,9 @@ const Talent: React.FC = () => {
         try {
             const formData = new FormData();
             if (video) {
-                formData.append("video", video.file);
+                // iPhone videos (MOV) are converted to MP4 for better compatibility
+                const compressedVideo = await compressVideo(video.file);
+                formData.append("video", compressedVideo);
             }
 
             await api.post("/onboarding/talent", formData, {

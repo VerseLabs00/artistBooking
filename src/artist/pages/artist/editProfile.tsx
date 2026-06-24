@@ -172,11 +172,25 @@ export default function EditProfile() {
 
         } catch (err: any) {
             const errors = err.response?.data?.errors;
-            let errMsg = err.response?.data?.message || "Failed to save profile.";
-            if (errors) {
-                errMsg = Object.values(errors).flat().join(" ");
+            const message = err.response?.data?.message;
+            
+            if (errors && typeof errors === 'object') {
+                // Format field-specific errors for better readability
+                const errorMessages = Object.entries(errors).map(([field, msgs]) => {
+                    const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    const errorList = Array.isArray(msgs) ? msgs : [msgs];
+                    return `• ${fieldName}: ${errorList.join(', ')}`;
+                });
+                toast.error(`Please fix the following errors:\n${errorMessages.join('\n')}`, { 
+                    id: saveToast,
+                    duration: 6000,
+                    style: { whiteSpace: 'pre-line' }
+                });
+            } else if (message) {
+                toast.error(message, { id: saveToast, duration: 5000 });
+            } else {
+                toast.error("Failed to save profile. Please check your connection and try again.", { id: saveToast });
             }
-            toast.error(errMsg, { id: saveToast });
         } finally {
             setLoading(false);
         }
@@ -189,10 +203,10 @@ export default function EditProfile() {
             return;
         }
 
-        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'];
         const extension = file.name.split('.').pop()?.toLowerCase();
         if (!extension || !allowedExtensions.includes(extension)) {
-            toast.error(`Failed to upload ${type}: Unsupported format. Allowed: JPG, PNG, GIF, WebP`);
+            toast.error(`Failed to upload ${type}: Unsupported format. Allowed: JPG, PNG, GIF, WebP, HEIC`);
             return;
         }
 
@@ -211,11 +225,24 @@ export default function EditProfile() {
             toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} updated!`, { id: uploadToast });
         } catch (err: any) {
             const errors = err.response?.data?.errors;
-            let errMsg = err.response?.data?.message || `Failed to upload ${type}.`;
-            if (errors) {
-                errMsg = Object.values(errors).flat().join(" ");
+            const message = err.response?.data?.message;
+            
+            if (errors && typeof errors === 'object') {
+                const errorMessages = Object.entries(errors).map(([field, msgs]) => {
+                    const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    const errorList = Array.isArray(msgs) ? msgs : [msgs];
+                    return `• ${fieldName}: ${errorList.join(', ')}`;
+                });
+                toast.error(`Upload failed:\n${errorMessages.join('\n')}`, { 
+                    id: uploadToast,
+                    duration: 6000,
+                    style: { whiteSpace: 'pre-line' }
+                });
+            } else if (message) {
+                toast.error(message, { id: uploadToast, duration: 5000 });
+            } else {
+                toast.error(`Failed to upload ${type}. Please check your connection and try again.`, { id: uploadToast });
             }
-            toast.error(errMsg, { id: uploadToast });
         }
     };
 
@@ -235,14 +262,14 @@ export default function EditProfile() {
                 toast.error(`File "${file.name}" exceeds the 50MB limit and was skipped.`);
                 continue;
             }
-            const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'avi'];
+            const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'];
             const extension = file.name.split('.').pop()?.toLowerCase();
             if (!extension || !allowedExtensions.includes(extension)) {
-                toast.error(`File "${file.name}" has an unsupported format and was skipped. Allowed formats: JPG, PNG, GIF, WebP, MP4, MOV, AVI`);
+                toast.error(`File "${file.name}" has an unsupported format and was skipped. Allowed formats: JPG, PNG, GIF, WebP, HEIC`);
                 continue;
             }
             // Compress images to handle mobile formats (HEIC/HEIF) and reduce file size
-            const processedFile = file.type.startsWith('image/') ? await compressImage(file) : file;
+            const processedFile = await compressImage(file);
             validFiles.push({ url: URL.createObjectURL(processedFile), isNew: true, file: processedFile });
         }
         if (validFiles.length > 0) {
@@ -258,7 +285,25 @@ export default function EditProfile() {
                 await api.delete(`/profile/gallery/${item.id}`);
                 toast.success("Photo removed", { id: delToast });
             } catch (err: any) {
-                toast.error(err.response?.data?.message || "Failed to remove photo", { id: delToast });
+                const errors = err.response?.data?.errors;
+                const message = err.response?.data?.message;
+                
+                if (errors && typeof errors === 'object') {
+                    const errorMessages = Object.entries(errors).map(([field, msgs]) => {
+                        const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                        const errorList = Array.isArray(msgs) ? msgs : [msgs];
+                        return `• ${fieldName}: ${errorList.join(', ')}`;
+                    });
+                    toast.error(`Failed to remove photo:\n${errorMessages.join('\n')}`, { 
+                        id: delToast,
+                        duration: 6000,
+                        style: { whiteSpace: 'pre-line' }
+                    });
+                } else if (message) {
+                    toast.error(message, { id: delToast, duration: 5000 });
+                } else {
+                    toast.error("Failed to remove photo. Please check your connection and try again.", { id: delToast });
+                }
                 return;
             }
         }
