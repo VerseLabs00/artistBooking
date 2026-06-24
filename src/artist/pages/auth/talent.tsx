@@ -5,7 +5,7 @@ import stage from "../../../../public/bg-login.png";
 import api from "../../api/axios";
 import { compressVideo } from "../../utils/compressVideo";
 
-const MAX_VIDEO_MB    = 100;
+const MAX_VIDEO_MB    = 50;
 const MAX_VIDEO_BYTES = MAX_VIDEO_MB * 1024 * 1024;
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/x-msvideo", "video/x-matroska", "video/webm", "video/x-flv", "video/x-ms-wmv", "video/mp4v-es", "video/3gpp"];
 
@@ -100,7 +100,7 @@ const Talent: React.FC = () => {
             const message = err.response?.data?.message;
             
             if (err.response?.status === 413) {
-                setError("Upload failed: File too large. Your video exceeds the server's upload limit. Please try a smaller video (under 100MB).");
+                setError("Upload failed: File too large. Your video exceeds the server's upload limit. Please try a smaller video (under 50MB).");
             } else if (errors && typeof errors === 'object') {
                 const errorMessages = Object.entries(errors).map(([field, msgs]) => {
                     const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());

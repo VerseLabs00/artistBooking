@@ -3,9 +3,9 @@
 // This utility reduces resolution and bitrate to make uploads work.
 
 const MAX_VIDEO_DURATION = 300; // 5 minutes in seconds
-const MAX_WIDTH = 480; // Reduced resolution for smaller file size
-const MAX_HEIGHT = 854; // Reduced resolution for smaller file size
-const TARGET_BITRATES = [1500000, 1000000, 500000, 300000, 200000]; // Try multiple bitrates: 1.5Mbps, 1Mbps, 0.5Mbps, 0.3Mbps, 0.2Mbps
+const MAX_WIDTH = 360; // Reduced resolution for smaller file size
+const MAX_HEIGHT = 640; // Reduced resolution for smaller file size
+const TARGET_BITRATES = [1500000, 1000000, 500000, 300000, 200000, 150000, 100000]; // Try multiple bitrates: 1.5Mbps, 1Mbps, 0.5Mbps, 0.3Mbps, 0.2Mbps, 0.15Mbps, 0.1Mbps
 const TARGET_SIZE_BYTES = 1 * 1024 * 1024; // Target 1MB
 
 const loadVideo = (src: string): Promise<HTMLVideoElement> =>
