@@ -262,7 +262,7 @@ export default function ArtistProfile() {
             m.purpose !== "verification_back" &&
             m.purpose !== "selfie"
     );
-    const videoLinks = media.filter(m => m.media_type === "video");
+    const videoLinks = media.filter(m => m.media_type === "video" && !(m.purpose === "talent_media" && !m.is_external_link));
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">

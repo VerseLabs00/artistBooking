@@ -178,8 +178,8 @@ function VerificationCard({ app }) {
                   </div>
 
                   <div className="bg-gray-50 rounded-2xl p-4 md:p-5">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Portfolio & Videos</h3>
-                    {app.portfolio.images?.length > 0 || app.portfolio.video ? (
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Portfolio & Photos</h3>
+                    {app.portfolio.images?.length > 0 ? (
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                           {app.portfolio.images.map((img, i) => (
                               <div
@@ -191,17 +191,9 @@ function VerificationCard({ app }) {
                                 <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform" />
                               </div>
                           ))}
-                          {app.portfolio.video && (
-                              <div className="relative rounded-xl overflow-hidden bg-gray-800" style={{ paddingBottom: '100%' }}>
-                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-                                  <Play size={18} className="text-white" />
-                                  <span className="text-white text-[10px] font-bold tracking-widest">VIDEO</span>
-                                </div>
-                              </div>
-                          )}
                         </div>
                     ) : (
-                        <p className="text-sm text-gray-400">No portfolio uploaded.</p>
+                        <p className="text-sm text-gray-400">No performance photos uploaded.</p>
                     )}
                   </div>
 
