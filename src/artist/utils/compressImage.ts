@@ -3,8 +3,8 @@
 // uploads to fail on mobile. We downscale to a sane max dimension and re-encode
 // as JPEG. PDFs and non-image files are returned untouched.
 
-const MAX_DIMENSION = 1600; // px, longest edge
-const JPEG_QUALITY = 0.8;
+const MAX_DIMENSION = 800; // px, longest edge (aggressive compression for mobile)
+const JPEG_QUALITY = 0.6; // Lower quality for smaller file sizes
 
 const loadImage = (src: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
@@ -15,16 +15,22 @@ const loadImage = (src: string): Promise<HTMLImageElement> =>
     });
 
 export async function compressImage(file: File): Promise<File> {
+    console.log(`Compressing file: ${file.name}, size: ${file.size}, type: ${file.type}`);
+    
     // Only process images. Leave PDFs / unknown types as-is.
     const isImage =
         file.type.startsWith("image/") ||
         /\.(jpe?g|png|gif|webp|heic|heif|bmp|tiff?|avif)$/i.test(file.name);
 
-    if (!isImage) return file;
+    if (!isImage) {
+        console.log("Not an image, returning original");
+        return file;
+    }
 
     // For HEIC files, if the browser doesn't support them natively,
     // we need to ensure the MIME type is correctly set for the backend
     if (/\.(heic|heif)$/i.test(file.name) && !file.type.startsWith("image/")) {
+        console.log("HEIC file without proper MIME type, correcting...");
         // Create a new File object with correct MIME type for HEIC
         const correctedFile = new File([file], file.name, {
             type: "image/heic",
@@ -36,7 +42,8 @@ export async function compressImage(file: File): Promise<File> {
             const img = await loadImage(objectUrl);
             URL.revokeObjectURL(objectUrl);
             return await processImage(img, file);
-        } catch {
+        } catch (error) {
+            console.warn("HEIC conversion failed:", error);
             URL.revokeObjectURL(objectUrl);
             return correctedFile;
         }
@@ -76,13 +83,31 @@ async function processImage(img: HTMLImageElement, originalFile: File): Promise<
     if (!ctx) return originalFile;
     ctx.drawImage(img, 0, 0, width, height);
 
-    const blob: Blob | null = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY)
-    );
+    // Try multiple quality levels to get under size limit
+    const qualityLevels = [JPEG_QUALITY, 0.5, 0.4, 0.3];
+    let blob: Blob | null = null;
+    let finalQuality = JPEG_QUALITY;
+
+    for (const quality of qualityLevels) {
+        const testBlob: Blob | null = await new Promise((resolve) =>
+            canvas.toBlob(resolve, "image/jpeg", quality)
+        );
+        
+        if (testBlob && testBlob.size < originalFile.size) {
+            blob = testBlob;
+            finalQuality = quality;
+            // If we got a reasonable size, break
+            if (testBlob.size < 2 * 1024 * 1024) break; // Under 2MB
+        }
+    }
 
     // If conversion failed or somehow produced a bigger file, keep original.
-    if (!blob || blob.size >= originalFile.size) return originalFile;
+    if (!blob || blob.size >= originalFile.size) {
+        console.warn(`Compression failed: original=${originalFile.size}, compressed=${blob?.size}, returning original`);
+        return originalFile;
+    }
 
+    console.log(`Compression successful: original=${originalFile.size}, compressed=${blob.size}, quality=${finalQuality}`);
     const newName = originalFile.name.replace(/\.[^.]+$/, "") + ".jpg";
     return new File([blob], newName, {
         type: "image/jpeg",
