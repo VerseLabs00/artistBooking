@@ -3,9 +3,10 @@
 // This utility reduces resolution and bitrate to make uploads work.
 
 const MAX_VIDEO_DURATION = 300; // 5 minutes in seconds
-const MAX_WIDTH = 720; // Reduced resolution for smaller file size
-const MAX_HEIGHT = 1280; // Reduced resolution for smaller file size
-const TARGET_BITRATES = [1500000, 1000000, 500000]; // Try multiple bitrates: 1.5Mbps, 1Mbps, 0.5Mbps
+const MAX_WIDTH = 480; // Reduced resolution for smaller file size
+const MAX_HEIGHT = 854; // Reduced resolution for smaller file size
+const TARGET_BITRATES = [1500000, 1000000, 500000, 300000, 200000]; // Try multiple bitrates: 1.5Mbps, 1Mbps, 0.5Mbps, 0.3Mbps, 0.2Mbps
+const TARGET_SIZE_BYTES = 1 * 1024 * 1024; // Target 1MB
 
 const loadVideo = (src: string): Promise<HTMLVideoElement> =>
     new Promise((resolve, reject) => {
@@ -21,9 +22,9 @@ const loadVideo = (src: string): Promise<HTMLVideoElement> =>
 export async function compressVideo(file: File): Promise<File> {
     console.log(`Compressing video: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)}MB, type: ${file.type}`);
     
-    // If already small enough, return as-is
-    if (file.size < 5 * 1024 * 1024) {
-        console.log('Video already small enough, returning original');
+    // If already under 1MB, return as-is
+    if (file.size < TARGET_SIZE_BYTES) {
+        console.log(`Video size ${(file.size / 1024 / 1024).toFixed(2)}MB is already under 1MB, returning original`);
         return file;
     }
 
@@ -62,14 +63,26 @@ export async function compressVideo(file: File): Promise<File> {
         
         console.log(`Target dimensions: ${width}x${height}`);
 
-        // Try different bitrates to get under size limit
+        let bestCompressed: File | null = null;
+        let bestSize = file.size;
+
+        // Try different bitrates to get under 1MB target
         for (const bitrate of TARGET_BITRATES) {
             try {
                 const compressed = await compressWithBitrate(video, width, height, bitrate, file);
-                if (compressed.size < file.size) {
-                    console.log(`Compression successful: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressed.size / 1024 / 1024).toFixed(2)}MB at ${bitrate / 1000000}Mbps`);
+                console.log(`Compression attempt at ${bitrate / 1000000}Mbps: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressed.size / 1024 / 1024).toFixed(2)}MB`);
+                
+                // If under 1MB, return immediately
+                if (compressed.size < TARGET_SIZE_BYTES) {
+                    console.log(`✓ Target achieved: ${(compressed.size / 1024 / 1024).toFixed(2)}MB is under 1MB`);
                     URL.revokeObjectURL(objectUrl);
                     return compressed;
+                }
+                
+                // Otherwise keep track of smallest result
+                if (compressed.size < bestSize) {
+                    bestCompressed = compressed;
+                    bestSize = compressed.size;
                 }
             } catch (error) {
                 console.warn(`Compression failed at bitrate ${bitrate}:`, error);
@@ -77,7 +90,14 @@ export async function compressVideo(file: File): Promise<File> {
             }
         }
 
-        console.warn('All compression attempts failed, returning original');
+        // If we got a smaller file (even if not under 1MB), return it
+        if (bestCompressed && bestSize < file.size) {
+            console.log(`Returning best compressed result: ${(bestSize / 1024 / 1024).toFixed(2)}MB (couldn't reach 1MB target)`);
+            URL.revokeObjectURL(objectUrl);
+            return bestCompressed;
+        }
+
+        console.warn('All compression attempts failed or produced larger files, returning original');
         URL.revokeObjectURL(objectUrl);
         return file;
     } catch (error) {
@@ -158,8 +178,8 @@ async function compressWithBitrate(
 
     const blob = await recordingPromise;
     
-    if (!blob || blob.size >= originalFile.size) {
-        throw new Error(`Compression produced larger file: ${blob?.size} vs ${originalFile.size}`);
+    if (!blob) {
+        throw new Error('Compression produced no blob');
     }
 
     const extension = supportedMimeType.includes('mp4') ? 'mp4' : 'webm';
