@@ -221,8 +221,16 @@ export default function EditProfile() {
 
     const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
+        const existingCount = gallery.length;
+        const remainingSlots = 3 - existingCount;
+        const filesToProcess = files.slice(0, remainingSlots);
+
+        if (files.length > remainingSlots) {
+            toast.error(`You can only upload up to 3 images. ${files.length - remainingSlots} file(s) were skipped.`);
+        }
+        
         const validFiles: { url: string; isNew: boolean; file: File }[] = [];
-        for (const file of files) {
+        for (const file of filesToProcess) {
             if (file.size > 50 * 1024 * 1024) {
                 toast.error(`File "${file.name}" exceeds the 50MB limit and was skipped.`);
                 continue;
@@ -479,10 +487,18 @@ export default function EditProfile() {
                             <SlideHeader icon={<Image size={20} />} title="Performance gallery" subtitle="Showcase your best moments on stage." noMargin />
                             <button
                                 onClick={() => galleryRef.current?.click()}
-                                className="px-4 py-2.5 bg-[#F4F1EC] text-[#0B0B0D] rounded-xl text-xs font-bold hover:bg-white transition-all shrink-0"
+                                disabled={gallery.length >= 3}
+                                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                                    gallery.length >= 3
+                                        ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                                        : "bg-[#F4F1EC] text-[#0B0B0D] hover:bg-white"
+                                }`}
                             >
                                 Upload
                             </button>
+                            <p className="text-xs text-gray-500 mt-2">
+                                {gallery.length}/3 images uploaded
+                            </p>
                             <input ref={galleryRef} type="file" multiple className="hidden" onChange={handleGalleryUpload} />
                         </div>
 
