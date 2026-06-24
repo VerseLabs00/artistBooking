@@ -197,6 +197,23 @@ function VerificationCard({ app }) {
                     )}
                   </div>
 
+                  {app.portfolio.videos?.length > 0 && (
+                      <div className="bg-gray-50 rounded-2xl p-4 md:p-5">
+                          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Portfolio & Video</h3>
+                          <div className="space-y-3">
+                            {app.portfolio.videos.map((vid, i) => (
+                                <div key={i} className="rounded-xl overflow-hidden bg-black">
+                                    <video
+                                        src={vid}
+                                        controls
+                                        className="w-full max-h-[300px] object-contain"
+                                    />
+                                </div>
+                            ))}
+                          </div>
+                      </div>
+                  )}
+
                   {app.pricing && (
                       <div className="bg-gray-50 rounded-2xl p-4 md:p-5">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Pricing</h3>
