@@ -71,9 +71,10 @@ const Talent: React.FC = () => {
         try {
             const formData = new FormData();
             if (video) {
-                // iPhone videos (MOV) are converted to MP4 for better compatibility
-                const compressedVideo = await compressVideo(video.file);
-                formData.append("video", compressedVideo);
+                // iPhone videos (MOV) get MIME type correction
+                const processedVideo = await compressVideo(video.file);
+                console.log(`Uploading video: ${processedVideo.name}, size: ${processedVideo.size}, type: ${processedVideo.type}`);
+                formData.append("video", processedVideo);
             }
 
             await api.post("/onboarding/talent", formData, {
@@ -85,11 +86,22 @@ const Talent: React.FC = () => {
 
             navigate("/account");
         } catch (err: any) {
+            console.error("Video upload error:", err);
             const errors = err.response?.data?.errors;
-            setError(errors
-                ? Object.values(errors).flat().join(" ")
-                : err.response?.data?.message || "Upload failed. Please try again."
-            );
+            const message = err.response?.data?.message;
+            
+            if (errors && typeof errors === 'object') {
+                const errorMessages = Object.entries(errors).map(([field, msgs]) => {
+                    const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    const errorList = Array.isArray(msgs) ? msgs : [msgs];
+                    return `• ${fieldName}: ${errorList.join(', ')}`;
+                });
+                setError(`Upload failed:\n${errorMessages.join('\n')}`);
+            } else if (message) {
+                setError(message);
+            } else {
+                setError(`Upload failed: ${err.message || "Please try again."}`);
+            }
         } finally {
             setLoading(false);
             setUploadPct(0);
