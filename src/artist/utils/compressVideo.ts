@@ -21,9 +21,9 @@ const loadVideo = (src: string): Promise<HTMLVideoElement> =>
 export async function compressVideo(file: File): Promise<File> {
     console.log(`Compressing video: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)}MB, type: ${file.type}`);
     
-    // If already small enough, return as-is
-    if (file.size < 5 * 1024 * 1024) {
-        console.log('Video already small enough, returning original');
+    // If already small enough, return as-is (compression can increase size for small videos)
+    if (file.size < 10 * 1024 * 1024) {
+        console.log(`Video size ${(file.size / 1024 / 1024).toFixed(2)}MB is under 10MB threshold, returning original without compression to avoid size increase`);
         return file;
     }
 
