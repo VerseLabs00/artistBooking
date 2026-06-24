@@ -73,8 +73,14 @@ const Talent: React.FC = () => {
             if (video) {
                 // iPhone videos (MOV) get MIME type correction
                 const processedVideo = await compressVideo(video.file);
-                console.log(`Uploading video: ${processedVideo.name}, size: ${processedVideo.size}, type: ${processedVideo.type}`);
+                console.log(`Uploading video: ${processedVideo.name}, size: ${(processedVideo.size / 1024 / 1024).toFixed(2)}MB, type: ${processedVideo.type}`);
                 formData.append("video", processedVideo);
+                
+                // Log FormData contents for debugging
+                console.log("FormData entries:");
+                for (const [key, value] of formData.entries()) {
+                    console.log(`  ${key}:`, value instanceof File ? `File: ${value.name}, ${(value.size / 1024 / 1024).toFixed(2)}MB, ${value.type}` : value);
+                }
             }
 
             await api.post("/onboarding/talent", formData, {
@@ -87,10 +93,15 @@ const Talent: React.FC = () => {
             navigate("/account");
         } catch (err: any) {
             console.error("Video upload error:", err);
+            console.error("Error status:", err.response?.status);
+            console.error("Error data:", err.response?.data);
+            
             const errors = err.response?.data?.errors;
             const message = err.response?.data?.message;
             
-            if (errors && typeof errors === 'object') {
+            if (err.response?.status === 413) {
+                setError("Upload failed: File too large. Your video exceeds the server's upload limit. Please try a smaller video (under 100MB).");
+            } else if (errors && typeof errors === 'object') {
                 const errorMessages = Object.entries(errors).map(([field, msgs]) => {
                     const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                     const errorList = Array.isArray(msgs) ? msgs : [msgs];
