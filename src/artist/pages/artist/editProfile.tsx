@@ -170,6 +170,9 @@ export default function EditProfile() {
             );
             setGallery(imgs.map((m: any) => ({ id: m.id, url: m.url })));
 
+            // Navigate to account page after successful save
+            navigate("/account");
+
         } catch (err: any) {
             const errors = err.response?.data?.errors;
             const message = err.response?.data?.message;
@@ -327,43 +330,43 @@ export default function EditProfile() {
     };
 
     if (fetchLoading) return (
-        <div className="min-h-screen flex items-center justify-center bg-[#0B0B0D]">
+        <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
             <div className="flex flex-col items-center gap-4">
                 <div className="w-10 h-10 border-[3px] border-[#E0263A] border-t-transparent rounded-full animate-spin" />
-                <p className="text-gray-400 text-sm font-medium tracking-wide">Loading your profile…</p>
+                <p className="text-gray-600 text-sm font-medium tracking-wide">Loading your profile…</p>
             </div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-[#0B0B0D] text-[#F4F1EC] font-sans">
+        <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] font-sans">
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
                 * { font-family: 'Inter', sans-serif; }
                 .ed-display { font-family: 'Fraunces', serif; }
                 .ed-input {
-                    width: 100%; padding: 14px 16px; border-radius: 14px; border: 1.5px solid #2A2A2E;
-                    transition: all 0.18s ease; outline: none; background: #161618; color: #F4F1EC;
+                    width: 100%; padding: 14px 16px; border-radius: 14px; border: 1.5px solid #E5E5E5;
+                    transition: all 0.18s ease; outline: none; background: #FFFFFF; color: #1A1A1A;
                 }
-                .ed-input::placeholder { color: #6B6B70; }
+                .ed-input::placeholder { color: #9CA3AF; }
                 .ed-input:focus { border-color: #E0263A; box-shadow: 0 0 0 4px rgba(224,38,58,0.16); }
                 .ed-card {
-                    background: #131315; border: 1px solid #232326; border-radius: 28px;
+                    background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 28px;
                     padding: 28px 22px;
                 }
                 @media (min-width: 640px) { .ed-card { padding: 40px 36px; } }
                 @media (min-width: 1024px) { .ed-card { padding: 52px 56px; } }
                 .ed-progress-dot { transition: all 0.25s ease; }
                 .ed-step-btn { transition: all 0.18s ease; }
-                .ed-step-btn:hover { color: #F4F1EC; }
+                .ed-step-btn:hover { color: #1A1A1A; }
                 .fade-in { animation: edFadeIn 0.35s ease; }
                 @keyframes edFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
             `}</style>
 
             {/* TOP HEADER */}
-            <header className="sticky top-0 z-50 bg-[#0B0B0D]/90 backdrop-blur-md border-b border-[#1D1D20] px-4 sm:px-8 py-3 sm:py-4 grid grid-cols-3 items-center gap-3">
+            <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#E5E5E5] px-4 sm:px-8 py-3 sm:py-4 grid grid-cols-3 items-center gap-3">
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                    <button onClick={() => navigate("/account")} className="p-2 hover:bg-[#1A1A1D] rounded-full transition-colors shrink-0 text-[#F4F1EC]">
+                    <button onClick={() => navigate("/account")} className="p-2 hover:bg-gray-100 rounded-full transition-colors shrink-0 text-[#1A1A1A]">
                         <X size={18} />
                     </button>
                     <div className="min-w-0">
@@ -377,7 +380,7 @@ export default function EditProfile() {
                         <div
                             key={s.id}
                             className={`ed-progress-dot h-1.5 rounded-full ${
-                                i === stepIndex ? "w-7 bg-[#E0263A]" : i < stepIndex ? "w-3 bg-[#E0263A]/40" : "w-3 bg-[#2A2A2E]"
+                                i === stepIndex ? "w-7 bg-[#E0263A]" : i < stepIndex ? "w-3 bg-[#E0263A]/40" : "w-3 bg-gray-300"
                             }`}
                         />
                     ))}
@@ -408,7 +411,7 @@ export default function EditProfile() {
                                 <div className="absolute inset-0 bg-black/30" />
                                 <button
                                     onClick={() => coverRef.current?.click()}
-                                    className="absolute bottom-5 right-5 bg-[#0B0B0D]/80 backdrop-blur border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold flex items-center gap-2 hover:bg-[#0B0B0D] transition-all"
+                                    className="absolute bottom-5 right-5 bg-white/80 backdrop-blur border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-bold flex items-center gap-2 hover:bg-white transition-all text-[#1A1A1A]"
                                 >
                                     <Image size={14} /> Change cover
                                 </button>
@@ -419,12 +422,12 @@ export default function EditProfile() {
                                 <div className="relative group/avatar shrink-0">
                                     <img
                                         src={avatarPreview ?? "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200"}
-                                        className="w-24 h-24 sm:w-32 sm:h-32 rounded-[28px] border-[5px] border-[#0B0B0D] object-cover shadow-2xl"
+                                        className="w-24 h-24 sm:w-32 sm:h-32 rounded-[28px] border-[5px] border-[#FAFAFA] object-cover shadow-2xl"
                                         alt="avatar"
                                     />
                                     <button
                                         onClick={() => avatarRef.current?.click()}
-                                        className="absolute -bottom-1 -right-1 bg-[#E0263A] text-white p-2.5 rounded-2xl border-4 border-[#0B0B0D] shadow-lg hover:scale-105 transition-all"
+                                        className="absolute -bottom-1 -right-1 bg-[#E0263A] text-white p-2.5 rounded-2xl border-4 border-[#FAFAFA] shadow-lg hover:scale-105 transition-all"
                                     >
                                         <Image size={14} />
                                     </button>
@@ -516,10 +519,10 @@ export default function EditProfile() {
                                 </div>
                             </Field>
                         </div>
-                        <div className="mt-6 p-5 bg-[#1A1A1D] rounded-2xl flex gap-3 items-start border border-[#232326]">
+                        <div className="mt-6 p-5 bg-gray-100 rounded-2xl flex gap-3 items-start border border-[#E5E5E5]">
                             <AlertCircle size={16} className="text-[#E0263A] mt-0.5 shrink-0" />
-                            <p className="text-sm text-gray-400 leading-relaxed">
-                                Your pricing shows as a range, e.g. <span className="text-gray-200 font-semibold">Rs. {form.starting_price || "35,000"} – {form.max_price || "75,000"}</span>, so customers know your value before reaching out.
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                                Your pricing shows as a range, e.g. <span className="text-gray-900 font-semibold">Rs. {form.starting_price || "35,000"} – {form.max_price || "75,000"}</span>, so customers know your value before reaching out.
                             </p>
                         </div>
                     </div>
@@ -535,8 +538,8 @@ export default function EditProfile() {
                                 disabled={gallery.length >= 3}
                                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                                     gallery.length >= 3
-                                        ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                                        : "bg-[#F4F1EC] text-[#0B0B0D] hover:bg-white"
+                                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                        : "bg-[#1A1A1A] text-white hover:bg-gray-800"
                                 }`}
                             >
                                 Upload
@@ -550,18 +553,18 @@ export default function EditProfile() {
                         {gallery.length > 0 ? (
                             <div className="grid grid-cols-3 gap-4 mt-6">
                                 {gallery.map((img, i) => (
-                                    <div key={i} className="group relative aspect-square rounded-[20px] overflow-hidden border border-[#232326]">
+                                    <div key={i} className="group relative aspect-square rounded-[20px] overflow-hidden border border-[#E5E5E5]">
                                         <img src={img.url} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="gallery" />
                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <button
                                                 onClick={() => deleteGalleryItem(img)}
-                                                className="bg-[#F4F1EC] text-[#E0263A] p-2.5 rounded-xl hover:bg-white transition-all"
+                                                className="bg-white text-[#E0263A] p-2.5 rounded-xl hover:bg-gray-100 transition-all"
                                             >
                                                 <X size={16} />
                                             </button>
                                         </div>
                                         {img.isNew && (
-                                            <div className="absolute top-3 left-3 bg-[#2ECC71] text-[#0B0B0D] text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
+                                            <div className="absolute top-3 left-3 bg-[#2ECC71] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
                                                 New
                                             </div>
                                         )}
@@ -569,7 +572,7 @@ export default function EditProfile() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="mt-6 py-14 border-2 border-dashed border-[#232326] rounded-[24px] text-center">
+                            <div className="mt-6 py-14 border-2 border-dashed border-[#E5E5E5] rounded-[24px] text-center">
                                 <p className="text-sm text-gray-500 font-medium">No photos yet. Showcase your past events here.</p>
                             </div>
                         )}
@@ -592,7 +595,7 @@ export default function EditProfile() {
                                     {mediaEntries.length > 1 && (
                                         <button
                                             onClick={() => removeMediaEntry(i)}
-                                            className="text-gray-500 hover:text-[#E0263A] transition-colors shrink-0 p-2"
+                                            className="text-gray-400 hover:text-[#E0263A] transition-colors shrink-0 p-2"
                                         >
                                             <X size={16} />
                                         </button>
@@ -603,7 +606,7 @@ export default function EditProfile() {
                             {mediaEntries[mediaEntries.length - 1]?.link.trim() && (
                                 <button
                                     onClick={addMediaEntry}
-                                    className="w-full py-3.5 border-2 border-dashed border-[#2A2A2E] rounded-[18px] text-gray-500 text-sm font-bold hover:border-[#E0263A]/40 hover:text-[#E0263A] transition-all flex items-center justify-center gap-2"
+                                    className="w-full py-3.5 border-2 border-dashed border-[#E5E5E5] rounded-[18px] text-gray-500 text-sm font-bold hover:border-[#E0263A]/40 hover:text-[#E0263A] transition-all flex items-center justify-center gap-2"
                                 >
                                     <Plus size={15} /> Add another link
                                 </button>
@@ -618,25 +621,25 @@ export default function EditProfile() {
                         <SlideHeader icon={<Link size={20} />} title="Social & web presence" subtitle="Help fans and clients find you elsewhere." />
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 bg-[#1A1A1D] border border-[#232326] rounded-xl flex items-center justify-center text-[#E0263A] shrink-0"><Youtube size={20} /></div>
+                                <div className="w-11 h-11 bg-gray-100 border border-[#E5E5E5] rounded-xl flex items-center justify-center text-[#E0263A] shrink-0"><Youtube size={20} /></div>
                                 <Field label="YouTube" className="flex-1">
                                     <input className="ed-input" name="youtube_link" value={form.youtube_link} onChange={handleChange} placeholder="@handle" />
                                 </Field>
                             </div>
                             <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 bg-[#1A1A1D] border border-[#232326] rounded-xl flex items-center justify-center text-[#3B82F6] shrink-0"><Facebook size={20} /></div>
+                                <div className="w-11 h-11 bg-gray-100 border border-[#E5E5E5] rounded-xl flex items-center justify-center text-[#3B82F6] shrink-0"><Facebook size={20} /></div>
                                 <Field label="Facebook" className="flex-1">
                                     <input className="ed-input" name="facebook_link" value={form.facebook_link} onChange={handleChange} placeholder="fb.com/..." />
                                 </Field>
                             </div>
                             <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 bg-[#1A1A1D] border border-[#232326] rounded-xl flex items-center justify-center text-[#EC4899] shrink-0"><Instagram size={20} /></div>
+                                <div className="w-11 h-11 bg-gray-100 border border-[#E5E5E5] rounded-xl flex items-center justify-center text-[#EC4899] shrink-0"><Instagram size={20} /></div>
                                 <Field label="Instagram" className="flex-1">
                                     <input className="ed-input" name="instagram_link" value={form.instagram_link} onChange={handleChange} placeholder="@username" />
                                 </Field>
                             </div>
                             <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 bg-[#1A1A1D] border border-[#232326] rounded-xl flex items-center justify-center text-[#2ECC71] shrink-0"><Music2 size={20} /></div>
+                                <div className="w-11 h-11 bg-gray-100 border border-[#E5E5E5] rounded-xl flex items-center justify-center text-[#2ECC71] shrink-0"><Music2 size={20} /></div>
                                 <Field label="Spotify" className="flex-1">
                                     <input className="ed-input" name="spotify_link" value={form.spotify_link} onChange={handleChange} placeholder="artist url" />
                                 </Field>
@@ -647,13 +650,13 @@ export default function EditProfile() {
             </div>
 
             {/* ===== BOTTOM NAV BAR ===== */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0B0B0D]/95 backdrop-blur-md border-t border-[#1D1D20]">
+            <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-[#E5E5E5]">
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between gap-3">
                     <button
                         onClick={goBack}
                         disabled={isFirstStep}
                         className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${
-                            isFirstStep ? "text-gray-600 cursor-not-allowed" : "text-gray-300 hover:bg-[#1A1A1D]"
+                            isFirstStep ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
                         }`}
                     >
                         <ArrowLeft size={16} /> <span className="hidden sm:inline">Back</span>
@@ -667,7 +670,7 @@ export default function EditProfile() {
                                 className={`px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${
                                     isDirty
                                         ? "bg-[#E0263A] text-white shadow-lg shadow-[#E0263A]/20 hover:brightness-110 active:scale-95"
-                                        : "bg-[#1A1A1D] text-gray-600 cursor-not-allowed"
+                                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
                                 }`}
                             >
                                 <Save size={16} />
@@ -676,7 +679,7 @@ export default function EditProfile() {
                         ) : (
                             <button
                                 onClick={goNext}
-                                className="px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl text-sm font-bold bg-[#F4F1EC] text-[#0B0B0D] hover:bg-white transition-all flex items-center gap-2 active:scale-95"
+                                className="px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl text-sm font-bold bg-[#1A1A1A] text-white hover:bg-gray-800 transition-all flex items-center gap-2 active:scale-95"
                             >
                                 Next <ArrowRight size={16} />
                             </button>
@@ -692,7 +695,7 @@ function SlideHeader({ icon, title, subtitle, noMargin = false }: { icon: React.
     return (
         <div className={noMargin ? "mb-0" : "mb-8"}>
             <div className="flex items-center gap-3 mb-2">
-                <span className="p-2 bg-[#1A1A1D] border border-[#232326] text-[#E0263A] rounded-lg">{icon}</span>
+                <span className="p-2 bg-gray-100 border border-[#E5E5E5] text-[#E0263A] rounded-lg">{icon}</span>
                 <h3 className="ed-display text-lg sm:text-xl font-semibold">{title}</h3>
             </div>
             <p className="text-sm text-gray-500">{subtitle}</p>
