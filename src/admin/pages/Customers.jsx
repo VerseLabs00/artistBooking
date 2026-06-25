@@ -1,14 +1,15 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { X, Mail, Calendar, ShoppingBag, AlertTriangle } from 'lucide-react'
 import {
   fetchCustomers,
-  banCustomer,
-  unbanCustomer,
+  deleteCustomer,
   setFilter,
   setSearchQuery,
   selectFilteredCustomers,
+  fetchCustomer,
 } from '../features/customers/customersSlice'
 import PageHeader from '../components/common/PageHeader'
 import StatCard from '../components/common/StatCard'
@@ -22,6 +23,101 @@ const filterTabs = [
   { label: 'Banned', value: 'banned' },
 ]
 
+function CustomerModal({ customer, open, onClose, onDelete }) {
+  if (!open || !customer) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+          <h2 className="text-lg font-bold text-gray-900">Customer Details</h2>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <X size={18} className="text-gray-500" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          <div className="flex items-center gap-4 mb-6">
+            <img src={customer.avatar} alt={customer.name} className="w-16 h-16 rounded-full object-cover border-4 border-gray-100" />
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">{customer.name}</h3>
+              <p className="text-sm text-gray-500">{customer.email}</p>
+              <span className={`text-xs font-bold px-2 py-1 rounded-full mt-1 inline-block ${customer.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                {customer.status === 'active' ? '● Active' : '⛔ Banned'}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-xs text-gray-400 mb-1">Total Bookings</p>
+              <p className="text-2xl font-bold text-gray-900">{customer.bookings}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-xs text-gray-400 mb-1">Total Spent</p>
+              <p className="text-2xl font-bold text-primary">{customer.totalSpent}</p>
+            </div>
+          </div>
+
+          <div className="space-y-3 mb-6">
+            <div className="flex items-center gap-3">
+              <Mail size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-400">Email</p>
+                <p className="text-sm font-semibold text-gray-800">{customer.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Calendar size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-400">Joined</p>
+                <p className="text-sm font-semibold text-gray-800">{customer.joined}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <ShoppingBag size={16} className="text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-400">Total Bookings</p>
+                <p className="text-sm font-semibold text-gray-800">{customer.bookings}</p>
+              </div>
+            </div>
+          </div>
+
+          {customer.bookingHistory?.length > 0 && (
+            <div>
+              <h4 className="text-sm font-bold text-gray-900 mb-3">Recent Bookings</h4>
+              <div className="space-y-2">
+                {customer.bookingHistory.slice(0, 3).map((b, i) => (
+                  <div key={i} className="bg-gray-50 rounded-xl p-3">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">#{b.id}</p>
+                        <p className="text-xs text-gray-500">{b.artist_name || b.artist || '—'}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-gray-900">{b.agreed_price ? `LKR ${Number(b.agreed_price).toLocaleString()}` : (b.amount || '—')}</p>
+                        <p className="text-xs text-gray-500 capitalize">{b.booking_status || b.status || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 bg-white">
+          <button onClick={onClose} className="btn-secondary px-5 py-2 text-sm">Close</button>
+          <button onClick={onDelete} className="bg-red-500 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-red-600 transition-colors">Delete Customer</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Customers() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -29,11 +125,32 @@ export default function Customers() {
   const filter = useSelector(s => s.customers.filter)
   const searchQuery = useSelector(s => s.customers.searchQuery)
   const filtered = useSelector(selectFilteredCustomers)
-  const { loading, error } = useSelector(s => s.customers)
+  const { loading, error, selected } = useSelector(s => s.customers)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState(null)
 
   useEffect(() => {
     dispatch(fetchCustomers())
   }, [dispatch])
+
+  const handleView = async (customer) => {
+    setSelectedCustomer(customer)
+    await dispatch(fetchCustomer(customer.id))
+    setModalOpen(true)
+  }
+
+  const handleDelete = async () => {
+    if (selectedCustomer) {
+      const result = await dispatch(deleteCustomer(selectedCustomer.id))
+      if (deleteCustomer.fulfilled.match(result)) {
+        toast.success(`${selectedCustomer.name} deleted successfully`)
+        setModalOpen(false)
+        setSelectedCustomer(null)
+      } else {
+        toast.error(result.payload || 'Delete failed')
+      }
+    }
+  }
 
   const active = all.filter(c => c.status === 'active').length
   const banned = all.filter(c => c.status === 'banned').length
@@ -93,12 +210,8 @@ export default function Customers() {
                       <td className="table-cell"><StatusBadge status={customer.status} /></td>
                       <td className="table-cell">
                         <div className="flex items-center gap-1 md:gap-2">
-                          <button onClick={() => navigate(`/customers/${customer.id}`)} className="btn-secondary text-xs px-2 md:px-3 py-1.5">View</button>
-                          {customer.status === 'active' ? (
-                            <button onClick={() => { dispatch(banCustomer(customer.id)); toast.error(`${customer.name} banned`) }} className="bg-gray-800 text-white px-2 md:px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-gray-900 transition-colors">BAN</button>
-                          ) : (
-                            <button onClick={() => { dispatch(unbanCustomer(customer.id)); toast.success(`${customer.name} unbanned`) }} className="btn-success text-xs px-2 md:px-3 py-1.5">Unban</button>
-                          )}
+                          <button onClick={() => handleView(customer)} className="btn-secondary text-xs px-2 md:px-3 py-1.5">View</button>
+                          <button onClick={() => { setSelectedCustomer(customer); setModalOpen(true); }} className="bg-red-500 text-white px-2 md:px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-red-600 transition-colors">Delete</button>
                         </div>
                       </td>
                     </tr>
@@ -111,6 +224,13 @@ export default function Customers() {
 
         {filtered.length > 0 && <div className="px-4 py-3 text-xs text-gray-400">Showing {filtered.length} of {all.length} users</div>}
       </div>
+
+      <CustomerModal
+        customer={selected || selectedCustomer}
+        open={modalOpen}
+        onClose={() => { setModalOpen(false); setSelectedCustomer(null); }}
+        onDelete={handleDelete}
+      />
     </div>
   )
 }

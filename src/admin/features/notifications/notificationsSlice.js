@@ -1,72 +1,46 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { getArtistsApi } from "../../api/artistsApi";
 
 const initialState = {
-  list: [
-    {
-      id: 1,
-      type: "verification", // verification | booking | artist | customer | system
-      title: "New Verification Request",
-      message: "Nirmala Kumari submitted a verification application.",
-      time: "2 min ago",
-      read: false,
-      link: "/verification",
-    },
-    {
-      id: 2,
-      type: "booking",
-      title: "Booking Cancelled",
-      message: "Booking #BK-2838 was cancelled by Kavya Nair.",
-      time: "15 min ago",
-      read: false,
-      link: "/bookings/%23BK-2838",
-    },
-    {
-      id: 3,
-      type: "verification",
-      title: "New Verification Request",
-      message: "Tharindu Perera re-submitted their verification.",
-      time: "1 hr ago",
-      read: false,
-      link: "/verification",
-    },
-    {
-      id: 4,
-      type: "artist",
-      title: "Artist Suspended",
-      message: "Sarah Bands account was suspended due to disputes.",
-      time: "3 hr ago",
-      read: true,
-      link: "/artists/4",
-    },
-    {
-      id: 5,
-      type: "booking",
-      title: "New Booking Confirmed",
-      message: "Tom Wilson confirmed booking #BK-2837 with MC Royal.",
-      time: "5 hr ago",
-      read: true,
-      link: "/bookings/%23BK-2837",
-    },
-    {
-      id: 6,
-      type: "customer",
-      title: "Customer Banned",
-      message: "Dilan Silva was banned for abusive behaviour.",
-      time: "1 day ago",
-      read: true,
-      link: "/customers/7",
-    },
-    {
-      id: 7,
-      type: "system",
-      title: "Commission Rate Updated",
-      message: "Platform commission rate changed to 15%.",
-      time: "2 days ago",
-      read: true,
-      link: "/settings",
-    },
-  ],
+  list: [],
+  loading: false,
+  error: null,
 };
+
+// Fetch pending artists and convert to notifications
+export const fetchVerificationNotifications = createAsyncThunk(
+  "notifications/fetchVerification",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await getArtistsApi({ status: "pending", per_page: 50 });
+      const raw = Array.isArray(data) ? data : (data.data ?? []);
+      
+      // Convert pending artists to notification format
+      return raw.map((artist, index) => ({
+        id: `verification-${artist.id}`,
+        type: "verification",
+        title: "New Verification Request",
+        message: `${artist.stage_name || artist.full_name || 'Artist'} submitted a verification application.`,
+        time: artist.created_at
+          ? new Date(artist.created_at).toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "Recently",
+        read: false,
+        link: `/admin/verification?expand=${artist.id}`,
+        artistId: artist.id,
+        artistName: artist.stage_name || artist.full_name || "Artist"
+      }));
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to load notifications"
+      );
+    }
+  }
+);
 
 const notificationsSlice = createSlice({
   name: "notifications",
@@ -87,6 +61,21 @@ const notificationsSlice = createSlice({
     addNotification(state, action) {
       state.list.unshift(action.payload);
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchVerificationNotifications.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchVerificationNotifications.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        state.list = payload;
+      })
+      .addCase(fetchVerificationNotifications.rejected, (state, { payload }) => {
+        state.loading = false;
+        state.error = payload;
+      });
   },
 });
 

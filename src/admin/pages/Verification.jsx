@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Play, ChevronDown, ChevronUp, X, FileText } from 'lucide-react'
 import {
@@ -8,6 +9,7 @@ import {
   rejectArtist,
   setFilter,
   toggleExpand,
+  setExpandedId,
   selectFilteredVerifications,
 } from '../features/verification/verificationSlice'
 import PageHeader from '../components/common/PageHeader'
@@ -387,6 +389,7 @@ function VerificationCard({ app }) {
 
 export default function Verification() {
   const dispatch = useDispatch()
+  const [searchParams] = useSearchParams()
   const filter = useSelector(s => s.verification.filter)
   const filtered = useSelector(selectFilteredVerifications)
   const { list, loading, error } = useSelector(s => s.verification)
@@ -394,6 +397,16 @@ export default function Verification() {
   useEffect(() => {
     dispatch(fetchPendingArtists())
   }, [dispatch])
+
+  // Handle URL param for expanding specific artist
+  useEffect(() => {
+    const expandId = searchParams.get('expand')
+    if (expandId) {
+      dispatch(setExpandedId(parseInt(expandId)))
+      // Clear the param after handling to avoid re-expanding on refresh
+      window.history.replaceState({}, '', '/admin/verification')
+    }
+  }, [searchParams, dispatch])
 
   const total = list.length
   const todayCount = list.filter(v => v.isToday).length

@@ -10,6 +10,7 @@ import {
   Users,
   Settings,
   AlertCircle,
+  Mic2,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useRef, useEffect } from "react";
@@ -18,7 +19,10 @@ import {
   markAllRead,
   dismissNotification,
   selectUnreadCount,
+  fetchVerificationNotifications,
 } from "../../features/notifications/notificationsSlice";
+import { fetchArtists } from "../../features/artists/artistsSlice";
+import { fetchCustomers } from "../../features/customers/customersSlice";
 
 const pageTitles = {
   "/": "Dashboard",
@@ -120,13 +124,18 @@ export default function Topbar({ onMenuClick }) {
 
   const notifications = useSelector((s) => s.notifications.list);
   const unreadCount = useSelector(selectUnreadCount);
+  const artists = useSelector((s) => s.artists.list);
+  const customers = useSelector((s) => s.customers.list);
 
   const [search, setSearch] = useState("");
   const [notifOpen, setNotifOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all"); // all | unread
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [filteredResults, setFilteredResults] = useState([]);
 
   const bellRef = useRef(null);
   const dropRef = useRef(null);
+  const searchRef = useRef(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -139,10 +148,50 @@ export default function Topbar({ onMenuClick }) {
       ) {
         setNotifOpen(false);
       }
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(e.target)
+      ) {
+        setSearchOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  // Fetch notifications on mount
+  useEffect(() => {
+    dispatch(fetchVerificationNotifications());
+  }, [dispatch]);
+
+  // Fetch artists and customers for search
+  useEffect(() => {
+    dispatch(fetchArtists({ per_page: 100 }));
+    dispatch(fetchCustomers({ per_page: 100 }));
+  }, [dispatch]);
+
+  // Filter results based on search input
+  useEffect(() => {
+    if (search.trim().length === 0) {
+      setFilteredResults([]);
+      setSearchOpen(false);
+      return;
+    }
+
+    const query = search.toLowerCase();
+    const artistResults = artists
+      .filter((a) => (a.name || "").toLowerCase().includes(query))
+      .slice(0, 5)
+      .map((a) => ({ ...a, type: "artist" }));
+
+    const customerResults = customers
+      .filter((c) => (c.name || "").toLowerCase().includes(query))
+      .slice(0, 5)
+      .map((c) => ({ ...c, type: "customer" }));
+
+    setFilteredResults([...artistResults, ...customerResults]);
+    setSearchOpen(true);
+  }, [search, artists, customers]);
 
   const displayed =
     activeTab === "unread"
@@ -152,6 +201,16 @@ export default function Topbar({ onMenuClick }) {
   const handleNavigate = (link) => {
     setNotifOpen(false);
     navigate(link);
+  };
+
+  const handleSearchResultClick = (result) => {
+    setSearch("");
+    setSearchOpen(false);
+    if (result.type === "artist") {
+      navigate("/admin/artists");
+    } else if (result.type === "customer") {
+      navigate("/admin/customers");
+    }
   };
 
   return (
@@ -170,15 +229,48 @@ export default function Topbar({ onMenuClick }) {
       {/* Right — search + bell */}
       <div className="flex items-center gap-2 md:gap-4">
         {/* Search */}
-        <div className="hidden md:flex items-center bg-gray-100 rounded-full px-4 py-2 gap-2 w-48 lg:w-72">
-          <Search size={15} className="text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400 w-full"
-          />
+        <div className="relative hidden md:flex items-center" ref={searchRef}>
+          <div className="flex items-center bg-gray-100 rounded-full px-4 py-2 gap-2 w-48 lg:w-72">
+            <Search size={15} className="text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search artists or customers..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400 w-full"
+            />
+          </div>
+          
+          {/* Search Dropdown */}
+          {searchOpen && filteredResults.length > 0 && (
+            <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+              <div className="max-h-[320px] overflow-y-auto">
+                {filteredResults.map((result) => (
+                  <div
+                    key={`${result.type}-${result.id}`}
+                    onClick={() => handleSearchResultClick(result)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                      {result.type === "artist" ? (
+                        <Mic2 size={14} className="text-gray-500" />
+                      ) : (
+                        <Users size={14} className="text-gray-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {result.name}
+                      </p>
+                      <p className="text-xs text-gray-400 capitalize">
+                        {result.type}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Bell button */}
