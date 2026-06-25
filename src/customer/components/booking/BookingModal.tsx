@@ -7,7 +7,8 @@ interface BookingModalProps {
   onClose: () => void
   artistProfileId: string
   artistName: string
-  startingPrice: number
+  fullPrice: number
+  advance: number
 }
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -276,20 +277,32 @@ function Step2({
 }
 
 function Step3({
-  artistName, startingPrice, selectedDateKey, hour, period, venue, eventType, customerPhone,
-  onPrev, onConfirm, loading, error,
-}: {
-  artistName: string; startingPrice: number
-  selectedDateKey: string; hour: string; period: string
-  venue: string; eventType: string; customerPhone: string
-  onPrev: () => void; onConfirm: () => void
-  loading: boolean; error: string
-}) {
-  const advance = Math.round(startingPrice * 0.30 * 100) / 100
-  const balance = startingPrice - advance
-  const [y, m, d] = selectedDateKey.split('-').map(Number)
+   artistName, fullPrice, advance, selectedDateKey, hour, period, venue, eventType, customerPhone,
+   onPrev, onConfirm, loading, error,
+ }: {
+   artistName: string; fullPrice: number; advance: number
+   selectedDateKey: string; hour: string; period: string
+   venue: string; eventType: string; customerPhone: string
+   onPrev: () => void; onConfirm: () => void
+   loading: boolean; error: string
+ }) {
+  const [commissionRate, setCommissionRate] = useState(15)
+  const safeFullPrice = Number(fullPrice) || 0
+  const safeAdvance = Number(advance) || 0
+  const platformFee = +(safeAdvance * commissionRate / 100).toFixed(2)
+  const totalPayment = +(safeAdvance + platformFee).toFixed(2)
+  const balance = safeFullPrice - safeAdvance
+   const [y, m, d] = selectedDateKey.split('-').map(Number)
 
-  return (
+   useEffect(() => {
+     // Fetch commission rate from public settings endpoint
+     fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'}/settings`)
+       .then(res => res.json())
+       .then(data => setCommissionRate(data.commission_rate || 15))
+       .catch(() => setCommissionRate(15))
+   }, [])
+
+   return (
     <div className="flex flex-col h-full">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Confirm Booking</h2>
 
@@ -304,13 +317,15 @@ function Step3({
         </div>
 
         <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-2">
-          <div className="flex justify-between"><span className="text-gray-500">Total Price</span><span className="font-medium text-gray-900">LKR {startingPrice.toLocaleString()}</span></div>
-          <div className="flex justify-between text-red-600"><span>Advance (30%)</span><span className="font-bold">LKR {advance.toLocaleString()}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500">Total Price</span><span className="font-medium text-gray-900">LKR {safeFullPrice.toLocaleString()}</span></div>
+          <div className="flex justify-between text-red-600"><span>Advance</span><span className="font-bold">LKR {safeAdvance.toLocaleString()}</span></div>
+          <div className="flex justify-between text-blue-600"><span>Platform Booking Fee ({commissionRate}%)</span><span className="font-bold">LKR {platformFee.toLocaleString()}</span></div>
+          <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-200"><span>Total to Pay Now</span><span>LKR {totalPayment.toLocaleString()}</span></div>
           <div className="flex justify-between"><span className="text-gray-500">Balance Due</span><span className="font-medium text-gray-500">LKR {balance.toLocaleString()}</span></div>
         </div>
 
         <p className="text-xs text-gray-400 text-center px-2">
-          You will be redirected to PayHere to complete the 30% advance payment securely.
+          You will be redirected to PayHere to complete the payment securely.
         </p>
 
         {error && <p className="text-sm text-red-500 text-center">{error}</p>}
@@ -352,12 +367,12 @@ function submitToPayHere(payhere: Record<string, string>) {
 }
 
 const stepInfo = [
-  { title: 'Set Date & Time', desc: 'Choose your preferred event date and start time.' },
-  { title: 'Event Details', desc: 'Tell us where the event is and what type it is.' },
-  { title: 'Confirm & Pay', desc: 'Review your booking and pay the 30% advance via PayHere.' },
-]
+   { title: 'Set Date & Time', desc: 'Choose your preferred event date and start time.' },
+   { title: 'Event Details', desc: 'Tell us where the event is and what type it is.' },
+   { title: 'Confirm & Pay', desc: 'Review your booking and pay the advance plus platform fee via PayHere.' },
+ ]
 
-export default function BookingModal({ onClose, artistProfileId, artistName, startingPrice }: BookingModalProps) {
+export default function BookingModal({ onClose, artistProfileId, artistName, fullPrice, advance }: BookingModalProps) {
   const [step, setStep] = useState(1)
 
   const [selectedDateKey, setSelectedDateKey] = useState('')
@@ -468,7 +483,8 @@ export default function BookingModal({ onClose, artistProfileId, artistName, sta
           {step === 3 && (
             <Step3
               artistName={artistName}
-              startingPrice={startingPrice}
+              fullPrice={fullPrice}
+              advance={advance}
               selectedDateKey={selectedDateKey}
               hour={hour}
               period={period}

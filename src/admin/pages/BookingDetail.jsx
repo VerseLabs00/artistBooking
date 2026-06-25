@@ -162,22 +162,22 @@ export default function BookingDetail() {
             <div className="space-y-2.5">
               <div className="flex justify-between"><span className="text-xs text-gray-500">Total Amount</span><span className="text-sm font-extrabold text-gray-900">{booking.amount}</span></div>
               <div className="h-px bg-gray-100" />
-              <div className="flex justify-between">
-                <span className="text-xs text-gray-500">Deposit (30%)</span>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-gray-800">{booking.deposit}</p>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${paymentBadge[booking.depositStatus] || paymentBadge.pending}`}>{booking.depositStatus}</span>
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-gray-500">Balance</span>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-gray-800">{booking.balance}</p>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${paymentBadge[booking.balanceStatus] || paymentBadge.pending}`}>{booking.balanceStatus}</span>
-                </div>
-              </div>
-              <div className="h-px bg-gray-100" />
-              <div className="flex justify-between"><span className="text-xs text-gray-500">Platform (15%)</span><span className="text-xs font-bold text-primary">{booking.commission}</span></div>
+<div className="flex justify-between">
+                 <span className="text-xs text-gray-500">Deposit</span>
+                 <div className="text-right">
+                   <p className="text-xs font-bold text-gray-800">{booking.deposit}</p>
+                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${paymentBadge[booking.depositStatus] || paymentBadge.pending}`}>{booking.depositStatus}</span>
+                 </div>
+               </div>
+               <div className="flex justify-between">
+                 <span className="text-xs text-gray-500">Balance</span>
+                 <div className="text-right">
+                   <p className="text-xs font-bold text-gray-800">{booking.balance}</p>
+                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${paymentBadge[booking.balanceStatus] || paymentBadge.pending}`}>{booking.balanceStatus}</span>
+                 </div>
+               </div>
+               <div className="h-px bg-gray-100" />
+               <div className="flex justify-between"><span className="text-xs text-gray-500">Platform Fee</span><span className="text-xs font-bold text-primary">{booking.commission}</span></div>
             </div>
           </div>
 

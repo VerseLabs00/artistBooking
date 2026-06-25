@@ -17,8 +17,8 @@ interface Profile {
     bio_1?: string;
     bio_2?: string;
     paragraph?: string;
-    starting_price?: number;
-    max_price?: number;
+    full_price?: number;
+    advance?: number;
     avatar_url?: string;
     cover_url?: string;
     youtube_link?: string;
@@ -507,17 +507,17 @@ export default function ArtistProfile() {
                                 )}
 
                                 {/* PRICE */}
-                                {profile?.starting_price && (
+                                {profile?.full_price && (
                                     <div className="mt-7 text-left">
                                         <div className="text-[#FF2B6B] font-bold text-[28px] leading-none">
-                                            ${profile.starting_price}
+                                            ${profile.full_price}
                                             <span className="text-gray-600 text-[15px] font-medium ml-2">
-                                                starting price
+                                                full price
                                             </span>
                                         </div>
-                                        {profile.max_price && (
+                                        {profile.advance && (
                                             <p className="text-[11px] text-gray-400 mt-1">
-                                                Range: ${profile.starting_price} - ${profile.max_price} depending on event type and duration
+                                                Advance: ${profile.advance}
                                             </p>
                                         )}
                                     </div>

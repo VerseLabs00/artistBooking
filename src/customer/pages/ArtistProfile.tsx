@@ -38,11 +38,11 @@ async function fetchYouTubeTitle(ytId: string): Promise<string> {
     return data.title as string;
 }
 
-function MediaPreviewCard({ 
-    item, 
-    isActive, 
-    onActivate 
-}: { 
+function MediaPreviewCard({
+                              item,
+                              isActive,
+                              onActivate
+                          }: {
     item: { id: string; url: string; media_type: string; is_external_link: boolean; title?: string | null };
     isActive: boolean;
     onActivate: () => void;
@@ -68,7 +68,7 @@ function MediaPreviewCard({
 
     if (ytId) {
         return (
-            <div className="flex flex-col h-full font-sans">
+            <div className="flex flex-col h-full">
                 <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
                     <div className="aspect-video w-full bg-black relative group cursor-pointer" onClick={onActivate}>
                         {!isActive ? (
@@ -115,7 +115,7 @@ function MediaPreviewCard({
 
     if (spotifyEmbed) {
         return (
-            <div className="flex flex-col h-full font-sans">
+            <div className="flex flex-col h-full">
                 <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
                     <div className="w-full h-[152px]">
                         <iframe
@@ -140,7 +140,7 @@ function MediaPreviewCard({
 
     if (isDirectVideo(item.url)) {
         return (
-            <div className="flex flex-col h-full font-sans">
+            <div className="flex flex-col h-full">
                 <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
                     <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
                         <Play size={32} className="text-gray-400" />
@@ -161,7 +161,7 @@ function MediaPreviewCard({
             href={item.url}
             target="_blank"
             rel="noreferrer"
-            className="flex flex-col h-full font-sans"
+            className="flex flex-col h-full"
         >
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 h-full block">
                 <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
@@ -181,7 +181,7 @@ function MediaPreviewCard({
 export default function ArtistProfile({ id: propId, onClose }: { id?: string; onClose?: () => void }) {
     const { id: paramId } = useParams<{ id: string }>();
     const id = propId || paramId;
-    
+
     const navigate = useNavigate();
     const [artist, setArtist] = useState<ArtistDetail | null>(null);
     const [loading, setLoading] = useState(true);
@@ -279,20 +279,20 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
         <div className="min-h-screen bg-[#F4F1F5] flex items-center justify-center">
             <div className="animate-pulse flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full border-4 border-[#FF2B6B] border-t-transparent animate-spin mb-4" />
-                <p className="text-gray-400 text-sm font-sans">Loading profile...</p>
+                <p className="text-gray-400 text-sm">Loading profile...</p>
             </div>
         </div>
     );
 
     if (!artist) return (
-        <div className="min-h-screen bg-[#F4F1F5] flex items-center justify-center font-sans">
+        <div className="min-h-screen bg-[#F4F1F5] flex items-center justify-center">
             <div className="text-gray-500 font-medium">Artist not found.</div>
         </div>
     );
 
     const avgRating = artist.rating.average ?? 0;
     const galleryImages = artist.gallery;
-    
+
     // Combine portfolio media with main social links if not already present
     const mediaLinks = [...artist.media];
     if (artist.youtube_link && !mediaLinks.some(m => m.url === artist.youtube_link)) {
@@ -315,9 +315,8 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
     }
 
     return (
-        <div className={`${onClose ? 'relative h-full overflow-y-auto custom-scrollbar' : 'min-h-screen'} bg-[#F4F1F5] transition-all duration-500`} style={{ fontFamily: "'Fraunces', serif" }}>
+        <div className={`${onClose ? 'relative h-full overflow-y-auto custom-scrollbar' : 'min-h-screen'} bg-[#F4F1F5] transition-all duration-500`}>
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
                 .custom-scrollbar::-webkit-scrollbar { width: 8px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
@@ -366,7 +365,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                     </h1>
 
                                     {/* RATING */}
-                                    <div className="flex items-center justify-center gap-1 mt-2 text-[13px] font-sans">
+                                    <div className="flex items-center justify-center gap-1 mt-2 text-[13px]">
                                         <Star size={14} className="text-yellow-500 fill-yellow-400" />
                                         <span className="font-semibold text-gray-700">
                                             {avgRating > 0 ? avgRating.toFixed(1) : "—"}
@@ -378,7 +377,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
 
                                     {/* TAGS */}
                                     {artist.tags.length > 0 && (
-                                        <div className="flex flex-wrap justify-center gap-2 mt-4 font-sans">
+                                        <div className="flex flex-wrap justify-center gap-2 mt-4">
                                             {artist.tags.map((tag, i) => (
                                                 <span
                                                     key={i}
@@ -392,30 +391,30 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
 
                                     {/* Bio/Short Bio */}
                                     {artist.short_bio && (
-                                        <p className="text-[13px] text-gray-500 leading-6 mt-6 text-left font-sans">
+                                        <p className="text-[13px] text-gray-500 leading-6 mt-6 text-left">
                                             {artist.short_bio}
                                         </p>
                                     )}
 
                                     {/* PRICE */}
-                                    {artist.starting_price && (
-                                        <div className="mt-7 text-left font-sans">
+                                    {artist.full_price && (
+                                        <div className="mt-7 text-left">
                                             <div className="text-[#FF2B6B] font-bold text-[28px] leading-none">
-                                                LKR {artist.starting_price.toLocaleString()}
+                                                LKR {artist.full_price.toLocaleString()}
                                                 <span className="text-gray-600 text-[15px] font-medium ml-2">
-                                                    starting price
+                                                    full price
                                                 </span>
                                             </div>
-                                            {artist.max_price && (
+                                            {artist.advance && (
                                                 <p className="text-[11px] text-gray-400 mt-1">
-                                                    Range: LKR {artist.starting_price.toLocaleString()} – {artist.max_price.toLocaleString()} depending on event type and duration
+                                                    Advance: LKR {artist.advance.toLocaleString()}
                                                 </p>
                                             )}
                                         </div>
                                     )}
 
                                     {/* BOOK BUTTON */}
-                                    <div className="mt-7 font-sans">
+                                    <div className="mt-7">
                                         <button
                                             onClick={handleBookNow}
                                             className="w-full bg-[#FF2B6B] hover:bg-[#ff1b60] transition text-white py-3 rounded-full font-bold text-sm shadow-md"
@@ -466,7 +465,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                     <h2 className="text-xl sm:text-2xl md:text-[26px] font-bold text-gray-900">
                                         Overview
                                     </h2>
-                                    <div className="flex flex-wrap gap-5 mt-2 text-[13px] text-gray-500 font-sans">
+                                    <div className="flex flex-wrap gap-5 mt-2 text-[13px] text-gray-500">
                                         {artist.category && (
                                             <span className="flex items-center gap-1">
                                                 <Music size={13} /> {artist.category}
@@ -479,7 +478,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex gap-2 font-sans">
+                                <div className="flex gap-2">
                                     <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors">
                                         <Heart size={18} />
                                     </button>
@@ -490,7 +489,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                             </div>
 
                             {/* DESCRIPTION */}
-                            <div className="mt-7 space-y-5 text-[14px] text-gray-500 leading-7 font-sans">
+                            <div className="mt-7 space-y-5 text-[14px] text-gray-500 leading-7">
                                 {artist.bio_1 && <p>{artist.bio_1}</p>}
                                 {artist.bio_2 && <p>{artist.bio_2}</p>}
                                 {artist.paragraph && <p>{artist.paragraph}</p>}
@@ -522,9 +521,9 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                     <h3 className="text-[24px] font-bold mt-10 mb-5">Audio & Video</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {mediaLinks.map((item) => (
-                                            <MediaPreviewCard 
-                                                key={item.id} 
-                                                item={item} 
+                                            <MediaPreviewCard
+                                                key={item.id}
+                                                item={item}
                                                 isActive={activeMediaId === item.id}
                                                 onActivate={() => setActiveMediaId(item.id)}
                                             />
@@ -535,7 +534,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
 
                             {/* REVIEWS */}
                             <h3 className="text-[24px] font-bold mt-12 mb-6">Reviews</h3>
-                            <div className="grid md:grid-cols-2 gap-8 mb-10 font-sans">
+                            <div className="grid md:grid-cols-2 gap-8 mb-10">
                                 <div className="text-center">
                                     <h2 className="text-4xl font-bold">{avgRating > 0 ? avgRating.toFixed(1) : "—"}</h2>
                                     <div className="flex justify-center text-yellow-400 mt-2">
@@ -565,7 +564,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                 </div>
                             </div>
 
-                            <div className="space-y-4 font-sans">
+                            <div className="space-y-4">
                                 {artist.rating.recent_reviews.map((r) => (
                                     <div key={r.id} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
                                         <div className="flex justify-between">
@@ -590,13 +589,13 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                     </div>
                                 ))}
                                 {artist.rating.recent_reviews.length === 0 && (
-                                    <p className="text-sm text-gray-400 text-center py-6 font-sans">No reviews yet.</p>
+                                    <p className="text-sm text-gray-400 text-center py-6">No reviews yet.</p>
                                 )}
                             </div>
 
                             {/* LEAVE A REVIEW */}
-                            <div className="mt-12 bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-sm font-sans">
-                                <h3 className="text-lg font-bold text-gray-900 mb-2 font-serif">Leave a Review</h3>
+                            <div className="mt-12 bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-sm">
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">Leave a Review</h3>
                                 <p className="text-xs text-gray-400 mb-6">Share your experience with the community</p>
 
                                 <div className="flex items-center justify-center gap-1 mb-6">
@@ -651,7 +650,8 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                 <BookingModal
                     artistProfileId={artist.id}
                     artistName={artist.stage_name}
-                    startingPrice={artist.starting_price ?? 0}
+                    fullPrice={artist.full_price ?? 0}
+                    advance={artist.advance ?? 0}
                     onClose={() => setShowBooking(false)}
                 />
             )}

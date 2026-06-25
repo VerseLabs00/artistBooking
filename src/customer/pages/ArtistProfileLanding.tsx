@@ -434,17 +434,17 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                                     )}
 
                                     {/* PRICE */}
-                                    {artist.starting_price && (
+                                    {artist.full_price && (
                                         <div className="mt-7 text-left">
                                             <div className="text-[#FF2B6B] font-bold text-[28px] leading-none">
-                                                LKR {artist.starting_price.toLocaleString()}
+                                                LKR {artist.full_price.toLocaleString()}
                                                 <span className="text-gray-600 text-[15px] font-medium ml-2">
-                                                    starting price
+                                                    full price
                                                 </span>
                                             </div>
-                                            {artist.max_price && (
+                                            {artist.advance && (
                                                 <p className="text-[11px] text-gray-400 mt-1">
-                                                    Range: LKR {artist.starting_price.toLocaleString()} – {artist.max_price.toLocaleString()} depending on event type and duration
+                                                    Advance: LKR {artist.advance.toLocaleString()}
                                                 </p>
                                             )}
                                         </div>
@@ -687,7 +687,8 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                 <BookingModal
                     artistProfileId={artist.id}
                     artistName={artist.stage_name}
-                    startingPrice={artist.starting_price ?? 0}
+                    fullPrice={artist.full_price ?? 0}
+                    advance={artist.advance ?? 0}
                     onClose={() => setShowBooking(false)}
                 />
             )}

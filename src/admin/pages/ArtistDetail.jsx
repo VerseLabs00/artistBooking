@@ -123,9 +123,14 @@ export default function ArtistDetail() {
             )}
             {artist.bio && <p className="text-xs text-gray-500 leading-relaxed mb-4">{artist.bio}</p>}
             <div className="mb-5">
-              <span className="text-2xl font-extrabold text-primary">LKR {Number(artist.basePrice || 0).toLocaleString()}</span>
-              <span className="text-xs text-gray-400 ml-2">starting price</span>
+              <span className="text-2xl font-extrabold text-primary">LKR {Number(artist.fullPrice || 0).toLocaleString()}</span>
+              <span className="text-xs text-gray-400 ml-2">full price</span>
             </div>
+            {artist.advance && (
+              <div className="text-sm text-gray-500">
+                Advance: LKR {Number(artist.advance).toLocaleString()}
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">

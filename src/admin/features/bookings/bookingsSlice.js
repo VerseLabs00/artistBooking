@@ -22,7 +22,8 @@ function normaliseBooking(b) {
 
   const totalPrice   = parseFloat(b.agreed_price   ?? 0)
   const advancePrice = parseFloat(b.advance_amount ?? 0)
-  const commission   = totalPrice * 0.15
+  const platformFee  = parseFloat(b.platform_fee    ?? 0)
+  const commission   = parseFloat(b.commission_rate ?? 15)
 
   return {
     ...b,
@@ -48,7 +49,7 @@ function normaliseBooking(b) {
     amount:      totalPrice   ? `LKR ${totalPrice.toLocaleString()}`   : '—',
     deposit:     advancePrice ? `LKR ${advancePrice.toLocaleString()}` : '—',
     balance:     totalPrice   ? `LKR ${(totalPrice - advancePrice).toLocaleString()}` : '—',
-    commission:  totalPrice   ? `LKR ${commission.toFixed(0)}` : '—',
+    commission:  platformFee  ? `LKR ${platformFee.toFixed(0)}` : '—',
 
     depositStatus: b.payment_status ?? 'pending',
     balanceStatus: b.booking_status === 'completed' ? 'paid' : 'pending',

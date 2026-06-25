@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux'
 import toast from 'react-hot-toast'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   updateCommissionRate,
   updateDepositRate,
@@ -10,6 +10,7 @@ import {
   toggleNotifications,
 } from '../features/settings/settingsSlice'
 import PageHeader from '../components/common/PageHeader'
+import { settingsApi } from '../api/settingsApi'
 
 function ToggleSwitch({ enabled, onToggle }) {
   return (
@@ -56,12 +57,43 @@ export default function Settings() {
   const [commissionInput, setCommissionInput] = useState(settings.commissionRate)
   const [depositInput, setDepositInput] = useState(settings.depositRate)
   const [featuredInput, setFeaturedInput] = useState(settings.featuredListingPrice)
+  const [loading, setLoading] = useState(false)
 
-  const saveFinance = () => {
-    dispatch(updateCommissionRate(Number(commissionInput)))
-    dispatch(updateDepositRate(Number(depositInput)))
-    dispatch(updateFeaturedPrice(Number(featuredInput)))
-    toast.success('Finance settings saved!')
+  useEffect(() => {
+    loadSettings()
+  }, [])
+
+  const loadSettings = async () => {
+    try {
+      const data = await settingsApi.getSettings()
+      setCommissionInput(data.commission_rate)
+      setDepositInput(data.deposit_rate)
+      setFeaturedInput(data.featured_listing_price)
+      dispatch(updateCommissionRate(data.commission_rate))
+      dispatch(updateDepositRate(data.deposit_rate))
+      dispatch(updateFeaturedPrice(data.featured_listing_price))
+    } catch (error) {
+      console.error('Failed to load settings:', error)
+    }
+  }
+
+  const saveFinance = async () => {
+    setLoading(true)
+    try {
+      await settingsApi.updateSettings({
+        commission_rate: Number(commissionInput),
+        deposit_rate: Number(depositInput),
+        featured_listing_price: Number(featuredInput)
+      })
+      dispatch(updateCommissionRate(Number(commissionInput)))
+      dispatch(updateDepositRate(Number(depositInput)))
+      dispatch(updateFeaturedPrice(Number(featuredInput)))
+      toast.success('Finance settings saved!')
+    } catch (error) {
+      toast.error('Failed to save settings')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -120,8 +152,8 @@ export default function Settings() {
           </div>
         </SettingsRow>
         <div className="pt-2">
-          <button onClick={saveFinance} className="btn-primary">
-            Save Finance Settings
+          <button onClick={saveFinance} disabled={loading} className="btn-primary disabled:opacity-50">
+            {loading ? 'Saving...' : 'Save Finance Settings'}
           </button>
         </div>
       </SettingsSection>
