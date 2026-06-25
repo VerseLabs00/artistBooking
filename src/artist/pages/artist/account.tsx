@@ -265,8 +265,145 @@ export default function ArtistProfile() {
     const videoLinks = media.filter(m => m.media_type === "video" && !(m.purpose === "talent_media" && !m.is_external_link));
 
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">
-            Loading profile...
+        <div className="min-h-screen bg-[#F4F1F5] pb-20 overflow-x-hidden">
+            {/* HERO SKELETON */}
+            <div className="relative h-[220px] w-full">
+                <div className="w-full h-[220px] bg-gray-200 animate-pulse" />
+                <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+120px)] lg:translate-x-0 z-30">
+                    <div className="w-32 h-32 rounded-full border-[5px] border-white bg-gray-200 animate-pulse" />
+                </div>
+            </div>
+
+            {/* MAIN WRAPPER */}
+            <div className="max-w-6xl mx-auto px-4 mt-4 relative z-20">
+                <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
+
+                    {/* LEFT PANEL SKELETON */}
+                    <div className="space-y-5">
+                        {/* Main card skeleton */}
+                        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                            <div className="px-6 pb-7 text-center pt-20">
+                                <div className="h-10 bg-gray-200 rounded animate-pulse mx-auto w-3/4 mt-4" />
+                                <div className="h-4 bg-gray-200 rounded animate-pulse mx-auto w-1/3 mt-3" />
+                                <div className="h-3 bg-gray-200 rounded animate-pulse mx-auto w-1/2 mt-4" />
+                                <div className="h-8 bg-gray-200 rounded animate-pulse mx-auto w-2/3 mt-7" />
+                                <div className="flex gap-3 mt-7">
+                                    <div className="flex-1 h-12 bg-gray-200 rounded-full animate-pulse" />
+                                    <div className="flex-1 h-12 bg-gray-200 rounded-full animate-pulse" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Social skeleton */}
+                        <div className="bg-white border border-gray-200 rounded-2xl p-7 shadow-sm text-center">
+                            <div className="h-6 bg-gray-200 rounded animate-pulse mx-auto w-1/3 mb-5" />
+                            <div className="flex justify-center gap-4">
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                    <div key={i} className="w-11 h-11 rounded-full bg-gray-200 animate-pulse" />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Calendar skeleton */}
+                        <div className="bg-white border border-gray-200 rounded-2xl p-7 shadow-sm">
+                            <div className="h-6 bg-gray-200 rounded animate-pulse w-1/3 mb-4" />
+                            <div className="h-40 bg-gray-200 rounded animate-pulse" />
+                        </div>
+                    </div>
+
+                    {/* RIGHT PANEL SKELETON */}
+                    <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+                        {/* Top section skeleton */}
+                        <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                                <div className="h-8 bg-gray-200 rounded animate-pulse w-1/3" />
+                                <div className="flex gap-5 mt-2">
+                                    <div className="h-4 bg-gray-200 rounded animate-pulse w-20" />
+                                    <div className="h-4 bg-gray-200 rounded animate-pulse w-24" />
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+                                <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+                            </div>
+                        </div>
+
+                        {/* Description skeleton */}
+                        <div className="mt-7 space-y-3">
+                            <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                            <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                            <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
+                        </div>
+
+                        {/* Gallery skeleton */}
+                        <div className="mt-10">
+                            <div className="h-8 bg-gray-200 rounded animate-pulse w-1/4 mb-5" />
+                            <div className="grid grid-cols-3 gap-3">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="h-[180px] bg-gray-200 rounded-xl animate-pulse" />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Audio & Video skeleton */}
+                        <div className="mt-10">
+                            <div className="h-8 bg-gray-200 rounded animate-pulse w-1/3 mb-5" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {[1, 2].map((i) => (
+                                    <div key={i} className="bg-gray-200 rounded-2xl h-[200px] animate-pulse" />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Reviews skeleton */}
+                        <div className="mt-12">
+                            <div className="h-6 bg-gray-200 rounded animate-pulse w-1/5 mb-6" />
+                            <div className="grid md:grid-cols-2 gap-8 mb-10">
+                                <div className="text-center space-y-2">
+                                    <div className="h-10 bg-gray-200 rounded animate-pulse mx-auto w-16" />
+                                    <div className="flex justify-center gap-1">
+                                        {[1, 2, 3, 4, 5].map((i) => (
+                                            <div key={i} className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
+                                        ))}
+                                    </div>
+                                    <div className="h-3 bg-gray-200 rounded animate-pulse mx-auto w-20" />
+                                </div>
+                                <div className="space-y-2">
+                                    {[1, 2, 3, 4, 5].map((i) => (
+                                        <div key={i} className="flex items-center gap-2">
+                                            <div className="h-2 bg-gray-200 rounded animate-pulse w-4" />
+                                            <div className="w-3.5 h-3.5 bg-gray-200 rounded animate-pulse" />
+                                            <div className="flex-1 h-2 bg-gray-200 rounded animate-pulse" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                        <div className="flex justify-between">
+                                            <div className="flex gap-3 items-center">
+                                                <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+                                                <div className="space-y-1">
+                                                    <div className="h-3 bg-gray-200 rounded animate-pulse w-20" />
+                                                    <div className="h-2 bg-gray-200 rounded animate-pulse w-16" />
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-1">
+                                                {[1, 2, 3, 4, 5].map((j) => (
+                                                    <div key={j} className="w-3 h-3 bg-gray-200 rounded animate-pulse" />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 h-3 bg-gray-200 rounded animate-pulse w-full" />
+                                        <div className="mt-1 h-3 bg-gray-200 rounded animate-pulse w-3/4" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
     if (error) return (
