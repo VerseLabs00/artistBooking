@@ -41,12 +41,26 @@ const Talent: React.FC = () => {
                 }
             })
             .catch(() => {});
+
+        // Load saved talent video if it exists
+        api.get("/onboarding/talent")
+            .then(response => {
+                const savedData = response.data;
+                if (savedData.video_url) {
+                    setVideo({ file: null as any, preview: savedData.video_url });
+                    setDataAlreadySaved(true);
+                }
+            })
+            .catch(() => {
+                // No saved data exists, keep default empty state
+            });
     }, []);
 
     const [video,    setVideo]    = useState<VideoEntry | null>(null);
     const [loading,  setLoading]  = useState(false);
     const [uploadPct, setUploadPct] = useState(0);
     const [error,    setError]    = useState("");
+    const [dataAlreadySaved, setDataAlreadySaved] = useState(false);
     const videoRef = useRef<HTMLInputElement>(null);
 
     const handleVideoSelected = useCallback((files: FileList | null) => {
@@ -81,12 +95,18 @@ const Talent: React.FC = () => {
     const handleContinue = async () => {
         setError("");
 
+        // If data is already saved and user hasn't selected a new video, just navigate
+        if (dataAlreadySaved && video && !video.file) {
+            navigate("/account");
+            return;
+        }
+
         setLoading(true);
         setUploadPct(0);
 
         try {
             const formData = new FormData();
-            if (video) {
+            if (video && video.file) {
                 // iPhone videos (MOV) get MIME type correction
                 const processedVideo = await compressVideo(video.file);
                 console.log(`Uploading video: ${processedVideo.name}, size: ${(processedVideo.size / 1024 / 1024).toFixed(2)}MB, type: ${processedVideo.type}`);
@@ -227,8 +247,8 @@ const Talent: React.FC = () => {
 
                         {!video ? (
                             <div
-                                onClick={() => videoRef.current?.click()}
-                                className="aspect-video rounded-xl border-2 border-dashed border-gray-300 hover:border-red-500 flex flex-col items-center justify-center cursor-pointer transition group mb-6"
+                                onClick={() => !dataAlreadySaved && videoRef.current?.click()}
+                                className={`aspect-video rounded-xl border-2 border-dashed border-gray-300 hover:border-red-500 flex flex-col items-center justify-center cursor-pointer transition group mb-6 ${dataAlreadySaved ? 'cursor-not-allowed opacity-50' : ''}`}
                             >
                                 <Video size={32} className="text-gray-400 group-hover:text-red-500 transition mb-2" />
                                 <p className="text-xs text-gray-400 group-hover:text-red-500 transition text-center leading-tight px-2">
@@ -244,19 +264,23 @@ const Talent: React.FC = () => {
                                         controls
                                         className="w-full max-h-[300px] object-contain"
                                     />
-                                    <button
-                                        onClick={removeVideo}
-                                        className="absolute top-2 right-2 w-8 h-8 bg-black/60 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-                                    >
-                                        <X size={14} className="text-white" />
-                                    </button>
+                                    {!dataAlreadySaved && (
+                                        <button
+                                            onClick={removeVideo}
+                                            className="absolute top-2 right-2 w-8 h-8 bg-black/60 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                                        >
+                                            <X size={14} className="text-white" />
+                                        </button>
+                                    )}
                                     <div className="absolute bottom-2 right-2">
                                         <CheckCircle2 size={16} className="text-green-400 drop-shadow" />
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-gray-400 mt-1.5 ml-1">
-                                    {video.file.name} · {formatBytes(video.file.size)}
-                                </p>
+                                {video.file && (
+                                    <p className="text-[10px] text-gray-400 mt-1.5 ml-1">
+                                        {video.file.name} · {formatBytes(video.file.size)}
+                                    </p>
+                                )}
                             </div>
                         )}
 
@@ -265,6 +289,7 @@ const Talent: React.FC = () => {
                             type="file"
                             accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm,video/x-flv,video/x-ms-wmv,video/*"
                             className="hidden"
+                            disabled={dataAlreadySaved}
                             onChange={e => handleVideoSelected(e.target.files)}
                         />
 

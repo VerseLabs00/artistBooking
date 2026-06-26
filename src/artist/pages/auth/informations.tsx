@@ -24,6 +24,25 @@ const Information: React.FC = () => {
                 }
             })
             .catch(() => {});
+
+        // Load saved basic info if it exists
+        api.get("/onboarding/basic-info")
+            .then(response => {
+                const savedData = response.data;
+                setForm({
+                    full_name: savedData.full_name || user?.name || "",
+                    stage_name: savedData.stage_name || "",
+                    location: savedData.location || "",
+                    phone_number: savedData.phone_number || "",
+                    dob: savedData.dob || "",
+                    email: savedData.email || user?.email || "",
+                    category: savedData.category || "Singer",
+                });
+                setDataAlreadySaved(true);
+            })
+            .catch(() => {
+                // No saved data exists, keep default values
+            });
     }, []);
 
     const [form, setForm] = useState({
@@ -37,6 +56,7 @@ const Information: React.FC = () => {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [dataAlreadySaved, setDataAlreadySaved] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -47,6 +67,14 @@ const Information: React.FC = () => {
         if (!form.full_name || !form.location || !form.phone_number || !form.email) {
             setError("Please fill in all required fields."); return;
         }
+        
+        // If data is already saved, just navigate without re-saving
+        if (dataAlreadySaved) {
+            window.scrollTo(0, 0);
+            navigate("/verification", { state: { resuming } });
+            return;
+        }
+
         setLoading(true);
         try {
             await api.post("/onboarding/basic-info", form);
@@ -166,13 +194,15 @@ const Information: React.FC = () => {
                                 <label className="text-sm font-medium">Full Name <span className="text-red-500">*</span></label>
                                 <input name="full_name" value={form.full_name} onChange={handleChange}
                                        type="text" placeholder="Enter your full name"
-                                       className="mt-2 w-full h-12 rounded-xl border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-black" />
+                                       readOnly={dataAlreadySaved}
+                                       className={`mt-2 w-full h-12 rounded-xl border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-black ${dataAlreadySaved ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
                             </div>
                             <div>
                                 <label className="text-sm font-medium">Stage Name (Optional)</label>
                                 <input name="stage_name" value={form.stage_name} onChange={handleChange}
                                        type="text" placeholder="your artistic name"
-                                       className="mt-2 w-full h-12 rounded-xl border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-black" />
+                                       readOnly={dataAlreadySaved}
+                                       className={`mt-2 w-full h-12 rounded-xl border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-black ${dataAlreadySaved ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
                             </div>
                             <div>
                                 <label className="text-sm font-medium">Location <span className="text-red-500">*</span></label>
@@ -180,7 +210,8 @@ const Information: React.FC = () => {
                                     <MapPin className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
                                     <input name="location" value={form.location} onChange={handleChange}
                                            type="text" placeholder="city, state"
-                                           className="w-full h-12 rounded-xl border border-gray-300 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-black" />
+                                           readOnly={dataAlreadySaved}
+                                           className={`w-full h-12 rounded-xl border border-gray-300 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-black ${dataAlreadySaved ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -188,7 +219,8 @@ const Information: React.FC = () => {
                                     <label className="text-sm font-medium">Phone Number <span className="text-red-500">*</span></label>
                                     <input name="phone_number" value={form.phone_number} onChange={handleChange}
                                            type="text" placeholder="+94 (555) 123-456"
-                                           className="mt-2 w-full h-12 rounded-xl border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-black" />
+                                           readOnly={dataAlreadySaved}
+                                           className={`mt-2 w-full h-12 rounded-xl border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-black ${dataAlreadySaved ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium">Date Of Birth</label>
@@ -196,7 +228,8 @@ const Information: React.FC = () => {
                                         <Calendar className="absolute right-3 top-3.5 w-5 h-5 text-gray-400" />
                                         <input name="dob" value={form.dob} onChange={handleChange}
                                                type="date"
-                                               className="w-full h-12 rounded-xl border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-black" />
+                                               readOnly={dataAlreadySaved}
+                                               className={`w-full h-12 rounded-xl border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-black ${dataAlreadySaved ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
                                     </div>
                                 </div>
                             </div>
@@ -204,14 +237,16 @@ const Information: React.FC = () => {
                                 <label className="text-sm font-medium">Email <span className="text-red-500">*</span></label>
                                 <input name="email" value={form.email} onChange={handleChange}
                                        type="email" placeholder="john@gmail.com"
-                                       className="mt-2 w-full h-12 rounded-xl border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-black" />
+                                       readOnly={dataAlreadySaved}
+                                       className={`mt-2 w-full h-12 rounded-xl border border-gray-300 px-4 focus:outline-none focus:ring-2 focus:ring-black ${dataAlreadySaved ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
                             </div>
                             <div>
                                 <label className="text-sm font-medium">Category <span className="text-red-500">*</span></label>
                                 <div className="relative mt-2">
                                     <Music2 className="absolute right-10 top-3.5 w-5 h-5 text-gray-400" />
                                     <select name="category" value={form.category} onChange={handleChange}
-                                            className="w-full h-12 rounded-xl border border-gray-300 px-4 appearance-none focus:outline-none focus:ring-2 focus:ring-black">
+                                            disabled={dataAlreadySaved}
+                                            className={`w-full h-12 rounded-xl border border-gray-300 px-4 appearance-none focus:outline-none focus:ring-2 focus:ring-black ${dataAlreadySaved ? 'bg-gray-100 cursor-not-allowed' : ''}`}>
                                         <option>Singer</option>
                                         <option>Rapper</option>
                                         <option>Live Band</option>

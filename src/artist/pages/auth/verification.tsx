@@ -43,6 +43,19 @@ const Verification: React.FC = () => {
                 }
             })
             .catch(() => {});
+
+        // Load saved verification documents if they exist
+        api.get("/onboarding/verification")
+            .then(response => {
+                const savedData = response.data;
+                if (savedData.front_url) setFrontPreview(savedData.front_url);
+                if (savedData.back_url) setBackPreview(savedData.back_url);
+                if (savedData.selfie_url) setSelfiePreview(savedData.selfie_url);
+                setDataAlreadySaved(true);
+            })
+            .catch(() => {
+                // No saved data exists, keep default empty state
+            });
     }, []);
 
     const [docType, setDocType] = useState<DocType>("National ID");
@@ -57,6 +70,7 @@ const Verification: React.FC = () => {
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState("");
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+    const [dataAlreadySaved, setDataAlreadySaved] = useState(false);
 
     const frontRef = useRef<HTMLInputElement>(null);
     const backRef = useRef<HTMLInputElement>(null);
@@ -92,8 +106,16 @@ const Verification: React.FC = () => {
     const handleContinue = async () => {
         setError("");
         setFieldErrors({});
-        if (!frontFile) { setError("Please upload the front side of your document."); return; }
-        if (!selfieFile) { setError("Please upload a selfie with your document."); return; }
+        
+        // If data is already saved and user hasn't selected new files, just navigate
+        if (dataAlreadySaved && !frontFile && !backFile && !selfieFile) {
+            window.scrollTo(0, 0);
+            navigate("/talent", { state: { resuming } });
+            return;
+        }
+
+        if (!frontFile && !frontPreview) { setError("Please upload the front side of your document."); return; }
+        if (!selfieFile && !selfiePreview) { setError("Please upload a selfie with your document."); return; }
         if (!agreed) { setError("Please agree to the terms to continue."); return; }
 
         setLoading(true);
@@ -102,16 +124,16 @@ const Verification: React.FC = () => {
             // Phone photos are large (and iPhones use HEIC). Compress/convert to
             // JPEG in the browser so uploads don't fail on mobile devices.
             const [front, selfie, back] = await Promise.all([
-                compressImage(frontFile),
-                compressImage(selfieFile),
+                frontFile ? compressImage(frontFile) : Promise.resolve(null),
+                selfieFile ? compressImage(selfieFile) : Promise.resolve(null),
                 backFile ? compressImage(backFile) : Promise.resolve(null),
             ]);
 
             const formData = new FormData();
             formData.append("document_type", docType);
-            formData.append("front", front);
+            if (front) formData.append("front", front);
             if (back) formData.append("back", back);
-            formData.append("selfie", selfie);
+            if (selfie) formData.append("selfie", selfie);
 
             await api.post("/onboarding/verification", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
@@ -221,8 +243,8 @@ const Verification: React.FC = () => {
                         {/* Document Types */}
                         <div className="flex gap-4 mb-8 flex-wrap">
                             {docTypes.map((item) => (
-                                <div key={item} onClick={() => setDocType(item)}
-                                    className={`w-28 h-24 border rounded-2xl flex flex-col items-center justify-center text-xs cursor-pointer transition ${docType === item ? "border-red-500 text-red-600 bg-red-50" : "text-gray-600 hover:border-red-500"}`}>
+                                <div key={item} onClick={() => !dataAlreadySaved && setDocType(item)}
+                                    className={`w-28 h-24 border rounded-2xl flex flex-col items-center justify-center text-xs cursor-pointer transition ${docType === item ? "border-red-500 text-red-600 bg-red-50" : "text-gray-600 hover:border-red-500"} ${dataAlreadySaved ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                     <div className="mb-2 text-red-500">🪪</div>
                                     {item}
                                 </div>
@@ -233,14 +255,16 @@ const Verification: React.FC = () => {
                         <div className="grid grid-cols-2 gap-6 mb-6">
                             <div>
                                 <p className="text-xs text-gray-400 mb-2">FRONT SIDE *</p>
-                                <div onClick={() => frontRef.current?.click()}
-                                    className={`relative overflow-hidden border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${fieldErrors.front ? "border-red-500" : frontPreview ? "border-green-400" : ""}`}>
+                                <div onClick={() => !dataAlreadySaved && frontRef.current?.click()}
+                                    className={`relative overflow-hidden border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${fieldErrors.front ? "border-red-500" : frontPreview ? "border-green-400" : ""} ${dataAlreadySaved ? 'cursor-not-allowed opacity-70' : ''}`}>
                                     {frontPreview ? (
                                         <>
                                             <img src={frontPreview} alt="Front preview" className="absolute inset-0 w-full h-full object-cover" />
-                                            <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
-                                                <p className="text-white text-sm font-medium">Change</p>
-                                            </div>
+                                            {!dataAlreadySaved && (
+                                                <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
+                                                    <p className="text-white text-sm font-medium">Change</p>
+                                                </div>
+                                            )}
                                         </>
                                     ) : frontFile ? (
                                         <>
@@ -256,19 +280,21 @@ const Verification: React.FC = () => {
                                         </>
                                     )}
                                 </div>
-                                <input ref={frontRef} type="file" accept=".jpg,.jpeg,.png,.pdf,.heic,.heif,image/*,application/pdf" className="hidden" onChange={e => selectFile("front", e.target.files?.[0] || null, setFrontFile, frontPreview, setFrontPreview)} />
+                                <input ref={frontRef} type="file" accept=".jpg,.jpeg,.png,.pdf,.heic,.heif,image/*,application/pdf" className="hidden" disabled={dataAlreadySaved} onChange={e => selectFile("front", e.target.files?.[0] || null, setFrontFile, frontPreview, setFrontPreview)} />
                                 {fieldErrors.front && <p className="text-xs text-red-600 mt-1 flex items-start gap-1"><AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />{fieldErrors.front}</p>}
                             </div>
                             <div>
                                 <p className="text-xs text-gray-400 mb-2">BACK SIDE</p>
-                                <div onClick={() => backRef.current?.click()}
-                                    className={`relative overflow-hidden border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${fieldErrors.back ? "border-red-500" : backPreview ? "border-green-400" : ""}`}>
+                                <div onClick={() => !dataAlreadySaved && backRef.current?.click()}
+                                    className={`relative overflow-hidden border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center text-gray-500 hover:border-red-500 cursor-pointer transition ${fieldErrors.back ? "border-red-500" : backPreview ? "border-green-400" : ""} ${dataAlreadySaved ? 'cursor-not-allowed opacity-70' : ''}`}>
                                     {backPreview ? (
                                         <>
                                             <img src={backPreview} alt="Back preview" className="absolute inset-0 w-full h-full object-cover" />
-                                            <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
-                                                <p className="text-white text-sm font-medium">Change</p>
-                                            </div>
+                                            {!dataAlreadySaved && (
+                                                <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
+                                                    <p className="text-white text-sm font-medium">Change</p>
+                                                </div>
+                                            )}
                                         </>
                                     ) : backFile ? (
                                         <>
@@ -284,7 +310,7 @@ const Verification: React.FC = () => {
                                         </>
                                     )}
                                 </div>
-                                <input ref={backRef} type="file" accept=".jpg,.jpeg,.png,.pdf,.heic,.heif,image/*,application/pdf" className="hidden" onChange={e => selectFile("back", e.target.files?.[0] || null, setBackFile, backPreview, setBackPreview)} />
+                                <input ref={backRef} type="file" accept=".jpg,.jpeg,.png,.pdf,.heic,.heif,image/*,application/pdf" className="hidden" disabled={dataAlreadySaved} onChange={e => selectFile("back", e.target.files?.[0] || null, setBackFile, backPreview, setBackPreview)} />
                                 {fieldErrors.back && <p className="text-xs text-red-600 mt-1 flex items-start gap-1"><AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />{fieldErrors.back}</p>}
                             </div>
                         </div>
@@ -292,14 +318,16 @@ const Verification: React.FC = () => {
                         {/* Selfie */}
                         <div className="mb-6">
                             <p className="text-xs text-gray-400 mb-2">SELFIE *</p>
-                            <div onClick={() => selfieRef.current?.click()}
-                                className={`relative overflow-hidden border-2 border-dashed rounded-2xl h-36 flex items-center justify-between px-6 hover:border-red-500 cursor-pointer transition ${fieldErrors.selfie ? "border-red-500" : selfiePreview ? "border-green-400" : ""}`}>
+                            <div onClick={() => !dataAlreadySaved && selfieRef.current?.click()}
+                                className={`relative overflow-hidden border-2 border-dashed rounded-2xl h-36 flex items-center justify-between px-6 hover:border-red-500 cursor-pointer transition ${fieldErrors.selfie ? "border-red-500" : selfiePreview ? "border-green-400" : ""} ${dataAlreadySaved ? 'cursor-not-allowed opacity-70' : ''}`}>
                                 {selfiePreview ? (
                                     <>
                                         <img src={selfiePreview} alt="Selfie preview" className="absolute inset-0 w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
-                                            <p className="text-white text-sm font-medium">Change</p>
-                                        </div>
+                                        {!dataAlreadySaved && (
+                                            <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
+                                                <p className="text-white text-sm font-medium">Change</p>
+                                            </div>
+                                        )}
                                     </>
                                 ) : (
                                     <>
@@ -314,13 +342,13 @@ const Verification: React.FC = () => {
                                     </>
                                 )}
                             </div>
-                            <input ref={selfieRef} type="file" accept=".jpg,.jpeg,.png,.heic,.heif,image/*" capture="user" className="hidden" onChange={e => selectFile("selfie", e.target.files?.[0] || null, setSelfieFile, selfiePreview, setSelfiePreview)} />
+                            <input ref={selfieRef} type="file" accept=".jpg,.jpeg,.png,.heic,.heif,image/*" capture="user" className="hidden" disabled={dataAlreadySaved} onChange={e => selectFile("selfie", e.target.files?.[0] || null, setSelfieFile, selfiePreview, setSelfiePreview)} />
                             {fieldErrors.selfie && <p className="text-xs text-red-600 mt-1 flex items-start gap-1"><AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />{fieldErrors.selfie}</p>}
                         </div>
 
                         {/* Agreement */}
                         <div className="flex items-start gap-3 mb-8 text-sm text-gray-600">
-                            <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} className="mt-1 accent-red-600" />
+                            <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} disabled={dataAlreadySaved} className="mt-1 accent-red-600" />
                             <p>I confirm these documents are genuine and belong to me. I agree to the <span className="text-red-600 font-medium">Privacy Policy</span> and <span className="text-red-600 font-medium">Verification Terms</span>.</p>
                         </div>
 
