@@ -190,9 +190,44 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
     const [selectedStar, setSelectedStar] = useState(0);
     const [review, setReview] = useState("");
 
-    const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxUrl, setLightboxUrl] = useState("");
+    const [lightboxType, setLightboxType] = useState<"image" | "youtube" | "spotify" | "video" | "link">("image");
 
     const { token, user } = useAuth();
+
+    const openLightbox = (url: string, type: "image" | "youtube" | "spotify" | "video" | "link" = "image") => {
+        setLightboxUrl(url);
+        setLightboxType(type);
+        setLightboxOpen(true);
+    };
+
+    const closeLightbox = () => {
+        setLightboxOpen(false);
+        setLightboxUrl("");
+        setLightboxType("image");
+    };
+
+    const getLightboxType = (item: { url: string; media_type: string; is_external_link: boolean }): "youtube" | "spotify" | "video" | "link" => {
+        if (getYouTubeId(item.url)) return "youtube";
+        if (getSpotifyEmbedUrl(item.url)) return "spotify";
+        if (isDirectVideo(item.url)) return "video";
+        return "link";
+    };
+
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === "Escape") closeLightbox();
+        };
+        if (lightboxOpen) {
+            document.addEventListener("keydown", handleEsc);
+            document.body.style.overflow = "hidden";
+        }
+        return () => {
+            document.removeEventListener("keydown", handleEsc);
+            document.body.style.overflow = "";
+        };
+    }, [lightboxOpen]);
 
     useEffect(() => {
         if (!id) return;
@@ -336,26 +371,7 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
     const avgRating = artist.rating.average ?? 0;
     const galleryImages = artist.gallery;
 
-    // Combine portfolio media with main social links if not already present
     const mediaLinks = [...artist.media];
-    if (artist.youtube_link && !mediaLinks.some(m => m.url === artist.youtube_link)) {
-        mediaLinks.push({
-            id: 'main-youtube',
-            url: artist.youtube_link,
-            media_type: 'video',
-            is_external_link: true,
-            title: 'Official YouTube'
-        });
-    }
-    if (artist.spotify_link && !mediaLinks.some(m => m.url === artist.spotify_link)) {
-        mediaLinks.push({
-            id: 'main-spotify',
-            url: artist.spotify_link,
-            media_type: 'audio',
-            is_external_link: true,
-            title: 'Official Spotify'
-        });
-    }
 
     return (
         <div className={`${onClose ? 'relative h-full overflow-y-auto custom-scrollbar' : 'min-h-screen'} bg-[#F4F1F5] transition-all duration-500`}>
@@ -434,17 +450,17 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                                     )}
 
                                     {/* PRICE */}
-                                    {artist.starting_price && (
+                                    {artist.full_price && (
                                         <div className="mt-7 text-left">
                                             <div className="text-[#FF2B6B] font-bold text-[28px] leading-none">
-                                                LKR {artist.starting_price.toLocaleString()}
+                                                LKR {artist.full_price.toLocaleString()}
                                                 <span className="text-gray-600 text-[15px] font-medium ml-2">
-                                                    starting price
+                                                    {/*full price*/}
                                                 </span>
                                             </div>
-                                            {artist.max_price && (
-                                                <p className="text-[11px] text-gray-400 mt-1">
-                                                    Range: LKR {artist.starting_price.toLocaleString()} – {artist.max_price.toLocaleString()} depending on event type and duration
+                                            {artist.advance && (
+                                                <p className="text-md text-black-400 mt-1">
+                                                    Advance {artist.advance.toLocaleString()}
                                                 </p>
                                             )}
                                         </div>
@@ -515,14 +531,6 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50">
-                                        <Heart size={18} />
-                                    </button>
-                                    <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50">
-                                        <MoreHorizontal size={18} />
-                                    </button>
-                                </div>
                             </div>
 
                             {/* DESCRIPTION */}
@@ -541,12 +549,17 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                                     <h3 className="text-[24px] font-bold mt-10 mb-5">Gallery</h3>
                                     <div className="grid grid-cols-3 gap-3">
                                         {galleryImages.slice(0, 3).map((img) => (
-                                            <img
+                                            <button
                                                 key={img.id}
-                                                src={img.url}
-                                                alt="gallery"
-                                                className="w-full h-[180px] object-cover rounded-xl"
-                                            />
+                                                onClick={() => openLightbox(img.url, "image")}
+                                                className="w-full h-[180px] rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#FF2B6B] focus:ring-offset-2"
+                                            >
+                                                <img
+                                                    src={img.url}
+                                                    alt="gallery"
+                                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                                />
+                                            </button>
                                         ))}
                                     </div>
                                 </>
@@ -561,8 +574,8 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                                             <MediaPreviewCard 
                                                 key={item.id} 
                                                 item={item} 
-                                                isActive={activeMediaId === item.id}
-                                                onActivate={() => setActiveMediaId(item.id)}
+                                                isActive={false}
+                                                onActivate={() => openLightbox(item.url, getLightboxType(item))}
                                             />
                                         ))}
                                     </div>
@@ -683,11 +696,74 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
 
             {/*<Footer />*/}
 
+            {lightboxOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center" onClick={closeLightbox}>
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+                    <div className="relative z-10 flex items-center justify-center w-full max-w-5xl max-h-[90vh] p-4" onClick={(e) => e.stopPropagation()}>
+                        {/* Close button — only shown for non-image media */}
+                        {lightboxType !== "image" && (
+                            <button onClick={closeLightbox} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95">
+                                <X size={18} className="text-white" />
+                            </button>
+                        )}
+                        <div className="flex items-center justify-center w-full">
+                            {lightboxType === "image" ? (
+                                <div onClick={closeLightbox} className="cursor-pointer">
+                                    <img src={lightboxUrl} alt="" className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+                                </div>
+                            ) : (
+                                <>
+                                    {lightboxType === "youtube" && (() => {
+                                        const ytId = getYouTubeId(lightboxUrl);
+                                        return ytId ? (
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+                                                title="YouTube video player"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allowFullScreen
+                                                className="aspect-video w-full max-h-[85vh]"
+                                            />
+                                        ) : null;
+                                    })()}
+                                    {lightboxType === "spotify" && (() => {
+                                        const spotifyUrl = getSpotifyEmbedUrl(lightboxUrl);
+                                        return spotifyUrl ? (
+                                            <iframe
+                                                src={spotifyUrl}
+                                                width="100%"
+                                                height="100%"
+                                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                                className="border-0 w-full h-[380px] max-h-[85vh] rounded-lg bg-white"
+                                            />
+                                        ) : null;
+                                    })()}
+                                    {lightboxType === "video" && (
+                                        <video src={lightboxUrl} controls autoPlay className="max-w-full max-h-[85vh] rounded-lg shadow-2xl" />
+                                    )}
+                                    {lightboxType === "link" && (
+                                        <iframe
+                                            src={lightboxUrl}
+                                            width="100%"
+                                            height="100%"
+                                            className="border-0 w-full h-[600px] max-h-[85vh] bg-white rounded-lg shadow-2xl"
+                                        />
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {showBooking && (
                 <BookingModal
                     artistProfileId={artist.id}
                     artistName={artist.stage_name}
-                    startingPrice={artist.starting_price ?? 0}
+                    fullPrice={artist.full_price ?? 0}
+                    advance={artist.advance ?? 0}
                     onClose={() => setShowBooking(false)}
                 />
             )}

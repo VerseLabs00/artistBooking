@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { getCustomersApi, getCustomerApi } from '../../api/customersApi'
+import { getCustomersApi, getCustomerApi, deleteCustomerApi } from '../../api/customersApi'
 
 // ── Helper: normalise backend User → UI shape ─────────────────────────────────
 function normaliseCustomer(c, stats = null) {
@@ -62,6 +62,18 @@ export const fetchCustomer = createAsyncThunk(
   }
 )
 
+export const deleteCustomer = createAsyncThunk(
+  'customers/delete',
+  async (id, { rejectWithValue }) => {
+    try {
+      await deleteCustomerApi(id)
+      return id
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Delete failed')
+    }
+  }
+)
+
 // ── Slice ─────────────────────────────────────────────────────────────────────
 
 const customersSlice = createSlice({
@@ -110,6 +122,10 @@ const customersSlice = createSlice({
       })
       .addCase(fetchCustomer.rejected, (state, { payload }) => {
         state.selectedLoading = false; state.error = payload
+      })
+      .addCase(deleteCustomer.fulfilled, (state, { payload: id }) => {
+        state.list = state.list.filter(c => c.id !== id)
+        if (state.selected?.id === id) state.selected = null
       })
   },
 })

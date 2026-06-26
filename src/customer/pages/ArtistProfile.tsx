@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-    Heart, MoreHorizontal, Play, Music, MapPin, Star,
-    Instagram, Facebook, Twitter, Mail, X
+    Heart, Play, Music, MapPin, Star,
+    Instagram, Facebook, Twitter, Mail, X, Loader2
 } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BookingModal from "../components/booking/BookingModal";
+import toast from "react-hot-toast";
 import { getArtist, submitReview } from "../services/discoveryService";
+import { toggleFavorite, getFavorites } from "../services/favoriteService";
 import type { ArtistDetail } from "../services/discoveryService";
 import { useAuth } from "../context/AuthContext";
 import { PublicArtistCalendar } from "../../components/PublicArtistCalendar";
@@ -38,11 +40,11 @@ async function fetchYouTubeTitle(ytId: string): Promise<string> {
     return data.title as string;
 }
 
-function MediaPreviewCard({ 
-    item, 
-    isActive, 
-    onActivate 
-}: { 
+function MediaPreviewCard({
+                              item,
+                              isActive,
+                              onActivate
+                          }: {
     item: { id: string; url: string; media_type: string; is_external_link: boolean; title?: string | null };
     isActive: boolean;
     onActivate: () => void;
@@ -68,7 +70,7 @@ function MediaPreviewCard({
 
     if (ytId) {
         return (
-            <div className="flex flex-col h-full font-sans">
+            <div className="flex flex-col h-full">
                 <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
                     <div className="aspect-video w-full bg-black relative group cursor-pointer" onClick={onActivate}>
                         {!isActive ? (
@@ -115,7 +117,7 @@ function MediaPreviewCard({
 
     if (spotifyEmbed) {
         return (
-            <div className="flex flex-col h-full font-sans">
+            <div className="flex flex-col h-full">
                 <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
                     <div className="w-full h-[152px]">
                         <iframe
@@ -140,17 +142,9 @@ function MediaPreviewCard({
 
     if (isDirectVideo(item.url)) {
         return (
-            <div className="flex flex-col h-full font-sans">
-                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
-                    <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
-                        <Play size={32} className="text-gray-400" />
-                    </div>
-                </div>
-                <div className="p-3">
-                    <p className="text-[14px] font-medium text-gray-700 truncate">
-                        {resolvedTitle || "Video"}
-                    </p>
-                    <p className="text-[11px] text-gray-400 truncate">{item.url}</p>
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
+                    <Play size={32} className="text-gray-400" />
                 </div>
             </div>
         );
@@ -161,7 +155,7 @@ function MediaPreviewCard({
             href={item.url}
             target="_blank"
             rel="noreferrer"
-            className="flex flex-col h-full font-sans"
+            className="flex flex-col h-full"
         >
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 h-full block">
                 <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
@@ -181,7 +175,7 @@ function MediaPreviewCard({
 export default function ArtistProfile({ id: propId, onClose }: { id?: string; onClose?: () => void }) {
     const { id: paramId } = useParams<{ id: string }>();
     const id = propId || paramId;
-    
+
     const navigate = useNavigate();
     const [artist, setArtist] = useState<ArtistDetail | null>(null);
     const [loading, setLoading] = useState(true);
@@ -190,7 +184,45 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
     const [selectedStar, setSelectedStar] = useState(0);
     const [review, setReview] = useState("");
 
-    const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
+    const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
+    const [favoriteLoadingIds, setFavoriteLoadingIds] = useState<Set<string | number>>(new Set());
+
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxUrl, setLightboxUrl] = useState("");
+    const [lightboxType, setLightboxType] = useState<"image" | "youtube" | "spotify" | "video" | "link">("image");
+
+    const openLightbox = (url: string, type: "image" | "youtube" | "spotify" | "video" | "link" = "image") => {
+        setLightboxUrl(url);
+        setLightboxType(type);
+        setLightboxOpen(true);
+    };
+
+    const getLightboxType = (item: { url: string; media_type: string; is_external_link: boolean }): "youtube" | "spotify" | "video" | "link" => {
+        if (getYouTubeId(item.url)) return "youtube";
+        if (getSpotifyEmbedUrl(item.url)) return "spotify";
+        if (isDirectVideo(item.url)) return "video";
+        return "link";
+    };
+
+    const closeLightbox = () => {
+        setLightboxOpen(false);
+        setLightboxUrl("");
+        setLightboxType("image");
+    };
+
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === "Escape") closeLightbox();
+        };
+        if (lightboxOpen) {
+            document.addEventListener("keydown", handleEsc);
+            document.body.style.overflow = "hidden";
+        }
+        return () => {
+            document.removeEventListener("keydown", handleEsc);
+            document.body.style.overflow = "";
+        };
+    }, [lightboxOpen]);
 
     const { token, user } = useAuth();
 
@@ -203,6 +235,49 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
             .catch(() => setArtist(null))
             .finally(() => setLoading(false));
     }, [id, propId]);
+
+    useEffect(() => {
+        getFavorites()
+            .then(data => {
+                setLikedArtists(new Set(data.map(f => f.id)));
+            })
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        const refresh = () => {
+            getFavorites()
+                .then(data => setLikedArtists(new Set(data.map(f => f.id))))
+                .catch(() => {});
+        };
+        window.addEventListener('favorites-changed', refresh);
+        window.addEventListener('storage', refresh);
+        return () => {
+            window.removeEventListener('favorites-changed', refresh);
+            window.removeEventListener('storage', refresh);
+        };
+    }, []);
+
+    const toggleLike = async (artistId: string | number) => {
+        setFavoriteLoadingIds(prev => new Set(prev).add(artistId));
+        try {
+            const result = await toggleFavorite(String(artistId));
+            setLikedArtists(prev => {
+                const next = new Set(prev);
+                result.is_favorited ? next.add(artistId) : next.delete(artistId);
+                return next;
+            });
+        } catch (err) {
+            console.error("Failed to toggle favorite:", err);
+            toast.error("Failed to update favorite. Please try again.");
+        } finally {
+            setFavoriteLoadingIds(prev => {
+                const next = new Set(prev);
+                next.delete(artistId);
+                return next;
+            });
+        }
+    };
 
     // FAILSAFE REDIRECT: If the booking modal is about to open but we are not logged in as a customer
     useEffect(() => {
@@ -275,49 +350,142 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
             .catch(() => {});
     };
 
-    if (loading) return (
-        <div className="min-h-screen bg-[#F4F1F5] flex items-center justify-center">
-            <div className="animate-pulse flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full border-4 border-[#FF2B6B] border-t-transparent animate-spin mb-4" />
-                <p className="text-gray-400 text-sm font-sans">Loading profile...</p>
+    if (loading) {
+        const skeletonClass = "animate-pulse bg-gray-200";
+        return (
+            <div className="min-h-screen bg-[#F4F1F5]">
+                {/* Skeleton Hero + Avatar — same positioning as real component */}
+                <div className={`relative h-[160px] sm:h-[200px] md:h-[220px] w-full overflow-visible`}>
+                    <div className={`w-full h-full ${skeletonClass}`} />
+                    <div className="absolute inset-0 bg-black/20" />
+                    <div className="absolute -bottom-12 sm:-bottom-16 left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+200px)] lg:translate-x-0 z-30">
+                        <div className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[4px] sm:border-[5px] border-white shadow-lg ${skeletonClass}`} />
+                    </div>
+                </div>
+
+                <div className="max-w-6xl mx-auto px-3 sm:px-4 mt-2 sm:mt-4 relative z-20 pb-12 sm:pb-20">
+                    <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
+
+                        {/* Skeleton Left Panel */}
+                        <div className="space-y-5">
+                            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                                <div className="px-4 sm:px-6 pb-5 sm:pb-7 text-center pt-16 sm:pt-20">
+                                    <div className={`h-8 w-40 rounded ${skeletonClass} mx-auto mb-3`} />
+                                    <div className="flex items-center justify-center gap-1">
+                                        <div className={`h-4 w-24 rounded ${skeletonClass}`} />
+                                    </div>
+                                    <div className="flex flex-wrap justify-center gap-2 mt-4">
+                                        <div className={`h-6 w-20 rounded-full ${skeletonClass}`} />
+                                        <div className={`h-6 w-24 rounded-full ${skeletonClass}`} />
+                                    </div>
+                                    <div className="space-y-2 mt-6 text-left">
+                                        <div className={`h-4 w-full rounded ${skeletonClass}`} />
+                                        <div className={`h-4 w-5/6 rounded ${skeletonClass}`} />
+                                    </div>
+                                    <div className="mt-6 text-left">
+                                        <div className={`h-8 w-24 rounded ${skeletonClass} mb-2`} />
+                                        <div className={`h-4 w-16 rounded ${skeletonClass}`} />
+                                    </div>
+                                    <div className="flex gap-3 mt-6">
+                                        <div className={`h-10 bg-gray-100 rounded-full flex-1 ${skeletonClass}`} />
+                                        <div className={`h-10 bg-gray-100 rounded-full flex-1 ${skeletonClass}`} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Social Skeleton */}
+                            <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-7 shadow-sm">
+                                <div className={`h-5 w-24 rounded ${skeletonClass} mx-auto mb-5`} />
+                                <div className="flex justify-center gap-4">
+                                    <div className={`w-11 h-11 rounded-full ${skeletonClass}`} />
+                                    <div className={`w-11 h-11 rounded-full ${skeletonClass}`} />
+                                    <div className={`w-11 h-11 rounded-full ${skeletonClass}`} />
+                                    <div className={`w-11 h-11 rounded-full ${skeletonClass}`} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right Panel Skeleton */}
+                        <div className="space-y-4">
+                            <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm">
+                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <div className={`h-7 w-28 rounded ${skeletonClass} mb-2`} />
+                                        <div className="flex flex-wrap gap-5">
+                                            <div className={`h-4 w-20 rounded ${skeletonClass}`} />
+                                            <div className={`h-4 w-24 rounded ${skeletonClass}`} />
+                                        </div>
+                                    </div>
+                                    <div className={`w-10 h-10 rounded-full border border-gray-100 ${skeletonClass}`} />
+                                </div>
+                                <div className="space-y-3 mt-7">
+                                    <div className={`h-4 w-full rounded ${skeletonClass}`} />
+                                    <div className={`h-4 w-5/6 rounded ${skeletonClass}`} />
+                                    <div className={`h-4 w-4/6 rounded ${skeletonClass}`} />
+                                </div>
+                            </div>
+
+                            {/* Media Skeleton */}
+                            <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm">
+                                <div className={`h-5 w-32 rounded ${skeletonClass} mb-4`} />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {[1,2].map(i => (
+                                        <div key={i} className={`rounded-2xl ${skeletonClass}`}>
+                                            <div className="aspect-video w-full bg-gray-200" />
+                                            <div className="p-3">
+                                                <div className={`h-4 w-3/4 rounded ${skeletonClass}`} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Reviews Skeleton */}
+                            <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm">
+                                <div className={`h-5 w-24 rounded ${skeletonClass} mb-6`} />
+                                <div className="space-y-4">
+                                    {[1,2,3].map(i => (
+                                        <div key={i} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                            <div className="flex justify-between">
+                                                <div className="flex gap-3 items-center">
+                                                    <div className={`w-8 h-8 rounded-full ${skeletonClass}`} />
+                                                    <div>
+                                                        <div className={`h-4 w-24 rounded ${skeletonClass} mb-1`} />
+                                                        <div className={`h-3 w-16 rounded ${skeletonClass}`} />
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    {[1,2,3,4,5].map(j => (
+                                                        <div key={j} className={`w-3 h-3 rounded-full ${skeletonClass}`} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className={`h-4 w-full rounded ${skeletonClass} mt-3`} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
 
     if (!artist) return (
-        <div className="min-h-screen bg-[#F4F1F5] flex items-center justify-center font-sans">
+        <div className="min-h-screen bg-[#F4F1F5] flex items-center justify-center">
             <div className="text-gray-500 font-medium">Artist not found.</div>
         </div>
     );
 
     const avgRating = artist.rating.average ?? 0;
     const galleryImages = artist.gallery;
-    
-    // Combine portfolio media with main social links if not already present
+
     const mediaLinks = [...artist.media];
-    if (artist.youtube_link && !mediaLinks.some(m => m.url === artist.youtube_link)) {
-        mediaLinks.push({
-            id: 'main-youtube',
-            url: artist.youtube_link,
-            media_type: 'video',
-            is_external_link: true,
-            title: 'Official YouTube'
-        });
-    }
-    if (artist.spotify_link && !mediaLinks.some(m => m.url === artist.spotify_link)) {
-        mediaLinks.push({
-            id: 'main-spotify',
-            url: artist.spotify_link,
-            media_type: 'audio',
-            is_external_link: true,
-            title: 'Official Spotify'
-        });
-    }
 
     return (
-        <div className={`${onClose ? 'relative h-full overflow-y-auto custom-scrollbar' : 'min-h-screen'} bg-[#F4F1F5] transition-all duration-500`} style={{ fontFamily: "'Fraunces', serif" }}>
+        <div className={`${onClose ? 'relative h-full overflow-y-auto custom-scrollbar' : 'min-h-screen'} bg-[#F4F1F5] transition-all duration-500`}>
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
                 .custom-scrollbar::-webkit-scrollbar { width: 8px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
@@ -366,7 +534,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                     </h1>
 
                                     {/* RATING */}
-                                    <div className="flex items-center justify-center gap-1 mt-2 text-[13px] font-sans">
+                                    <div className="flex items-center justify-center gap-1 mt-2 text-[13px]">
                                         <Star size={14} className="text-yellow-500 fill-yellow-400" />
                                         <span className="font-semibold text-gray-700">
                                             {avgRating > 0 ? avgRating.toFixed(1) : "—"}
@@ -378,7 +546,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
 
                                     {/* TAGS */}
                                     {artist.tags.length > 0 && (
-                                        <div className="flex flex-wrap justify-center gap-2 mt-4 font-sans">
+                                        <div className="flex flex-wrap justify-center gap-2 mt-4">
                                             {artist.tags.map((tag, i) => (
                                                 <span
                                                     key={i}
@@ -392,30 +560,30 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
 
                                     {/* Bio/Short Bio */}
                                     {artist.short_bio && (
-                                        <p className="text-[13px] text-gray-500 leading-6 mt-6 text-left font-sans">
+                                        <p className="text-[13px] text-gray-500 leading-6 mt-6 text-left">
                                             {artist.short_bio}
                                         </p>
                                     )}
 
                                     {/* PRICE */}
-                                    {artist.starting_price && (
-                                        <div className="mt-7 text-left font-sans">
+                                    {artist.full_price && (
+                                        <div className="mt-7 text-left">
                                             <div className="text-[#FF2B6B] font-bold text-[28px] leading-none">
-                                                LKR {artist.starting_price.toLocaleString()}
+                                                LKR {artist.full_price.toLocaleString()}
                                                 <span className="text-gray-600 text-[15px] font-medium ml-2">
-                                                    starting price
+                                                    {/*full price*/}
                                                 </span>
                                             </div>
-                                            {artist.max_price && (
-                                                <p className="text-[11px] text-gray-400 mt-1">
-                                                    Range: LKR {artist.starting_price.toLocaleString()} – {artist.max_price.toLocaleString()} depending on event type and duration
+                                            {artist.advance && (
+                                                <p className="text-md text-black-400 mt-1">
+                                                    Advance: LKR {artist.advance.toLocaleString()}
                                                 </p>
                                             )}
                                         </div>
                                     )}
 
                                     {/* BOOK BUTTON */}
-                                    <div className="mt-7 font-sans">
+                                    <div className="mt-7">
                                         <button
                                             onClick={handleBookNow}
                                             className="w-full bg-[#FF2B6B] hover:bg-[#ff1b60] transition text-white py-3 rounded-full font-bold text-sm shadow-md"
@@ -466,7 +634,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                     <h2 className="text-xl sm:text-2xl md:text-[26px] font-bold text-gray-900">
                                         Overview
                                     </h2>
-                                    <div className="flex flex-wrap gap-5 mt-2 text-[13px] text-gray-500 font-sans">
+                                    <div className="flex flex-wrap gap-5 mt-2 text-[13px] text-gray-500">
                                         {artist.category && (
                                             <span className="flex items-center gap-1">
                                                 <Music size={13} /> {artist.category}
@@ -479,18 +647,21 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex gap-2 font-sans">
-                                    <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors">
-                                        <Heart size={18} />
-                                    </button>
-                                    <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors">
-                                        <MoreHorizontal size={18} />
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={() => artist && toggleLike(artist.id)}
+                                    className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors relative self-start"
+                                >
+                                    <Heart
+                                        size={18}
+                                        className={artist && likedArtists.has(artist.id) ? "text-red-500" : "text-gray-400"}
+                                        fill={artist && likedArtists.has(artist.id) ? "#ef4444" : "none"}
+                                    />
+                                    {favoriteLoadingIds.has(artist?.id) && <Loader2 size={10} className="animate-spin absolute" />}
+                                </button>
                             </div>
 
                             {/* DESCRIPTION */}
-                            <div className="mt-7 space-y-5 text-[14px] text-gray-500 leading-7 font-sans">
+                            <div className="mt-7 space-y-5 text-[14px] text-gray-500 leading-7">
                                 {artist.bio_1 && <p>{artist.bio_1}</p>}
                                 {artist.bio_2 && <p>{artist.bio_2}</p>}
                                 {artist.paragraph && <p>{artist.paragraph}</p>}
@@ -505,12 +676,17 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                     <h3 className="text-[24px] font-bold mt-10 mb-5">Gallery</h3>
                                     <div className="grid grid-cols-3 gap-3">
                                         {galleryImages.slice(0, 3).map((img) => (
-                                            <img
+                                            <button
                                                 key={img.id}
-                                                src={img.url}
-                                                alt="gallery"
-                                                className="w-full h-[180px] object-cover rounded-xl"
-                                            />
+                                                onClick={() => openLightbox(img.url, "image")}
+                                                className="w-full h-[180px] rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#FF2B6B] focus:ring-offset-2"
+                                            >
+                                                <img
+                                                    src={img.url}
+                                                    alt="gallery"
+                                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                                />
+                                            </button>
                                         ))}
                                     </div>
                                 </>
@@ -522,11 +698,14 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                     <h3 className="text-[24px] font-bold mt-10 mb-5">Audio & Video</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {mediaLinks.map((item) => (
-                                            <MediaPreviewCard 
-                                                key={item.id} 
-                                                item={item} 
-                                                isActive={activeMediaId === item.id}
-                                                onActivate={() => setActiveMediaId(item.id)}
+                                            <MediaPreviewCard
+                                                key={item.id}
+                                                item={item}
+                                                isActive={false}
+                                                onActivate={() => {
+                                                    const type = getLightboxType(item);
+                                                    openLightbox(item.url, type);
+                                                }}
                                             />
                                         ))}
                                     </div>
@@ -535,7 +714,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
 
                             {/* REVIEWS */}
                             <h3 className="text-[24px] font-bold mt-12 mb-6">Reviews</h3>
-                            <div className="grid md:grid-cols-2 gap-8 mb-10 font-sans">
+                            <div className="grid md:grid-cols-2 gap-8 mb-10">
                                 <div className="text-center">
                                     <h2 className="text-4xl font-bold">{avgRating > 0 ? avgRating.toFixed(1) : "—"}</h2>
                                     <div className="flex justify-center text-yellow-400 mt-2">
@@ -565,7 +744,7 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                 </div>
                             </div>
 
-                            <div className="space-y-4 font-sans">
+                            <div className="space-y-4">
                                 {artist.rating.recent_reviews.map((r) => (
                                     <div key={r.id} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
                                         <div className="flex justify-between">
@@ -590,13 +769,13 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                     </div>
                                 ))}
                                 {artist.rating.recent_reviews.length === 0 && (
-                                    <p className="text-sm text-gray-400 text-center py-6 font-sans">No reviews yet.</p>
+                                    <p className="text-sm text-gray-400 text-center py-6">No reviews yet.</p>
                                 )}
                             </div>
 
                             {/* LEAVE A REVIEW */}
-                            <div className="mt-12 bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-sm font-sans">
-                                <h3 className="text-lg font-bold text-gray-900 mb-2 font-serif">Leave a Review</h3>
+                            <div className="mt-12 bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-sm">
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">Leave a Review</h3>
                                 <p className="text-xs text-gray-400 mb-6">Share your experience with the community</p>
 
                                 <div className="flex items-center justify-center gap-1 mb-6">
@@ -651,9 +830,72 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                 <BookingModal
                     artistProfileId={artist.id}
                     artistName={artist.stage_name}
-                    startingPrice={artist.starting_price ?? 0}
+                    fullPrice={artist.full_price ?? 0}
+                    advance={artist.advance ?? 0}
                     onClose={() => setShowBooking(false)}
                 />
+            )}
+
+            {lightboxOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center" onClick={closeLightbox}>
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+                    <div className="relative z-10 flex items-center justify-center w-full max-w-5xl max-h-[90vh] p-4" onClick={(e) => e.stopPropagation()}>
+                        {/* Close button — only shown for non-image media */}
+                        {lightboxType !== "image" && (
+                            <button onClick={closeLightbox} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95">
+                                <X size={18} className="text-white" />
+                            </button>
+                        )}
+                        <div className="flex items-center justify-center w-full">
+                            {lightboxType === "image" ? (
+                                <div onClick={closeLightbox} className="cursor-pointer">
+                                    <img src={lightboxUrl} alt="" className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+                                </div>
+                            ) : (
+                                <>
+                                    {lightboxType === "youtube" && (() => {
+                                        const ytId = getYouTubeId(lightboxUrl);
+                                        return ytId ? (
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+                                                title="YouTube video player"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allowFullScreen
+                                                className="aspect-video w-full max-h-[85vh]"
+                                            />
+                                        ) : null;
+                                    })()}
+                                    {lightboxType === "spotify" && (() => {
+                                        const spotifyUrl = getSpotifyEmbedUrl(lightboxUrl);
+                                        return spotifyUrl ? (
+                                            <iframe
+                                                src={spotifyUrl}
+                                                width="100%"
+                                                height="100%"
+                                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                                className="border-0 w-full h-[380px] max-h-[85vh] rounded-lg bg-white"
+                                            />
+                                        ) : null;
+                                    })()}
+                                    {lightboxType === "video" && (
+                                        <video src={lightboxUrl} controls autoPlay className="max-w-full max-h-[85vh] rounded-lg shadow-2xl" />
+                                    )}
+                                    {lightboxType === "link" && (
+                                        <iframe
+                                            src={lightboxUrl}
+                                            width="100%"
+                                            height="100%"
+                                            className="border-0 w-full h-[600px] max-h-[85vh] bg-white rounded-lg shadow-2xl"
+                                        />
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

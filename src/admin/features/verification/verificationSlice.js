@@ -121,6 +121,9 @@ const verificationSlice = createSlice({
     toggleExpand(state, action) {
       state.expandedId = state.expandedId === action.payload ? null : action.payload
     },
+    setExpandedId(state, action) {
+      state.expandedId = action.payload
+    },
     // Legacy local-only actions kept for compatibility
     approveApplication(state, action) {
       state.list = state.list.filter(v => v.id !== action.payload)
@@ -152,7 +155,7 @@ const verificationSlice = createSlice({
 })
 
 export const {
-  setFilter, toggleExpand, approveApplication, rejectApplication,
+  setFilter, toggleExpand, setExpandedId, approveApplication, rejectApplication,
 } = verificationSlice.actions
 
 export const selectFilteredVerifications = (state) => {

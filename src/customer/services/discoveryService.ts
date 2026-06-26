@@ -7,8 +7,8 @@ export interface ArtistCard {
   location: string
   avatar_url: string | null
   cover_url: string | null
-  starting_price: number | null
-  max_price: number | null
+  full_price: number | null
+  advance: number | null
   tags: string[]
   short_bio: string | null
   verification_status: string | null

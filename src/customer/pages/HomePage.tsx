@@ -9,7 +9,9 @@ import {
 import Footer from "../components/Footer";
 import api from "../lib/api";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 import { getArtists, getCategories, getNearYou, getStats } from "../services/discoveryService";
+import { toggleFavorite, getFavorites } from "../services/favoriteService";
 import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../services/discoveryService";
 import ArtistProfile from "./ArtistProfile";
 
@@ -26,6 +28,8 @@ interface Artist {
     verified: boolean;
     startingPrice: number | null;
     maxPrice: number | null;
+    fullPrice: number | null;
+    advance: number | null;
 }
 
 interface ArtistSearchFilters {
@@ -155,6 +159,8 @@ function mapDiscoveryArtist(a: DiscoveryArtist): Artist {
         verified: extra.verification_status === "verified" || extra.verification_status === "approved",
         startingPrice: a.starting_price,
         maxPrice: a.max_price,
+        fullPrice: a.full_price,
+        advance: a.advance,
     };
 }
 
@@ -242,6 +248,35 @@ export default function HomePage() {
     const [browseCategories, setBrowseCategories] = useState<CategoryData[]>(ALL_CATEGORIES_DATA);
     const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(true);
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
+    const [favoriteLoadingIds, setFavoriteLoadingIds] = useState<Set<string | number>>(new Set());
+
+    useEffect(() => {
+        getFavorites()
+            .then(data => {
+                setLikedArtists(new Set(data.map(f => f.id)));
+            })
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        const refresh = () => {
+            getFavorites()
+                .then(data => setLikedArtists(new Set(data.map(f => f.id))))
+                .catch(() => {});
+        };
+        window.addEventListener('favorites-changed', refresh);
+        window.addEventListener('storage', refresh);
+        window.addEventListener('focus', refresh);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') refresh();
+        });
+        return () => {
+            window.removeEventListener('favorites-changed', refresh);
+            window.removeEventListener('storage', refresh);
+            window.removeEventListener('focus', refresh);
+            document.removeEventListener('visibilitychange', refresh);
+        };
+    }, []);
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
     const [isClosingProfile, setIsClosingProfile] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -398,12 +433,25 @@ export default function HomePage() {
         window.open(`/categoryCustomer?name=${encodeURIComponent(category)}`, '_blank');
     };
 
-    const toggleLike = (id: string | number) => {
-        setLikedArtists(prev => {
-            const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
-            return next;
-        });
+    const toggleLike = async (id: string | number) => {
+        setFavoriteLoadingIds(prev => new Set(prev).add(id));
+        try {
+            const result = await toggleFavorite(String(id));
+            setLikedArtists(prev => {
+                const next = new Set(prev);
+                result.is_favorited ? next.add(id) : next.delete(id);
+                return next;
+            });
+        } catch (err) {
+            console.error("Failed to toggle favorite:", err);
+            toast.error("Failed to update favorite. Please try again.");
+        } finally {
+            setFavoriteLoadingIds(prev => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        }
     };
 
     const renderArtistCard = (artist: Artist) => (
@@ -423,6 +471,7 @@ export default function HomePage() {
                         className={likedArtists.has(artist.id) ? "text-red-500" : "text-gray-500"}
                         fill={likedArtists.has(artist.id) ? "#ef4444" : "none"}
                     />
+                    {favoriteLoadingIds.has(artist.id) && <Loader2 size={10} className="animate-spin absolute" />}
                 </button>
                 {artist.verified && (
                     <div className="verified-dot" />
@@ -441,7 +490,11 @@ export default function HomePage() {
                         <span className="text-[10px] font-700 text-gray-800">{artist.rating}</span>
                         <span className="text-[10px] text-gray-400">({artist.reviews})</span>
                     </div>
-                    <span className="text-[10px] font-800 pink-text">{artist.price}</span>
+                    {artist.fullPrice != null ? (
+                        <span className="text-[10px] font-800 pink-text">Rs. {artist.fullPrice.toLocaleString("en-LK")}</span>
+                    ) : (
+                        <span className="text-[10px] font-800 pink-text">{artist.price}</span>
+                    )}
                 </div>
             </div>
         </div>
@@ -692,7 +745,7 @@ export default function HomePage() {
                 {/* HERO SECTION */}
                 <section
                     className="relative w-full overflow-hidden bg-cover bg-center pt-28 pb-16 sm:pt-36 sm:pb-24 px-4 sm:px-6 md:px-12 lg:px-20 min-h-[480px] sm:min-h-[540px] flex items-center"
-                    style={{ backgroundImage: "url('/Cover7.jpg')" }}
+                    style={{ backgroundImage: "url('/new_cover.jpeg')" }}
                 >
                     <div className="absolute inset-0 bg-black/40 z-0" />
                     <div className="hero-bg-dots absolute top-0 right-0 w-72 h-72 opacity-30 pointer-events-none z-10" />
@@ -741,7 +794,7 @@ export default function HomePage() {
                         </div>
 
                         {browseCategoriesLoading ? (
-                            <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
+                            <div className="grid grid-cols-3 xs:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                                 {Array.from({ length: ALL_CATEGORIES_DATA.length }).map((_, i) => (
                                     <div
                                         key={i}
@@ -750,7 +803,7 @@ export default function HomePage() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
+                            <div className="grid grid-cols-3 xs:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                                 {browseCategories.map(cat => (
                                     <div
                                         key={cat.name}

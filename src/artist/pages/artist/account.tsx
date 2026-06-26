@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-    Heart, MoreHorizontal, Play, Music, MapPin, Users, Star,
-    Instagram, Facebook, Twitter, Mail, Youtube, Music2, Home, LogOut
+    Heart, Play, Music, MapPin, Users, Star,
+    Instagram, Facebook, Twitter, Mail, Youtube, Music2, Home, LogOut, X
 } from "lucide-react";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
@@ -17,8 +17,8 @@ interface Profile {
     bio_1?: string;
     bio_2?: string;
     paragraph?: string;
-    starting_price?: number;
-    max_price?: number;
+    full_price?: number;
+    advance?: number;
     avatar_url?: string;
     cover_url?: string;
     youtube_link?: string;
@@ -198,6 +198,45 @@ function MediaPreviewCard({ item, onDelete, isPlaying, onPlay }: {
             {renderFooter()}
         </div>
     );
+
+    // Favorited By Modal
+    if (showFavModal) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
+                    <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900">Favorited By ({favCount})</h3>
+                        <button onClick={() => setShowFavModal(false)} className="text-gray-400 hover:text-gray-600">
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div className="p-5 overflow-y-auto max-h-[60vh]">
+                        {favCustomers.length === 0 ? (
+                            <div className="text-center py-10">
+                                <Heart size={40} className="text-gray-200 mx-auto mb-3" />
+                                <p className="text-gray-500 text-sm">No customers have favorited you yet.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {favCustomers.map((c, i) => (
+                                    <div key={i} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50">
+                                        <div className="w-10 h-10 rounded-full bg-pink/10 flex items-center justify-center text-pink font-bold">
+                                            {c.name?.[0] || 'U'}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-gray-900 truncate">{c.name}</p>
+                                            <p className="text-xs text-gray-500 truncate">{c.email}</p>
+                                        </div>
+                                        <span className="text-[10px] text-gray-400">{c.favorited_at}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 }
 
 export default function ArtistProfile() {
@@ -209,12 +248,51 @@ export default function ArtistProfile() {
     const [artistStats, setArtistStats] = useState<{ total: number } | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [playingVideoId, setPlayingVideoId] = useState<number | null>(null);
+    const [showFavModal, setShowFavModal] = useState(false)
+    const [favCustomers, setFavCustomers] = useState<Array<{ name: string; email: string; favorited_at: string }>>([])
+    const [favCount, setFavCount] = useState(0)
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxUrl, setLightboxUrl] = useState("");
+    const [lightboxType, setLightboxType] = useState<"image" | "youtube" | "spotify" | "video" | "link">("image");
+
+    const getLightboxType = (url: string): "youtube" | "spotify" | "video" | "link" => {
+        if (getYouTubeId(url)) return "youtube";
+        if (getSpotifyEmbedUrl(url)) return "spotify";
+        if (isDirectVideo(url)) return "video";
+        return "link";
+    };
+
+    const openLightbox = (url: string, type: "image" | "youtube" | "spotify" | "video" | "link" = "image") => {
+        setLightboxUrl(url);
+        setLightboxType(type);
+        setLightboxOpen(true);
+    };
+
+    const closeLightbox = () => {
+        setLightboxOpen(false);
+        setLightboxUrl("");
+        setLightboxType("image");
+    };
+
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === "Escape") closeLightbox();
+        };
+        if (lightboxOpen) {
+            document.addEventListener("keydown", handleEsc);
+            document.body.style.overflow = "hidden";
+        }
+        return () => {
+            document.removeEventListener("keydown", handleEsc);
+            document.body.style.overflow = "";
+        };
+    }, [lightboxOpen]);
 
     useEffect(() => {
         window.scrollTo(0, 0);
         fetchProfile();
         fetchStats();
+        fetchFavoritedBy();
     }, []);
 
     const fetchProfile = async () => {
@@ -240,6 +318,19 @@ export default function ArtistProfile() {
             setArtistStats(data.stats);
         } catch (err) {
             console.error("Failed to load stats", err);
+        }
+    };
+
+    const fetchFavoritedBy = async () => {
+        try {
+            const { data } = await api.get("/profile");
+            const artistId = data.profile?.id;
+            if (!artistId) return;
+            const favData = await api.get(`/favorites/customers/${artistId}`);
+            setFavCustomers(favData.data.customers || []);
+            setFavCount(favData.data.total || 0);
+        } catch (err) {
+            console.error("Failed to load favorited by", err);
         }
     };
 
@@ -413,7 +504,8 @@ export default function ArtistProfile() {
     const displayName = profile?.stage_name || profile?.full_name || "Artist";
 
     return (
-        <div className="min-h-screen bg-[#F4F1F5] pb-20 overflow-x-hidden" style={{ fontFamily: "'Fraunces', serif" }}>
+        <>
+            <div className="min-h-screen bg-[#F4F1F5] pb-20 overflow-x-hidden" style={{ fontFamily: "'Fraunces', serif" }}>
             <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
             `}</style>
@@ -507,17 +599,17 @@ export default function ArtistProfile() {
                                 )}
 
                                 {/* PRICE */}
-                                {profile?.starting_price && (
+                                {profile?.full_price && (
                                     <div className="mt-7 text-left">
                                         <div className="text-[#FF2B6B] font-bold text-[28px] leading-none">
-                                            ${profile.starting_price}
+                                            Rs. {profile.full_price}
                                             <span className="text-gray-600 text-[15px] font-medium ml-2">
-                                                starting price
+                                                {/*full price*/}
                                             </span>
                                         </div>
-                                        {profile.max_price && (
-                                            <p className="text-[11px] text-gray-400 mt-1">
-                                                Range: ${profile.starting_price} - ${profile.max_price} depending on event type and duration
+                                        {profile.advance && (
+                                            <p className="text-md text-black-400 mt-1">
+                                                Advance:  Rs. {profile.advance}
                                             </p>
                                         )}
                                     </div>
@@ -602,14 +694,17 @@ export default function ArtistProfile() {
                                     )}
                                 </div>
                             </div>
-                            <div className="flex gap-2">
-                                <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50">
-                                    <Heart size={18} />
-                                </button>
-                                <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50">
-                                    <MoreHorizontal size={18} />
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => setShowFavModal(true)}
+                                className="relative w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors"
+                            >
+                                <Heart size={18} />
+                                {favCount > 0 && (
+                                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                                    {favCount}
+                                  </span>
+                                )}
+                            </button>
                         </div>
 
                         {/* DESCRIPTION */}
@@ -623,22 +718,27 @@ export default function ArtistProfile() {
                             )}
                         </div>
 
-                        {/* GALLERY — images rounded-xl */}
-{galleryImages.length > 0 && (
-                             <>
-                                 <h3 className="text-[24px] font-bold mt-10 mb-5">Gallery</h3>
-                                 <div className="grid grid-cols-3 gap-3">
-                                     {galleryImages.map((img) => (
-                                         <img
-                                             key={img.id}
-                                             src={img.url}
-                                             alt="gallery"
-                                             className="w-full h-[180px] object-cover rounded-xl"
-                                         />
-                                     ))}
-                                 </div>
-                             </>
-                         )}
+                         {/* GALLERY — images rounded-xl */}
+ {galleryImages.length > 0 && (
+                              <>
+                                  <h3 className="text-[24px] font-bold mt-10 mb-5">Gallery</h3>
+                                  <div className="grid grid-cols-3 gap-3">
+                                      {galleryImages.map((img) => (
+                                          <button
+                                              key={img.id}
+                                              onClick={() => openLightbox(img.url, "image")}
+                                              className="w-full h-[180px] rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#FF2B6B] focus:ring-offset-2"
+                                          >
+                                              <img
+                                                  src={img.url}
+                                                  alt="gallery"
+                                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                              />
+                                          </button>
+                                      ))}
+                                  </div>
+                              </>
+                          )}
 
                         {/* AUDIO & VIDEO */}
                         {videoLinks.length > 0 && (
@@ -650,8 +750,8 @@ export default function ArtistProfile() {
                                             key={item.id}
                                             item={item}
                                             onDelete={handleDeleteVideo}
-                                            isPlaying={playingVideoId === item.id}
-                                            onPlay={() => setPlayingVideoId(item.id)}
+                                            isPlaying={false}
+                                            onPlay={() => openLightbox(item.url, getLightboxType(item.url))}
                                         />
                                     ))}
                                 </div>
@@ -721,5 +821,104 @@ export default function ArtistProfile() {
                 </div>
             </div>
         </div>
-    );
+
+        {showFavModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
+                    <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900">Favorited By ({favCount})</h3>
+                        <button onClick={() => setShowFavModal(false)} className="text-gray-400 hover:text-gray-600">
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div className="p-5 overflow-y-auto max-h-[60vh]">
+                        {favCustomers.length === 0 ? (
+                            <div className="text-center py-10">
+                                <Heart size={40} className="text-gray-200 mx-auto mb-3" />
+                                <p className="text-gray-500 text-sm">No customers have favorited you yet.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {favCustomers.map((c, i) => (
+                                    <div key={i} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50">
+                                        <div className="w-10 h-10 rounded-full bg-pink/10 flex items-center justify-center text-pink font-bold">
+                                            {c.name?.[0] || 'U'}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-gray-900 truncate">{c.name}</p>
+                                            <p className="text-xs text-gray-500 truncate">{c.email}</p>
+                                        </div>
+                                        <span className="text-[10px] text-gray-400">{c.favorited_at}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        )}
+
+            {lightboxOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center" onClick={closeLightbox}>
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+                    <div className="relative z-10 flex items-center justify-center w-full max-w-5xl max-h-[90vh] p-4" onClick={(e) => e.stopPropagation()}>
+                        {/* Close button — only shown for non-image media */}
+                        {lightboxType !== "image" && (
+                            <button onClick={closeLightbox} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95">
+                                <X size={18} className="text-white" />
+                            </button>
+                        )}
+                        <div className="flex items-center justify-center w-full">
+                            {lightboxType === "image" ? (
+                                <div onClick={closeLightbox} className="cursor-pointer">
+                                    <img src={lightboxUrl} alt="" className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+                                </div>
+                            ) : (
+                                <>
+                                    {lightboxType === "youtube" && (() => {
+                                        const ytId = getYouTubeId(lightboxUrl);
+                                        return ytId ? (
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+                                                title="YouTube video player"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allowFullScreen
+                                                className="aspect-video w-full max-h-[85vh]"
+                                            />
+                                        ) : null;
+                                    })()}
+                                    {lightboxType === "spotify" && (() => {
+                                        const spotifyUrl = getSpotifyEmbedUrl(lightboxUrl);
+                                        return spotifyUrl ? (
+                                            <iframe
+                                                src={spotifyUrl}
+                                                width="100%"
+                                                height="100%"
+                                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                                className="border-0 w-full h-[380px] max-h-[85vh] rounded-lg bg-white"
+                                            />
+                                        ) : null;
+                                    })()}
+                                    {lightboxType === "video" && (
+                                        <video src={lightboxUrl} controls autoPlay className="max-w-full max-h-[85vh] rounded-lg shadow-2xl" />
+                                    )}
+                                    {lightboxType === "link" && (
+                                        <iframe
+                                            src={lightboxUrl}
+                                            width="100%"
+                                            height="100%"
+                                            className="border-0 w-full h-[600px] max-h-[85vh] bg-white rounded-lg shadow-2xl"
+                                        />
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+);
 }

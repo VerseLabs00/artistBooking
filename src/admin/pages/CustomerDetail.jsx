@@ -46,9 +46,34 @@ export default function CustomerDetail() {
 
   if (selectedLoading || !customer) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <p className="text-gray-400 text-sm">{selectedLoading ? 'Loading customer...' : 'Customer not found.'}</p>
-        <button onClick={() => navigate('/customers')} className="btn-primary">Back to Customers</button>
+      <div className="max-w-4xl mx-auto">
+        <div className="h-10 bg-gray-100 rounded w-32 animate-pulse mb-4" />
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5">
+          <div className="h-4 bg-gray-100 rounded w-48 animate-pulse" />
+        </div>
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="w-full lg:w-64 shrink-0 space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-full bg-gray-100 animate-pulse border-4 border-white shadow-md mb-3" />
+              <div className="h-6 bg-gray-100 rounded w-32 animate-pulse mb-2" />
+              <div className="h-4 bg-gray-100 rounded w-24 animate-pulse mb-3" />
+              <div className="h-6 bg-gray-100 rounded w-16 animate-pulse mb-4" />
+              <div className="w-full space-y-2.5 border-t border-gray-100 pt-4">
+                {[1,2,3].map(i => (
+                  <div key={i} className="h-4 bg-gray-100 rounded w-full animate-pulse" />
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="h-5 bg-gray-100 rounded w-32 animate-pulse mb-4" />
+              {[1,2,3,4].map(i => (
+                <div key={i} className="h-4 bg-gray-100 rounded w-full animate-pulse mb-2" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

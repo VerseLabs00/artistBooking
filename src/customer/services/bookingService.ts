@@ -18,6 +18,9 @@ export interface BookingSummary {
   order_id: string
   agreed_price: number
   advance_amount: number
+  platform_fee: number
+  total_payment: number
+  commission_rate: number
   booking_status: string
   payment_status: string
 }

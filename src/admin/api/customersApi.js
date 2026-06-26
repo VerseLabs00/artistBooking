@@ -7,3 +7,7 @@ export const getCustomersApi = (params = {}) =>
 // GET /api/admin/customers/:id
 export const getCustomerApi = (id) =>
   api.get(`/admin/customers/${id}`)
+
+// DELETE /api/admin/customers/:id
+export const deleteCustomerApi = (id) =>
+  api.delete(`/admin/customers/${id}`)

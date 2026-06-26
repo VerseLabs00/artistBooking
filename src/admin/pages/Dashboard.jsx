@@ -30,7 +30,33 @@ export default function Dashboard() {
       <PageHeader title="Dashboard" subtitle="Here's what's happening on HireMe today." />
 
       {loading && !stats ? (
-        <div className="flex items-center justify-center h-40 text-gray-400 text-sm">Loading dashboard...</div>
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                <div className="h-3 bg-gray-100 rounded w-24 animate-pulse mb-3" />
+                <div className="h-8 bg-gray-100 rounded w-20 animate-pulse mb-2" />
+                <div className="h-3 bg-gray-100 rounded w-16 animate-pulse" />
+              </div>
+            ))}
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6">
+            <div className="h-5 bg-gray-100 rounded w-32 animate-pulse mb-4" />
+            <div className="space-y-3">
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="flex items-center gap-4">
+                  <div className="h-4 bg-gray-100 rounded w-16 animate-pulse" />
+                  <div className="h-4 bg-gray-100 rounded w-24 animate-pulse" />
+                  <div className="h-4 bg-gray-100 rounded w-32 animate-pulse hidden md:block" />
+                  <div className="h-4 bg-gray-100 rounded w-20 animate-pulse hidden md:block" />
+                  <div className="h-4 bg-gray-100 rounded w-20 animate-pulse" />
+                  <div className="h-6 bg-gray-100 rounded w-20 animate-pulse" />
+                  <div className="h-8 bg-gray-100 rounded w-24 animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
       ) : (
         <>
           {/* Stats */}

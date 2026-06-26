@@ -42,9 +42,42 @@ export default function ArtistDetail() {
 
   if (selectedLoading || !artist) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <p className="text-gray-400 text-sm">{selectedLoading ? 'Loading artist...' : 'Artist not found.'}</p>
-        <button onClick={() => navigate('/artists')} className="btn-primary">Back to Artists</button>
+      <div className="max-w-5xl mx-auto">
+        <div className="h-10 bg-gray-100 rounded w-32 animate-pulse mb-5" />
+        <div className="relative mb-16">
+          <div className="h-48 md:h-56 rounded-2xl bg-gray-100 animate-pulse" />
+          <div className="absolute -bottom-12 left-6">
+            <div className="w-24 h-24 rounded-full bg-gray-100 animate-pulse border-4 border-white shadow-xl" />
+          </div>
+        </div>
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="w-full lg:w-72 shrink-0 space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="h-6 bg-gray-100 rounded w-32 animate-pulse mb-3" />
+              <div className="h-4 bg-gray-100 rounded w-24 animate-pulse mb-2" />
+              <div className="h-6 bg-gray-100 rounded w-16 animate-pulse mb-4" />
+              <div className="h-8 bg-gray-100 rounded w-28 animate-pulse mb-3" />
+              <div className="h-4 bg-gray-100 rounded w-20 animate-pulse" />
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="h-4 bg-gray-100 rounded w-16 animate-pulse mb-3" />
+              {[1,2,3,4].map(i => (
+                <div key={i} className="flex items-center gap-3 py-2">
+                  <div className="w-8 h-8 rounded bg-gray-100 animate-pulse" />
+                  <div className="h-4 bg-gray-100 rounded w-24 animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex-1 space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="h-5 bg-gray-100 rounded w-32 animate-pulse mb-4" />
+              {[1,2,3,4].map(i => (
+                <div key={i} className="h-4 bg-gray-100 rounded w-full animate-pulse mb-2" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -123,9 +156,14 @@ export default function ArtistDetail() {
             )}
             {artist.bio && <p className="text-xs text-gray-500 leading-relaxed mb-4">{artist.bio}</p>}
             <div className="mb-5">
-              <span className="text-2xl font-extrabold text-primary">LKR {Number(artist.basePrice || 0).toLocaleString()}</span>
-              <span className="text-xs text-gray-400 ml-2">starting price</span>
+              <span className="text-2xl font-extrabold text-primary">LKR {Number(artist.fullPrice || 0).toLocaleString()}</span>
+              <span className="text-xs text-gray-400 ml-2">full price</span>
             </div>
+            {artist.advance && (
+              <div className="text-sm text-gray-500">
+                Advance: LKR {Number(artist.advance).toLocaleString()}
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">

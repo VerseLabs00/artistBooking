@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg id="np-color" width="100%" viewBox="0 0 1200 180" xmlns="http://www.w3.org/2000/svg" style="display:block"><style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&amp;display=swap');</style>
-      <text x="14" y="148" font-family="'Playfair Display',Georgia,serif" font-weight="900" font-size="152" fill="#C8133B">Performa</text>
-      <circle cx="1164" cy="148" r="22" fill="#C8133B"></circle>
+      <text x="14" y="148" font-family="'Playfair Display',Georgia,serif" font-weight="900" font-size="152" fill="#C">Performa</text>
     </svg>

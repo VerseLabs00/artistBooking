@@ -1,9 +1,10 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { X, CheckCircle2, AlertCircle, Video } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import stage from "../../../../public/bg-login.png";
 import api from "../../api/axios";
 import { compressVideo } from "../../utils/compressVideo";
+import { getStats } from "../../../customer/services/discoveryService";
 
 const MAX_VIDEO_MB    = 50;
 const MAX_VIDEO_BYTES = MAX_VIDEO_MB * 1024 * 1024;
@@ -26,6 +27,21 @@ const Talent: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const resuming = (location.state as any)?.resuming === true;
+
+    const [stats, setStats] = useState<{ total_artists: number; sample_avatars: string[] }>({
+        total_artists: 0,
+        sample_avatars: []
+    });
+
+    useEffect(() => {
+        getStats()
+            .then(data => {
+                if (data && typeof data === 'object' && Array.isArray(data.sample_avatars)) {
+                    setStats(data);
+                }
+            })
+            .catch(() => {});
+    }, []);
 
     const [video,    setVideo]    = useState<VideoEntry | null>(null);
     const [loading,  setLoading]  = useState(false);
@@ -157,13 +173,12 @@ const Talent: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-4 mt-10">
                                 <div className="flex -space-x-3">
-                                    {["men/32", "women/44", "men/76"].map(p => (
-                                        <img key={p} src={`https://randomuser.me/api/portraits/${p}.jpg`}
-                                            className="w-10 h-10 rounded-full border-2 border-white" alt="" />
+                                    {(stats?.sample_avatars && Array.isArray(stats.sample_avatars) && stats.sample_avatars.length > 0 ? stats.sample_avatars : []).slice(0, 5).map((src, i) => (
+                                        <img key={i} src={src} className="w-10 h-10 rounded-full border-2 border-white object-cover" alt="" />
                                     ))}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium">600+ artists already joined</p>
+                                    <p className="text-sm font-medium">{(stats?.total_artists ?? 0) > 100 ? "100+ artists already joined" : `${stats?.total_artists ?? 0} artists already joined`}</p>
                                     <div className="text-yellow-400 text-sm">★★★★★</div>
                                 </div>
                             </div>

@@ -53,11 +53,9 @@ function normaliseArtist(a) {
     status: statusMap[a.verification_status] ?? a.verification_status ?? 'pending',
     isOnboarded: a.is_onboarded ?? false,
     // Pricing
-    basePrice:  parseFloat(a.starting_price ?? 0),
-    maxPrice:   parseFloat(a.max_price ?? 0),
-    priceRange: a.starting_price && a.max_price
-      ? `LKR ${Number(a.starting_price).toLocaleString()} – LKR ${Number(a.max_price).toLocaleString()}`
-      : '',
+    fullPrice:  parseFloat(a.full_price ?? 0),
+    advance:    parseFloat(a.advance ?? 0),
+    priceRange: '',
     // Stats
     rating:         a.average_rating ?? a.rating ?? 0,
     reviewCount:    a.review_count ?? 0,

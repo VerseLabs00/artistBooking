@@ -46,9 +46,9 @@ export default function Sidebar({ open, onClose }) {
       lg:translate-x-0 lg:z-20
     `}>
       {/* Logo */}
-      <Link to="/" className="flex items-center">
+      <Link to="/admin/login" className="flex items-center mt-6 ml-6">
         <img
-            src="/logoBlack.svg"
+            src="/logop.svg"
             alt="Perfoma"
             className="h-10 w-auto object-contain"
         />

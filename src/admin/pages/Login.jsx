@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { loginThunk } from '../features/auth/authSlice'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
+import logo from '../../../public/logoBlack.svg'
 
 export default function Login() {
   const dispatch = useDispatch()
@@ -43,18 +44,15 @@ export default function Login() {
           <div className="absolute bottom-0 right-0 w-80 h-80 bg-primary rounded-full translate-x-1/3 translate-y-1/3" />
         </div>
         <div className="relative flex items-center gap-3">
-          <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-xl">H</span>
-          </div>
           <div>
-            <span className="text-xl font-extrabold text-white">HireMe</span>
+            <span className="text-xl font-extrabold text-white">Performa</span>
             <span className="ml-2 text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded-full">Admin</span>
           </div>
         </div>
         <div className="relative">
           <h1 className="text-4xl font-extrabold text-white leading-tight mb-4">
             Manage your<br />
-            <span className="text-primary">artist platform</span><br />
+            <span className="text-[#E8194B]">artist platform</span><br />
             with confidence.
           </h1>
           <p className="text-white/50 text-sm leading-relaxed max-w-xs">
@@ -74,7 +72,7 @@ export default function Login() {
           </div>
         </div>
         <div className="relative">
-          <p className="text-white/20 text-xs">© 2026 HireMe. Super Admin Portal.</p>
+          <p className="text-white/20 text-xs">© 2026 Performa. Super Admin Portal.</p>
         </div>
       </div>
 
@@ -82,10 +80,8 @@ export default function Login() {
       <div className="w-full lg:w-1/2 flex items-center justify-center bg-gray-50 px-6 py-12">
         <div className="w-full max-w-sm">
           <div className="flex items-center gap-3 mb-10 lg:hidden">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">H</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900">HireMe</span>
+            <img src={logo} className="w-10 h-10" alt="Logo" />
+            <span className="text-xl font-bold text-gray-900">Performa</span>
             <span className="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">Admin</span>
           </div>
 
@@ -102,7 +98,7 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@hireme.lk"
-                  className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-2xl text-sm bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                  className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-2xl text-sm bg-white focus:outline-none focus:border-[#E8194B] focus:ring-2 focus:ring-[#E8194B]/10 transition-all"
                 />
               </div>
             </div>
@@ -116,7 +112,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-11 py-3.5 border border-gray-200 rounded-2xl text-sm bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                  className="w-full pl-11 pr-11 py-3.5 border border-gray-200 rounded-2xl text-sm bg-white focus:outline-none focus:border-[#E8194B] focus:ring-2 focus:ring-[#E8194B]/10 transition-all"
                 />
                 <button
                   type="button"
@@ -135,7 +131,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary text-white font-bold py-3.5 rounded-2xl hover:bg-primary-dark transition-colors disabled:opacity-60 flex items-center justify-center gap-2 mt-2"
+              className="w-full bg-[#E8194B] text-white font-bold py-3.5 rounded-2xl hover:bg-[#c8133b] transition-colors disabled:opacity-60 flex items-center justify-center gap-2 mt-2"
             >
               {loading ? (
                 <>

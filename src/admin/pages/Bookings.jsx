@@ -1,6 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   fetchBookings,
@@ -14,6 +13,7 @@ import StatCard from '../components/common/StatCard'
 import SearchBar from '../components/common/SearchBar'
 import FilterTabs from '../components/common/FilterTabs'
 import StatusBadge from '../components/common/StatusBadge'
+import BookingModal from '../components/common/BookingModal'
 
 const filterTabs = [
   { label: 'All', value: 'all' },
@@ -24,12 +24,13 @@ const filterTabs = [
 
 export default function Bookings() {
   const dispatch = useDispatch()
-  const navigate = useNavigate()
   const all = useSelector(s => s.bookings.list)
   const filter = useSelector(s => s.bookings.filter)
   const searchQuery = useSelector(s => s.bookings.searchQuery)
   const filtered = useSelector(selectFilteredBookings)
   const { loading, error } = useSelector(s => s.bookings)
+  const [selectedBooking, setSelectedBooking] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
     dispatch(fetchBookings())
@@ -68,7 +69,38 @@ export default function Bookings() {
           </div>
         </div>
 
-        {loading && <div className="text-center py-12 text-gray-400 text-sm">Loading bookings...</div>}
+        {loading && (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px]">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="table-header text-left">ID</th>
+                  <th className="table-header text-left">Customer</th>
+                  <th className="table-header text-left">Artist</th>
+                  <th className="table-header text-left hidden md:table-cell">Event</th>
+                  <th className="table-header text-left hidden md:table-cell">Date</th>
+                  <th className="table-header text-left">Amount</th>
+                  <th className="table-header text-left">Status</th>
+                  <th className="table-header text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1,2,3,4,5].map(i => (
+                  <tr key={i} className="border-b border-gray-50">
+                    <td className="table-cell"><div className="h-4 bg-gray-100 rounded w-16 animate-pulse" /></td>
+                    <td className="table-cell"><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-gray-100 animate-pulse" /><div className="h-4 bg-gray-100 rounded w-20 animate-pulse" /></div></td>
+                    <td className="table-cell"><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-gray-100 animate-pulse" /><div className="h-4 bg-gray-100 rounded w-20 animate-pulse" /></div></td>
+                    <td className="table-cell hidden md:table-cell"><div className="h-4 bg-gray-100 rounded w-16 animate-pulse" /></td>
+                    <td className="table-cell hidden md:table-cell"><div className="h-4 bg-gray-100 rounded w-20 animate-pulse" /></td>
+                    <td className="table-cell"><div className="h-4 bg-gray-100 rounded w-16 animate-pulse" /></td>
+                    <td className="table-cell"><div className="h-6 bg-gray-100 rounded w-16 animate-pulse" /></td>
+                    <td className="table-cell"><div className="h-8 bg-gray-100 rounded w-24 animate-pulse" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
         {error && !loading && <div className="text-center py-12 text-red-400 text-sm">{error}</div>}
 
         {!loading && (
@@ -114,7 +146,7 @@ export default function Bookings() {
                       <td className="table-cell"><StatusBadge status={booking.status} /></td>
                       <td className="table-cell">
                         <div className="flex items-center gap-1 md:gap-2">
-                          <button onClick={() => navigate(`/bookings/${booking.id}`)} className="btn-secondary text-xs px-2 md:px-3 py-1.5">View</button>
+                          <button onClick={() => { setSelectedBooking(booking); setModalOpen(true) }} className="btn-secondary text-xs px-2 md:px-3 py-1.5">View</button>
                           {booking.status !== 'cancelled' && booking.status !== 'completed' && (
                             <button onClick={() => handleCancel(booking)} className="btn-danger text-xs px-2 md:px-3 py-1.5 hidden sm:inline-flex">Cancel</button>
                           )}
@@ -130,6 +162,10 @@ export default function Bookings() {
 
         {filtered.length > 0 && <div className="px-4 py-3 text-xs text-gray-400">Showing {filtered.length} of {all.length} bookings</div>}
       </div>
+
+      {modalOpen && selectedBooking && (
+        <BookingModal booking={selectedBooking} onClose={() => setModalOpen(false)} />
+      )}
     </div>
   )
 }

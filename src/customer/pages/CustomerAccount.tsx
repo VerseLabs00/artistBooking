@@ -21,6 +21,7 @@ import {
   Camera
 } from 'lucide-react'
 import { getBookings, getBooking, cancelBooking } from '../services/bookingService'
+import { toggleFavorite, getFavorites } from '../services/favoriteService'
 import type { BookingSummary } from '../services/bookingService'
 import { useAuth } from '../context/AuthContext'
 import Footer from '../components/Footer'
@@ -64,6 +65,9 @@ export default function CustomerAccount() {
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'favorites' | 'settings'>('overview')
   const [uploading, setUploading] = useState(false)
+  const [favoritesModalOpen, setFavoritesModalOpen] = useState(false)
+  const [customerFavorites, setCustomerFavorites] = useState<Array<{ id: string; name: string; category: string; location: string; avatar_url: string }>>([])
+  const [favoritesCount, setFavoritesCount] = useState(0)
   
   // Details Modal State
   const [selectedBooking, setSelectedBooking] = useState<DetailedBooking | null>(null)
@@ -71,7 +75,18 @@ export default function CustomerAccount() {
 
   useEffect(() => {
     fetchBookings()
+    fetchFavorites()
   }, [])
+
+  const fetchFavorites = async () => {
+    try {
+      const data = await getFavorites()
+      setCustomerFavorites(data)
+      setFavoritesCount(data.length)
+    } catch (err) {
+      console.error("Failed to fetch favorites:", err)
+    }
+  }
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -197,12 +212,16 @@ export default function CustomerAccount() {
             >
               <X size={24} className="text-gray-400" />
             </button>
-            
-            <div className="flex flex-col md:flex-row h-full max-h-[90vh] overflow-y-auto">
-              <div className="w-full md:w-1/3 bg-gray-100">
-                <img src={selectedBooking.artist_image} className="w-full h-full object-cover" alt="" />
+
+            <div className="flex flex-col md:flex-row max-h-[90vh]">
+              <div className="w-full md:w-1/3 bg-gray-100 sticky top-0 self-start h-64 md:h-[90vh] z-10">
+                <img
+                    src={selectedBooking.artist_image}
+                    className="w-full h-full object-cover"
+                    alt=""
+                />
               </div>
-              <div className="w-full md:w-2/3 p-8">
+              <div className="w-full md:w-2/3 p-8 overflow-y-auto max-h-[90vh]">
                 <div className="mb-6">
                   <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(selectedBooking.booking_status)}`}>
                     {selectedBooking.booking_status}
@@ -250,7 +269,7 @@ export default function CustomerAccount() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-gray-500">
                       <FileText size={16} />
-                      <span className="text-xs font-bold uppercase tracking-wider">Paid Advance</span>
+                      <span className="text-xs font-bold uppercase tracking-wider">Advance</span>
                     </div>
                     <span className="text-sm font-bold text-gray-900">Rs. {selectedBooking.advance_amount.toLocaleString()}</span>
                   </div>
@@ -298,9 +317,17 @@ export default function CustomerAccount() {
             <span className="hidden sm:inline">Back to Discovery</span>
             <span className="sm:hidden">Back</span>
           </button>
-          {/*<div className="w-10 h-10 rounded-full bg-pink flex items-center justify-center text-white font-bold">*/}
-          {/*  {user?.name?.[0] || 'C'}*/}
-          {/*</div>*/}
+          <button
+            onClick={() => setFavoritesModalOpen(true)}
+            className="relative text-gray-600 hover:text-red-500 transition-colors"
+          >
+            <Heart size={20} />
+            {favoritesCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {favoritesCount}
+              </span>
+            )}
+          </button>
         </div>
       </nav>
 
@@ -376,7 +403,7 @@ export default function CustomerAccount() {
             {activeTab === 'overview' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <header>
-                  <h1 className="text-3xl font-black text-gray-900">Welcome back, {user?.name?.split(' ')[0]}!</h1>
+                  <h1 className="text-xl font-black text-gray-900">Welcome back, {user?.name?.split(' ')[0]}!</h1>
                   <p className="text-gray-500 mt-2">Manage your bookings and keep track of your favorite artists.</p>
                 </header>
 
@@ -406,8 +433,24 @@ export default function CustomerAccount() {
                   </div>
                   
                   {loading ? (
-                    <div className="flex items-center justify-center py-20 bg-white rounded-3xl border border-gray-100">
-                      <Loader2 className="animate-spin text-pink" size={32} />
+                    <div className="space-y-4">
+                      {[1,2,3].map(i => (
+                        <div key={i} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col sm:flex-row items-center gap-6">
+                          <div className="w-20 h-20 rounded-2xl bg-gray-100 animate-pulse flex-shrink-0" />
+                          <div className="flex-1 text-center sm:text-left">
+                            <div className="h-5 bg-gray-100 rounded w-32 animate-pulse mb-2" />
+                            <div className="h-4 bg-gray-100 rounded w-40 animate-pulse mb-3" />
+                            <div className="flex items-center justify-center sm:justify-start gap-2">
+                              <div className="h-6 bg-gray-100 rounded-full w-20 animate-pulse" />
+                              <div className="h-4 bg-gray-100 rounded w-16 animate-pulse" />
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="h-9 bg-gray-100 rounded-xl w-20 animate-pulse" />
+                            <div className="h-9 bg-gray-100 rounded-xl w-16 animate-pulse" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : bookings.length === 0 ? (
                     <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 px-6">
@@ -475,7 +518,29 @@ export default function CustomerAccount() {
                 </header>
 
                 <div className="space-y-4">
-                  {bookings.map(booking => (
+                  {loading ? (
+                    [1,2,3].map(i => (
+                      <div key={i} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                        <div className="flex flex-col md:flex-row gap-6">
+                          <div className="w-full md:w-48 h-32 rounded-2xl bg-gray-100 animate-pulse flex-shrink-0" />
+                          <div className="flex-1">
+                            <div className="h-5 bg-gray-100 rounded w-32 animate-pulse mb-2" />
+                            <div className="h-4 bg-gray-100 rounded w-24 animate-pulse mb-4" />
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+                              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+                              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+                              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+                            </div>
+                            <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-50">
+                              <div className="h-9 bg-gray-100 rounded-xl w-24 animate-pulse" />
+                              <div className="h-9 bg-gray-100 rounded-xl w-28 animate-pulse" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    bookings.map(booking => (
                     <div key={booking.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
                       <div className="flex flex-col md:flex-row gap-6">
                         <div className="relative w-full md:w-48 h-32 rounded-2xl overflow-hidden flex-shrink-0">
@@ -549,15 +614,50 @@ export default function CustomerAccount() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )))}
                 </div>
               </div>
             )}
 
-            {(activeTab === 'favorites' || activeTab === 'settings') && (
+            {activeTab === 'favorites' && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <header>
+                  <h1 className="text-3xl font-black text-gray-900">My Favorites</h1>
+                  <p className="text-gray-500 mt-1">Artists you've saved for later.</p>
+                </header>
+                {customerFavorites.length === 0 ? (
+                  <div className="text-center py-20 bg-white rounded-3xl border border-gray-100">
+                    <Heart size={40} className="text-gray-200 mx-auto mb-3" />
+                    <h3 className="font-bold text-gray-900">No favorites yet</h3>
+                    <p className="text-gray-500 text-sm mt-2">Explore artists and tap the heart to save them here.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {customerFavorites.map(artist => (
+                      <div key={artist.id} className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <img
+                          src={artist.avatar_url || '/assets/default-avatar.png'}
+                          className="w-14 h-14 rounded-full object-cover border-2 border-gray-100"
+                          alt={artist.name}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-900 truncate">{artist.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{artist.category} · {artist.location}</p>
+                        </div>
+                        <Link to={`/artistProfile/${artist.id}`} className="text-pink hover:underline">
+                          <ChevronRight size={18} />
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {(activeTab === 'settings') && (
               <div className="flex flex-col items-center justify-center py-40 bg-white rounded-3xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
                 <div className="w-20 h-20 bg-pink/5 rounded-full flex items-center justify-center text-pink mb-4">
-                  {activeTab === 'favorites' ? <Heart size={40} /> : <Settings size={40} />}
+                  <Settings size={40} />
                 </div>
                 <h3 className="font-bold text-xl text-gray-900">Coming Soon</h3>
                 <p className="text-gray-500 text-sm mt-2">This feature is currently under development.</p>
@@ -568,6 +668,52 @@ export default function CustomerAccount() {
       </div>
 
       {/*<Footer />*/}
+
+      {/* Favorites Modal */}
+      {favoritesModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setFavoritesModalOpen(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900">Favorite Artists</h3>
+              <button onClick={() => setFavoritesModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto max-h-[60vh]">
+              {customerFavorites.length === 0 ? (
+                <div className="text-center py-10">
+                  <Heart size={40} className="text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">No favorite artists yet.</p>
+                  <p className="text-gray-400 text-xs mt-1">Explore artists and tap the heart to add them here.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {customerFavorites.map(artist => (
+                    <div key={artist.id} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors">
+                      <img
+                        src={artist.avatar_url || '/assets/default-avatar.png'}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-gray-100"
+                        alt={artist.name}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-900 truncate">{artist.name}</p>
+                        <p className="text-xs text-gray-500 truncate">{artist.category} · {artist.location}</p>
+                      </div>
+                      <Link
+                        to={`/artistProfile/${artist.id}`}
+                        className="text-xs text-pink font-semibold hover:underline whitespace-nowrap"
+                        onClick={() => setFavoritesModalOpen(false)}
+                      >
+                        View
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

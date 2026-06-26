@@ -113,7 +113,34 @@ export default function Artists() {
         </div>
 
         {loading && (
-          <div className="text-center py-12 text-gray-400 text-sm">Loading artists...</div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px]">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="table-header text-left">Artist</th>
+                  <th className="table-header text-left">Category</th>
+                  <th className="table-header text-left hidden md:table-cell">Location</th>
+                  <th className="table-header text-left hidden md:table-cell">Bookings</th>
+                  <th className="table-header text-left">Rating</th>
+                  <th className="table-header text-left">Status</th>
+                  <th className="table-header text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1,2,3,4,5].map(i => (
+                  <tr key={i} className="border-b border-gray-50">
+                    <td className="table-cell"><div className="flex items-center gap-2 md:gap-3"><div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-100 animate-pulse shrink-0" /><div><div className="h-4 bg-gray-100 rounded w-24 animate-pulse mb-1" /><div className="h-3 bg-gray-100 rounded w-16 animate-pulse hidden sm:block" /></div></div></td>
+                    <td className="table-cell"><div className="h-4 bg-gray-100 rounded w-16 animate-pulse" /></td>
+                    <td className="table-cell hidden md:table-cell"><div className="h-4 bg-gray-100 rounded w-20 animate-pulse" /></td>
+                    <td className="table-cell hidden md:table-cell"><div className="h-4 bg-gray-100 rounded w-8 animate-pulse" /></td>
+                    <td className="table-cell"><div className="h-4 bg-gray-100 rounded w-8 animate-pulse" /></td>
+                    <td className="table-cell"><div className="h-6 bg-gray-100 rounded w-16 animate-pulse" /></td>
+                    <td className="table-cell"><div className="flex items-center gap-1 md:gap-2"><div className="w-7 h-7 rounded bg-gray-100 animate-pulse" /><div className="w-7 h-7 rounded bg-gray-100 animate-pulse" /><div className="w-7 h-7 rounded bg-gray-100 animate-pulse" /></div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
         {error && !loading && (
           <div className="text-center py-12 text-red-400 text-sm">{error}</div>

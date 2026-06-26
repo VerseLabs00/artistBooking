@@ -19,8 +19,8 @@ interface ProfileForm {
     bio_1: string;
     bio_2: string;
     paragraph: string;
-    starting_price: string;
-    max_price: string;
+    full_price: string;
+    advance: string;
     youtube_link: string;
     facebook_link: string;
     instagram_link: string;
@@ -35,7 +35,7 @@ interface MediaEntry {
 const defaultForm: ProfileForm = {
     stage_name: "", category: "Musician", location: "", phone_number: "",
     email: "", short_bio: "", bio_1: "", bio_2: "", paragraph: "",
-    starting_price: "", max_price: "", youtube_link: "", facebook_link: "",
+    full_price: "", advance: "", youtube_link: "", facebook_link: "",
     instagram_link: "", spotify_link: "",
 };
 
@@ -88,8 +88,8 @@ export default function EditProfile() {
                     bio_1: p.bio_1 || "",
                     bio_2: p.bio_2 || "",
                     paragraph: p.paragraph || "",
-                    starting_price: p.starting_price || "",
-                    max_price: p.max_price || "",
+                    full_price: p.full_price || "",
+                    advance: p.advance || "",
                     youtube_link: p.youtube_link || "",
                     facebook_link: p.facebook_link || "",
                     instagram_link: p.instagram_link || "",
@@ -127,7 +127,7 @@ export default function EditProfile() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        if (name === "starting_price" || name === "max_price") {
+        if (name === "full_price" || name === "advance") {
             setForm(prev => ({ ...prev, [name]: formatPriceInput(value) }));
         } else {
             setForm(prev => ({ ...prev, [name]: value }));
@@ -506,23 +506,23 @@ export default function EditProfile() {
                     <div className="fade-in ed-card">
                         <SlideHeader icon={<DollarSign size={20} />} title="Pricing structure" subtitle="Give clients a clear sense of your rates." />
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            <Field label="Starting price (LKR)">
+                            <Field label="Full Price (LKR)">
                                 <div className="relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-500 text-sm"></span>
-                                    <input className="ed-input pl-12" name="starting_price" value={form.starting_price} onChange={handleChange} placeholder="35,000" />
+                                    <input className="ed-input pl-12" name="full_price" value={form.full_price} onChange={handleChange} placeholder="75,000" />
                                 </div>
                             </Field>
-                            <Field label="Maximum price (LKR)">
+                            <Field label="Advance (LKR)">
                                 <div className="relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-500 text-sm"></span>
-                                    <input className="ed-input pl-12" name="max_price" value={form.max_price} onChange={handleChange} placeholder="75,000" />
+                                    <input className="ed-input pl-12" name="advance" value={form.advance} onChange={handleChange} placeholder="35,000" />
                                 </div>
                             </Field>
                         </div>
                         <div className="mt-6 p-5 bg-gray-100 rounded-2xl flex gap-3 items-start border border-[#E5E5E5]">
                             <AlertCircle size={16} className="text-[#E0263A] mt-0.5 shrink-0" />
                             <p className="text-sm text-gray-600 leading-relaxed">
-                                Your pricing shows as a range, e.g. <span className="text-gray-900 font-semibold">Rs. {form.starting_price || "35,000"} – {form.max_price || "75,000"}</span>, so customers know your value before reaching out.
+                                Set your full price and advance payment. Customers will see <span className="text-gray-900 font-semibold">Rs. {form.full_price || "75,000"}</span> with an advance of <span className="text-gray-900 font-semibold">Rs. {form.advance || "35,000"}</span>.
                             </p>
                         </div>
                     </div>
