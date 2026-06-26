@@ -5,7 +5,6 @@ const initialState = {
   depositRate: 30,
   featuredListingPrice: 2500,
   autoApproveEnabled: false,
-  maintenanceMode: false,
   notificationsEnabled: true,
 }
 
@@ -25,12 +24,6 @@ const settingsSlice = createSlice({
     toggleAutoApprove(state) {
       state.autoApproveEnabled = !state.autoApproveEnabled
     },
-    toggleMaintenance(state) {
-      state.maintenanceMode = !state.maintenanceMode
-    },
-    setMaintenanceMode(state, action) {
-      state.maintenanceMode = action.payload
-    },
     toggleNotifications(state) {
       state.notificationsEnabled = !state.notificationsEnabled
     },
@@ -42,8 +35,6 @@ export const {
   updateDepositRate,
   updateFeaturedPrice,
   toggleAutoApprove,
-  toggleMaintenance,
-  setMaintenanceMode,
   toggleNotifications,
 } = settingsSlice.actions
 
