@@ -379,11 +379,56 @@ export default function BookingRequests() {
                             </header>
 
                             {loading ? (
-                                <div className="flex items-center justify-center py-40 bg-white rounded-[40px] border border-gray-100 shadow-sm">
-                                    <div className="flex flex-col items-center gap-3">
-                                        <Loader2 className="animate-spin text-pink" size={40} />
-                                        <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Loading requests...</p>
-                                    </div>
+                                <div className="grid grid-cols-1 gap-4">
+                                    {[1,2,3,4,5,6].map(i => (
+                                        <div key={i} className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm">
+                                            <div className="flex flex-col md:flex-row gap-6">
+                                                <div className="w-full md:w-32 h-32 rounded-[20px] bg-gray-100 animate-pulse flex-shrink-0" />
+                                                <div className="flex-1 flex flex-col justify-between py-1 flex-1">
+                                                    <div>
+                                                        <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
+                                                            <div>
+                                                                <div className="h-5 bg-gray-100 rounded w-32 animate-pulse mb-2" />
+                                                                <div className="h-3 bg-gray-100 rounded w-24 animate-pulse" />
+                                                            </div>
+                                                            <div className="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
+                                                                <div className="h-3 bg-gray-100 rounded w-12 animate-pulse mb-1" />
+                                                                <div className="h-5 bg-gray-100 rounded w-20 animate-pulse" />
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-gray-100 animate-pulse" />
+                                                                <div>
+                                                                    <div className="h-3 bg-gray-100 rounded w-8 animate-pulse mb-1" />
+                                                                    <div className="h-4 bg-gray-100 rounded w-16 animate-pulse" />
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-gray-100 animate-pulse" />
+                                                                <div>
+                                                                    <div className="h-3 bg-gray-100 rounded w-8 animate-pulse mb-1" />
+                                                                    <div className="h-4 bg-gray-100 rounded w-16 animate-pulse" />
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-gray-100 animate-pulse" />
+                                                                <div>
+                                                                    <div className="h-3 bg-gray-100 rounded w-8 animate-pulse mb-1" />
+                                                                    <div className="h-4 bg-gray-100 rounded w-20 animate-pulse" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-50">
+                                                        <div className="h-9 bg-gray-100 rounded-xl w-24 animate-pulse" />
+                                                        <div className="h-9 bg-gray-100 rounded-xl w-20 animate-pulse" />
+                                                        <div className="h-9 bg-gray-100 rounded-xl w-20 animate-pulse" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             ) : filteredBookings.length === 0 ? (
                                 <div className="text-center py-40 bg-white rounded-[40px] border border-gray-100 shadow-sm px-6">

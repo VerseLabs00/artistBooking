@@ -56,6 +56,7 @@ export default function Settings() {
   const [commissionInput, setCommissionInput] = useState(settings.commissionRate)
   const [featuredInput, setFeaturedInput] = useState(settings.featuredListingPrice)
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
 
   useEffect(() => {
     loadSettings()
@@ -71,6 +72,8 @@ export default function Settings() {
       dispatch(setMaintenanceMode(data.maintenance_mode))
     } catch (error) {
       console.error('Failed to load settings:', error)
+    } finally {
+      setInitialLoading(false)
     }
   }
 
@@ -91,59 +94,60 @@ export default function Settings() {
     }
   }
 
+  if (initialLoading) {
+    return (
+      <div>
+        <PageHeader title="Settings" subtitle="Configure platform-wide settings and rules." />
+        <div className="space-y-5">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-5">
+            <div className="h-5 bg-gray-100 rounded w-40 animate-pulse mb-4" />
+            <div className="space-y-4">
+              {[1,2,3].map(i => (
+                <div key={i} className="flex items-center justify-between py-3">
+                  <div>
+                    <div className="h-4 bg-gray-100 rounded w-48 animate-pulse mb-1" />
+                    <div className="h-3 bg-gray-100 rounded w-32 animate-pulse" />
+                  </div>
+                  <div className="h-8 bg-gray-100 rounded w-28 animate-pulse" />
+                </div>
+              ))}
+              <div className="h-10 bg-gray-100 rounded w-40 animate-pulse mt-4" />
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-5">
+            <div className="h-5 bg-gray-100 rounded w-40 animate-pulse mb-4" />
+            <div className="space-y-4">
+              {[1,2,3].map(i => (
+                <div key={i} className="flex items-center justify-between py-3">
+                  <div>
+                    <div className="h-4 bg-gray-100 rounded w-48 animate-pulse mb-1" />
+                    <div className="h-3 bg-gray-100 rounded w-32 animate-pulse" />
+                  </div>
+                  <div className="w-11 h-6 bg-gray-100 rounded-full animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
-      <PageHeader
-        title="Settings"
-        subtitle="Configure platform-wide settings and rules."
-      />
+      <PageHeader title="Settings" subtitle="Configure platform-wide settings and rules." />
 
-      {/* Finance Settings */}
-      <SettingsSection title="💰 Finance & Commission">
-        <SettingsRow
-          label="Platform Commission Rate"
-          subtitle="Percentage taken from each booking payment"
-        >
+      <SettingsSection title="Finance & Commission">
+        <SettingsRow label="Platform Commission Rate" subtitle="Percentage taken from each booking payment">
           <div className="flex items-center gap-2">
-            <input
-              type="number"
-              value={commissionInput}
-              onChange={e => setCommissionInput(e.target.value)}
-              min={1}
-              max={50}
-              className="w-20 text-center border border-gray-200 rounded-lg py-1.5 text-sm font-bold focus:outline-none focus:border-primary"
-            />
+            <input type="number" value={commissionInput} onChange={e => setCommissionInput(e.target.value)} min={1} max={50} className="w-20 text-center border border-gray-200 rounded-lg py-1.5 text-sm font-bold focus:outline-none focus:border-primary" />
             <span className="text-sm text-gray-400">%</span>
           </div>
         </SettingsRow>
-        {/* <SettingsRow
-          label="Deposit Rate"
-          subtitle="Percentage customers pay upfront to confirm booking"
-        >
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              value={depositInput}
-              onChange={e => setDepositInput(e.target.value)}
-              min={10}
-              max={100}
-              className="w-20 text-center border border-gray-200 rounded-lg py-1.5 text-sm font-bold focus:outline-none focus:border-primary"
-            />
-            <span className="text-sm text-gray-400">%</span>
-          </div>
-        </SettingsRow> */}
-        <SettingsRow
-          label="Featured Listing Price"
-          subtitle="Amount artists pay to be featured (LKR)"
-        >
+        <SettingsRow label="Featured Listing Price" subtitle="Amount artists pay to be featured (LKR)">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-400">LKR</span>
-            <input
-              type="number"
-              value={featuredInput}
-              onChange={e => setFeaturedInput(e.target.value)}
-              className="w-28 text-center border border-gray-200 rounded-lg py-1.5 text-sm font-bold focus:outline-none focus:border-primary"
-            />
+            <input type="number" value={featuredInput} onChange={e => setFeaturedInput(e.target.value)} className="w-28 text-center border border-gray-200 rounded-lg py-1.5 text-sm font-bold focus:outline-none focus:border-primary" />
           </div>
         </SettingsRow>
         <div className="pt-2">
@@ -153,56 +157,30 @@ export default function Settings() {
         </div>
       </SettingsSection>
 
-      {/* Platform Controls */}
-      <SettingsSection title="⚙️ Platform Controls">
-        {/* <SettingsRow
-          label="Auto-Approve Artists"
-          subtitle="Skip manual verification for new artists"
-        >
-          <ToggleSwitch
-            enabled={settings.autoApproveEnabled}
-            onToggle={() => {
-              dispatch(toggleAutoApprove())
-              toast.success('Auto-approve updated')
-            }}
-          />
-        </SettingsRow> */}
-        <SettingsRow
-          label="Maintenance Mode"
-          subtitle="Temporarily disable the app for users"
-        >
-          <ToggleSwitch
-            enabled={settings.maintenanceMode}
-            onToggle={async () => {
-              const newValue = !settings.maintenanceMode
-              try {
-                await settingsApi.updateSettings({ maintenance_mode: newValue })
-                dispatch(toggleMaintenance())
-                toast(newValue ? '⚠️ Maintenance mode ON' : 'Maintenance mode OFF')
-              } catch {
-                toast.error('Failed to update maintenance mode')
-              }
-            }}
-          />
+      <SettingsSection title="Platform Controls">
+        <SettingsRow label="Maintenance Mode" subtitle="Temporarily disable the app for users">
+          <ToggleSwitch enabled={settings.maintenanceMode} onToggle={async () => {
+            const newValue = !settings.maintenanceMode
+            try {
+              await settingsApi.updateSettings({ maintenance_mode: newValue })
+              dispatch(toggleMaintenance())
+              toast(newValue ? 'Maintenance mode ON' : 'Maintenance mode OFF')
+            } catch {
+              toast.error('Failed to update maintenance mode')
+            }
+          }} />
         </SettingsRow>
         <div style={{ filter: 'blur(2px)', opacity: 0.5, pointerEvents: 'none' }}>
-          <SettingsRow
-            label="Push Notifications"
-            subtitle="Send booking reminders to customers and artists"
-          >
-            <ToggleSwitch
-              enabled={settings.notificationsEnabled}
-              onToggle={() => {
-                dispatch(toggleNotifications())
-                toast.success('Notification setting updated')
-              }}
-            />
+          <SettingsRow label="Push Notifications" subtitle="Send booking reminders to customers and artists">
+            <ToggleSwitch enabled={settings.notificationsEnabled} onToggle={() => {
+              dispatch(toggleNotifications())
+              toast.success('Notification setting updated')
+            }} />
           </SettingsRow>
         </div>
         <p className="text-xs text-gray-400 mt-1">Push Notifications — Coming soon</p>
       </SettingsSection>
 
-      {/* Current settings summary */}
       <div className="bg-gray-900 text-white rounded-2xl p-6">
         <h3 className="text-sm font-bold mb-4 text-gray-300">Current Settings Summary</h3>
         <div className="grid grid-cols-3 gap-4">

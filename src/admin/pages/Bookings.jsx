@@ -69,7 +69,38 @@ export default function Bookings() {
           </div>
         </div>
 
-        {loading && <div className="text-center py-12 text-gray-400 text-sm">Loading bookings...</div>}
+        {loading && (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px]">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="table-header text-left">ID</th>
+                  <th className="table-header text-left">Customer</th>
+                  <th className="table-header text-left">Artist</th>
+                  <th className="table-header text-left hidden md:table-cell">Event</th>
+                  <th className="table-header text-left hidden md:table-cell">Date</th>
+                  <th className="table-header text-left">Amount</th>
+                  <th className="table-header text-left">Status</th>
+                  <th className="table-header text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1,2,3,4,5].map(i => (
+                  <tr key={i} className="border-b border-gray-50">
+                    <td className="table-cell"><div className="h-4 bg-gray-100 rounded w-16 animate-pulse" /></td>
+                    <td className="table-cell"><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-gray-100 animate-pulse" /><div className="h-4 bg-gray-100 rounded w-20 animate-pulse" /></div></td>
+                    <td className="table-cell"><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-gray-100 animate-pulse" /><div className="h-4 bg-gray-100 rounded w-20 animate-pulse" /></div></td>
+                    <td className="table-cell hidden md:table-cell"><div className="h-4 bg-gray-100 rounded w-16 animate-pulse" /></td>
+                    <td className="table-cell hidden md:table-cell"><div className="h-4 bg-gray-100 rounded w-20 animate-pulse" /></td>
+                    <td className="table-cell"><div className="h-4 bg-gray-100 rounded w-16 animate-pulse" /></td>
+                    <td className="table-cell"><div className="h-6 bg-gray-100 rounded w-16 animate-pulse" /></td>
+                    <td className="table-cell"><div className="h-8 bg-gray-100 rounded w-24 animate-pulse" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
         {error && !loading && <div className="text-center py-12 text-red-400 text-sm">{error}</div>}
 
         {!loading && (

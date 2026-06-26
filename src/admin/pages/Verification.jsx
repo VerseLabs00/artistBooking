@@ -430,8 +430,24 @@ export default function Verification() {
         </div>
 
         {loading && (
-            <div className="bg-white rounded-2xl p-12 text-center text-gray-400 text-sm border border-gray-100 shadow-sm">
-              Loading applications...
+            <div className="space-y-4">
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="flex items-center justify-between px-4 md:px-5 py-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-100 animate-pulse shrink-0" />
+                      <div className="min-w-0">
+                        <div className="h-4 bg-gray-100 rounded w-32 animate-pulse mb-1" />
+                        <div className="h-3 bg-gray-100 rounded w-24 animate-pulse" />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="h-8 w-16 bg-gray-100 rounded animate-pulse" />
+                      <div className="h-8 w-16 bg-gray-100 rounded animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
         )}
 

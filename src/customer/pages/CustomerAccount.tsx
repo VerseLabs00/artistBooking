@@ -410,8 +410,24 @@ export default function CustomerAccount() {
                   </div>
                   
                   {loading ? (
-                    <div className="flex items-center justify-center py-20 bg-white rounded-3xl border border-gray-100">
-                      <Loader2 className="animate-spin text-pink" size={32} />
+                    <div className="space-y-4">
+                      {[1,2,3].map(i => (
+                        <div key={i} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col sm:flex-row items-center gap-6">
+                          <div className="w-20 h-20 rounded-2xl bg-gray-100 animate-pulse flex-shrink-0" />
+                          <div className="flex-1 text-center sm:text-left">
+                            <div className="h-5 bg-gray-100 rounded w-32 animate-pulse mb-2" />
+                            <div className="h-4 bg-gray-100 rounded w-40 animate-pulse mb-3" />
+                            <div className="flex items-center justify-center sm:justify-start gap-2">
+                              <div className="h-6 bg-gray-100 rounded-full w-20 animate-pulse" />
+                              <div className="h-4 bg-gray-100 rounded w-16 animate-pulse" />
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="h-9 bg-gray-100 rounded-xl w-20 animate-pulse" />
+                            <div className="h-9 bg-gray-100 rounded-xl w-16 animate-pulse" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : bookings.length === 0 ? (
                     <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 px-6">
@@ -479,7 +495,29 @@ export default function CustomerAccount() {
                 </header>
 
                 <div className="space-y-4">
-                  {bookings.map(booking => (
+                  {loading ? (
+                    [1,2,3].map(i => (
+                      <div key={i} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                        <div className="flex flex-col md:flex-row gap-6">
+                          <div className="w-full md:w-48 h-32 rounded-2xl bg-gray-100 animate-pulse flex-shrink-0" />
+                          <div className="flex-1">
+                            <div className="h-5 bg-gray-100 rounded w-32 animate-pulse mb-2" />
+                            <div className="h-4 bg-gray-100 rounded w-24 animate-pulse mb-4" />
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+                              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+                              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+                              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+                            </div>
+                            <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-50">
+                              <div className="h-9 bg-gray-100 rounded-xl w-24 animate-pulse" />
+                              <div className="h-9 bg-gray-100 rounded-xl w-28 animate-pulse" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    bookings.map(booking => (
                     <div key={booking.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
                       <div className="flex flex-col md:flex-row gap-6">
                         <div className="relative w-full md:w-48 h-32 rounded-2xl overflow-hidden flex-shrink-0">
@@ -553,7 +591,7 @@ export default function CustomerAccount() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )))}
                 </div>
               </div>
             )}

@@ -68,9 +68,25 @@ export default function BookingDetail() {
 
   if (selectedLoading || !booking) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <p className="text-gray-400 text-sm">{selectedLoading ? 'Loading booking...' : 'Booking not found.'}</p>
-        <button onClick={() => navigate('/bookings')} className="btn-primary">Back to Bookings</button>
+      <div className="max-w-4xl mx-auto">
+        <div className="h-10 bg-gray-100 rounded w-32 animate-pulse mb-5" />
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
+          <div className="h-6 bg-gray-100 rounded w-48 animate-pulse" />
+          <div className="grid grid-cols-2 gap-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="bg-gray-50 rounded-xl p-4">
+                <div className="h-3 bg-gray-100 rounded w-16 animate-pulse mb-2" />
+                <div className="h-5 bg-gray-100 rounded w-24 animate-pulse" />
+              </div>
+            ))}
+          </div>
+          <div className="h-32 bg-gray-100 rounded-xl animate-pulse" />
+          <div className="flex gap-3">
+            {[1,2,3].map(i => (
+              <div key={i} className="h-10 bg-gray-100 rounded-xl flex-1 animate-pulse" />
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
