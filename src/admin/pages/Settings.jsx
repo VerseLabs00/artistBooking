@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react'
 import {
   updateCommissionRate,
   updateFeaturedPrice,
-  toggleMaintenance,
-  setMaintenanceMode,
   toggleNotifications,
 } from '../features/settings/settingsSlice'
 import PageHeader from '../components/common/PageHeader'
@@ -69,7 +67,6 @@ export default function Settings() {
       setFeaturedInput(data.featured_listing_price)
       dispatch(updateCommissionRate(data.commission_rate))
       dispatch(updateFeaturedPrice(data.featured_listing_price))
-      dispatch(setMaintenanceMode(data.maintenance_mode))
     } catch (error) {
       console.error('Failed to load settings:', error)
     } finally {
@@ -158,18 +155,6 @@ export default function Settings() {
       </SettingsSection>
 
       <SettingsSection title="Platform Controls">
-        <SettingsRow label="Maintenance Mode" subtitle="Temporarily disable the app for users">
-          <ToggleSwitch enabled={settings.maintenanceMode} onToggle={async () => {
-            const newValue = !settings.maintenanceMode
-            try {
-              await settingsApi.updateSettings({ maintenance_mode: newValue })
-              dispatch(toggleMaintenance())
-              toast(newValue ? 'Maintenance mode ON' : 'Maintenance mode OFF')
-            } catch {
-              toast.error('Failed to update maintenance mode')
-            }
-          }} />
-        </SettingsRow>
         <div style={{ filter: 'blur(2px)', opacity: 0.5, pointerEvents: 'none' }}>
           <SettingsRow label="Push Notifications" subtitle="Send booking reminders to customers and artists">
             <ToggleSwitch enabled={settings.notificationsEnabled} onToggle={() => {

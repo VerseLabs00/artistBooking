@@ -1,13 +1,5 @@
 import { Routes, Route } from "react-router-dom";
 import ScrollToTop from "./artist/component/ScrollToTop.tsx";
-import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  updateCommissionRate,
-  updateFeaturedPrice,
-  setMaintenanceMode,
-} from "./admin/features/settings/settingsSlice";
-import { settingsApi } from "./admin/api/settingsApi";
 
 import Login from "./artist/pages/auth/login.tsx";
 import Account from "./artist/pages/artist/account.tsx";
@@ -34,53 +26,11 @@ import Category from "./artist/pages/artist/categoryLanding.tsx";
 import DevGate from "./artist/component/DevGate.tsx";
 
 function App() {
-    const dispatch = useDispatch();
-    const maintenanceMode = useSelector((s: any) => s.settings.maintenanceMode);
-    const [settingsReady, setSettingsReady] = useState(false);
-
-    useEffect(() => {
-        settingsApi.getSettings()
-            .then(data => {
-                dispatch(updateCommissionRate(data.commission_rate))
-                dispatch(updateFeaturedPrice(data.featured_listing_price))
-                dispatch(setMaintenanceMode(data.maintenance_mode))
-                setSettingsReady(true);
-            })
-            .catch(() => {
-                setSettingsReady(true);
-            });
-    }, [dispatch]);
-
-    if (!settingsReady) {
-        return (
-            <div style={{
-                minHeight: "100vh",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: "'Fraunces', Georgia, serif",
-                background: "#F4F1F5"
-            }}>
-                <div style={{ textAlign: "center" }}>
-                    <div style={{
-                        width: 40, height: 40, border: "4px solid #E8194B",
-                        borderTopColor: "transparent", borderRadius: "50%",
-                        animation: "spin 1s linear infinite",
-                        margin: "0 auto 16px"
-                    }} />
-                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                    <p style={{ color: "#666", fontSize: 14 }}>Loading...</p>
-                </div>
-            </div>
-        );
-    }
-
     const content = (
         <>
             <ScrollToTop />
             <Routes>
                 <Route path="/" element={<Landing />} />
-
                 <Route path="/login" element={<Login />} />
                 <Route path="/information" element={<Information />} />
                 <Route path="/account" element={<Account />} />
@@ -107,11 +57,7 @@ function App() {
         </>
     );
 
-    if (maintenanceMode) {
-        return <DevGate>{content}</DevGate>;
-    }
-
-    return content;
+    return <DevGate>{content}</DevGate>;
 }
 
 export default App;
