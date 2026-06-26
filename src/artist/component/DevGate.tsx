@@ -4,6 +4,18 @@ const DEV_USERNAME = "sangeeth";
 const DEV_PASSWORD = "12348765";
 const SESSION_KEY = "performa_dev_auth";
 
+// Helper to check if storage is available (iOS ITP can block it)
+const isStorageAvailable = (storage: Storage): boolean => {
+    try {
+        const test = "__storage_test__";
+        storage.setItem(test, test);
+        storage.removeItem(test);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
 interface DevGateProps {
     children: React.ReactNode;
 }
@@ -14,22 +26,48 @@ export default function DevGate({ children }: DevGateProps) {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [shake, setShake] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [storageAvailable, setStorageAvailable] = useState(true);
 
     useEffect(() => {
-        if (sessionStorage.getItem(SESSION_KEY) === "true") {
+        const sessionAvailable = isStorageAvailable(sessionStorage);
+        const localAvailable = isStorageAvailable(localStorage);
+        setStorageAvailable(sessionAvailable || localAvailable);
+
+        const sessionAuth = sessionAvailable && sessionStorage.getItem(SESSION_KEY) === "true";
+        const localAuth = localAvailable && localStorage.getItem(SESSION_KEY) === "true";
+        if (sessionAuth || localAuth) {
             setAuthed(true);
         }
     }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (submitting) return;
+        
+        setSubmitting(true);
+        
         if (username === DEV_USERNAME && password === DEV_PASSWORD) {
-            sessionStorage.setItem(SESSION_KEY, "true");
+            // Try to save to storage if available
+            try {
+                if (isStorageAvailable(sessionStorage)) {
+                    sessionStorage.setItem(SESSION_KEY, "true");
+                }
+                if (isStorageAvailable(localStorage)) {
+                    localStorage.setItem(SESSION_KEY, "true");
+                }
+            } catch (err) {
+                // Storage blocked by iOS ITP - continue anyway with in-memory auth
+                console.warn("Storage blocked by ITP, using in-memory auth");
+            }
             setAuthed(true);
         } else {
             setError("Incorrect username or password.");
             setShake(true);
-            setTimeout(() => setShake(false), 500);
+            setTimeout(() => {
+                setShake(false);
+                setSubmitting(false);
+            }, 500);
         }
     };
 
@@ -140,23 +178,24 @@ export default function DevGate({ children }: DevGateProps) {
 
                     <button
                         type="submit"
+                        disabled={submitting}
                         style={{
                             width: "100%",
                             marginTop: 24,
-                            background: "#E8194B",
+                            background: submitting ? "#999" : "#E8194B",
                             color: "#fff",
                             border: "none",
                             borderRadius: 12,
                             fontSize: 14,
                             fontWeight: 800,
                             padding: "13px",
-                            cursor: "pointer",
+                            cursor: submitting ? "not-allowed" : "pointer",
                             fontFamily: "inherit",
+                            WebkitTapHighlightColor: "transparent",
+                            opacity: submitting ? 0.7 : 1,
                         }}
-                        onMouseOver={e => (e.currentTarget.style.background = "#c8133b")}
-                        onMouseOut={e => (e.currentTarget.style.background = "#E8194B")}
                     >
-                        Continue to Performa
+                        {submitting ? "Verifying..." : "Continue to Performa"}
                     </button>
                 </form>
 
