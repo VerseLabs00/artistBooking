@@ -1,15 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MapPin, Calendar, Music2 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import stage from "../../../../public/bg-login.png";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
+import { getStats } from "../../../customer/services/discoveryService";
 
 const Information: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const resuming = (location.state as any)?.resuming === true;
     const { user } = useAuth();
+    const [stats, setStats] = useState<{ total_artists: number; sample_avatars: string[] }>({
+        total_artists: 0,
+        sample_avatars: []
+    });
+
+    useEffect(() => {
+        getStats()
+            .then(data => {
+                if (data && typeof data === 'object' && Array.isArray(data.sample_avatars)) {
+                    setStats(data);
+                }
+            })
+            .catch(() => {});
+    }, []);
 
     const [form, setForm] = useState({
         full_name: user?.name || "",
@@ -103,12 +118,12 @@ const Information: React.FC = () => {
 
                             <div className="flex items-center gap-4 mt-10">
                                 <div className="flex -space-x-3">
-                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" className="w-10 h-10 rounded-full border-2 border-white" />
-                                    <img src="https://randomuser.me/api/portraits/women/44.jpg" className="w-10 h-10 rounded-full border-2 border-white" />
-                                    <img src="https://randomuser.me/api/portraits/men/76.jpg" className="w-10 h-10 rounded-full border-2 border-white" />
+                                    {(stats?.sample_avatars && Array.isArray(stats.sample_avatars) && stats.sample_avatars.length > 0 ? stats.sample_avatars : []).slice(0, 5).map((src, i) => (
+                                        <img key={i} src={src} className="w-10 h-10 rounded-full border-2 border-white object-cover" alt="" />
+                                    ))}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium">600+ artists already joined</p>
+                                    <p className="text-sm font-medium">{(stats?.total_artists ?? 0) > 100 ? "100+ artists already joined" : `${stats?.total_artists ?? 0} artists already joined`}</p>
                                     <div className="text-yellow-400 text-sm">★★★★★</div>
                                 </div>
                             </div>
