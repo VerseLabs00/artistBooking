@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { getArtists } from "../../../customer/services/discoveryService";
+import { toggleFavorite, getFavorites } from "../../../customer/services/favoriteService";
 import {
     MapPin, Heart, CheckCircle, Star, Search, ChevronDown, X
 } from "lucide-react";
 import ArtistProfile from "../../../customer/pages/ArtistProfile";
+import toast from "react-hot-toast";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Artist {
@@ -42,6 +44,15 @@ export default function DJsPage() {
     const [priceMax, setPriceMax] = useState("200,000");
     const [rating, setRating] = useState("any");
     const [favs, setFavs] = useState<Set<string | number>>(new Set());
+    const [favoriteLoadingIds, setFavoriteLoadingIds] = useState<Set<string | number>>(new Set());
+
+    useEffect(() => {
+        getFavorites()
+            .then(data => {
+                setFavs(new Set(data.map(f => f.id)));
+            })
+            .catch(() => {});
+    }, []);
     const [sortBy, setSortBy] = useState("Most Popular");
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
     const [isClosingProfile, setIsClosingProfile] = useState(false);
@@ -118,12 +129,25 @@ export default function DJsPage() {
         }
     }, [sortBy, artists]);
 
-    const toggleFav = (id: string | number) => {
-        setFavs(prev => {
-            const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
-            return next;
-        });
+    const toggleFav = async (id: string | number) => {
+        setFavoriteLoadingIds(prev => new Set(prev).add(id));
+        try {
+            const result = await toggleFavorite(String(id));
+            setFavs(prev => {
+                const next = new Set(prev);
+                result.is_favorited ? next.add(id) : next.delete(id);
+                return next;
+            });
+        } catch (err) {
+            console.error("Failed to toggle favorite:", err);
+            toast.error("Failed to update favorite. Please try again.");
+        } finally {
+            setFavoriteLoadingIds(prev => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        }
     };
 
     const toggleLocation = (loc: string) => {

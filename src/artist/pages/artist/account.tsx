@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-    Heart, MoreHorizontal, Play, Music, MapPin, Users, Star,
-    Instagram, Facebook, Twitter, Mail, Youtube, Music2, Home, LogOut
+    Heart, Play, Music, MapPin, Users, Star,
+    Instagram, Facebook, Twitter, Mail, Youtube, Music2, Home, LogOut, X
 } from "lucide-react";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
@@ -198,6 +198,45 @@ function MediaPreviewCard({ item, onDelete, isPlaying, onPlay }: {
             {renderFooter()}
         </div>
     );
+
+    // Favorited By Modal
+    if (showFavModal) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
+                    <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900">Favorited By ({favCount})</h3>
+                        <button onClick={() => setShowFavModal(false)} className="text-gray-400 hover:text-gray-600">
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div className="p-5 overflow-y-auto max-h-[60vh]">
+                        {favCustomers.length === 0 ? (
+                            <div className="text-center py-10">
+                                <Heart size={40} className="text-gray-200 mx-auto mb-3" />
+                                <p className="text-gray-500 text-sm">No customers have favorited you yet.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {favCustomers.map((c, i) => (
+                                    <div key={i} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50">
+                                        <div className="w-10 h-10 rounded-full bg-pink/10 flex items-center justify-center text-pink font-bold">
+                                            {c.name?.[0] || 'U'}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-gray-900 truncate">{c.name}</p>
+                                            <p className="text-xs text-gray-500 truncate">{c.email}</p>
+                                        </div>
+                                        <span className="text-[10px] text-gray-400">{c.favorited_at}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 }
 
 export default function ArtistProfile() {
@@ -210,11 +249,15 @@ export default function ArtistProfile() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [playingVideoId, setPlayingVideoId] = useState<number | null>(null);
+    const [showFavModal, setShowFavModal] = useState(false)
+    const [favCustomers, setFavCustomers] = useState<Array<{ name: string; email: string; favorited_at: string }>>([])
+    const [favCount, setFavCount] = useState(0)
 
     useEffect(() => {
         window.scrollTo(0, 0);
         fetchProfile();
         fetchStats();
+        fetchFavoritedBy();
     }, []);
 
     const fetchProfile = async () => {
@@ -240,6 +283,19 @@ export default function ArtistProfile() {
             setArtistStats(data.stats);
         } catch (err) {
             console.error("Failed to load stats", err);
+        }
+    };
+
+    const fetchFavoritedBy = async () => {
+        try {
+            const { data } = await api.get("/profile");
+            const artistId = data.profile?.id;
+            if (!artistId) return;
+            const favData = await api.get(`/favorites/customers/${artistId}`);
+            setFavCustomers(favData.data.customers || []);
+            setFavCount(favData.data.total || 0);
+        } catch (err) {
+            console.error("Failed to load favorited by", err);
         }
     };
 
@@ -413,7 +469,8 @@ export default function ArtistProfile() {
     const displayName = profile?.stage_name || profile?.full_name || "Artist";
 
     return (
-        <div className="min-h-screen bg-[#F4F1F5] pb-20 overflow-x-hidden" style={{ fontFamily: "'Fraunces', serif" }}>
+        <>
+            <div className="min-h-screen bg-[#F4F1F5] pb-20 overflow-x-hidden" style={{ fontFamily: "'Fraunces', serif" }}>
             <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
             `}</style>
@@ -602,14 +659,17 @@ export default function ArtistProfile() {
                                     )}
                                 </div>
                             </div>
-                            <div className="flex gap-2">
-                                <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50">
-                                    <Heart size={18} />
-                                </button>
-                                <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50">
-                                    <MoreHorizontal size={18} />
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => setShowFavModal(true)}
+                                className="relative w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors"
+                            >
+                                <Heart size={18} />
+                                {favCount > 0 && (
+                                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                                    {favCount}
+                                  </span>
+                                )}
+                            </button>
                         </div>
 
                         {/* DESCRIPTION */}
@@ -721,5 +781,42 @@ export default function ArtistProfile() {
                 </div>
             </div>
         </div>
-    );
+
+        {showFavModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
+                    <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900">Favorited By ({favCount})</h3>
+                        <button onClick={() => setShowFavModal(false)} className="text-gray-400 hover:text-gray-600">
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div className="p-5 overflow-y-auto max-h-[60vh]">
+                        {favCustomers.length === 0 ? (
+                            <div className="text-center py-10">
+                                <Heart size={40} className="text-gray-200 mx-auto mb-3" />
+                                <p className="text-gray-500 text-sm">No customers have favorited you yet.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {favCustomers.map((c, i) => (
+                                    <div key={i} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50">
+                                        <div className="w-10 h-10 rounded-full bg-pink/10 flex items-center justify-center text-pink font-bold">
+                                            {c.name?.[0] || 'U'}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-gray-900 truncate">{c.name}</p>
+                                            <p className="text-xs text-gray-500 truncate">{c.email}</p>
+                                        </div>
+                                        <span className="text-[10px] text-gray-400">{c.favorited_at}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        )}
+    </>
+);
 }

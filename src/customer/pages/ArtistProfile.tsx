@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-    Heart, MoreHorizontal, Play, Music, MapPin, Star,
-    Instagram, Facebook, Twitter, Mail, X
+    Heart, Play, Music, MapPin, Star,
+    Instagram, Facebook, Twitter, Mail, X, Loader2
 } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BookingModal from "../components/booking/BookingModal";
+import toast from "react-hot-toast";
 import { getArtist, submitReview } from "../services/discoveryService";
+import { toggleFavorite, getFavorites } from "../services/favoriteService";
 import type { ArtistDetail } from "../services/discoveryService";
 import { useAuth } from "../context/AuthContext";
 import { PublicArtistCalendar } from "../../components/PublicArtistCalendar";
@@ -140,17 +142,9 @@ function MediaPreviewCard({
 
     if (isDirectVideo(item.url)) {
         return (
-            <div className="flex flex-col h-full">
-                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
-                    <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
-                        <Play size={32} className="text-gray-400" />
-                    </div>
-                </div>
-                <div className="p-3">
-                    <p className="text-[14px] font-medium text-gray-700 truncate">
-                        {resolvedTitle || "Video"}
-                    </p>
-                    <p className="text-[11px] text-gray-400 truncate">{item.url}</p>
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
+                    <Play size={32} className="text-gray-400" />
                 </div>
             </div>
         );
@@ -191,6 +185,8 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
     const [review, setReview] = useState("");
 
     const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
+    const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
+    const [favoriteLoadingIds, setFavoriteLoadingIds] = useState<Set<string | number>>(new Set());
 
     const { token, user } = useAuth();
 
@@ -203,6 +199,35 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
             .catch(() => setArtist(null))
             .finally(() => setLoading(false));
     }, [id, propId]);
+
+    useEffect(() => {
+        getFavorites()
+            .then(data => {
+                setLikedArtists(new Set(data.map(f => f.id)));
+            })
+            .catch(() => {});
+    }, []);
+
+    const toggleLike = async (artistId: string | number) => {
+        setFavoriteLoadingIds(prev => new Set(prev).add(artistId));
+        try {
+            const result = await toggleFavorite(String(artistId));
+            setLikedArtists(prev => {
+                const next = new Set(prev);
+                result.is_favorited ? next.add(artistId) : next.delete(artistId);
+                return next;
+            });
+        } catch (err) {
+            console.error("Failed to toggle favorite:", err);
+            toast.error("Failed to update favorite. Please try again.");
+        } finally {
+            setFavoriteLoadingIds(prev => {
+                const next = new Set(prev);
+                next.delete(artistId);
+                return next;
+            });
+        }
+    };
 
     // FAILSAFE REDIRECT: If the booking modal is about to open but we are not logged in as a customer
     useEffect(() => {
@@ -478,14 +503,17 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors">
-                                        <Heart size={18} />
-                                    </button>
-                                    <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors">
-                                        <MoreHorizontal size={18} />
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={() => artist && toggleLike(artist.id)}
+                                    className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors relative self-start"
+                                >
+                                    <Heart
+                                        size={18}
+                                        className={artist && likedArtists.has(artist.id) ? "text-red-500" : "text-gray-400"}
+                                        fill={artist && likedArtists.has(artist.id) ? "#ef4444" : "none"}
+                                    />
+                                    {favoriteLoadingIds.has(artist?.id) && <Loader2 size={10} className="animate-spin absolute" />}
+                                </button>
                             </div>
 
                             {/* DESCRIPTION */}

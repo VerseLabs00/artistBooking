@@ -515,14 +515,6 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50">
-                                        <Heart size={18} />
-                                    </button>
-                                    <button className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:bg-gray-50">
-                                        <MoreHorizontal size={18} />
-                                    </button>
-                                </div>
                             </div>
 
                             {/* DESCRIPTION */}

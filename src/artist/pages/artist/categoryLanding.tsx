@@ -210,19 +210,6 @@ export default function DJsPage() {
             <div className="relative" style={{ aspectRatio: "3/4" }}>
                 <img src={artist.image} className="w-full h-full object-cover" alt={artist.name} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)" }} />
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFav(artist.id);
-                    }}
-                    className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all hover:scale-110"
-                >
-                    <Heart
-                        size={15}
-                        className={favs.has(artist.id) ? "text-red-500" : "text-gray-500"}
-                        fill={favs.has(artist.id) ? "#ef4444" : "none"}
-                    />
-                </button>
                 {artist.verified && (
                     <div className="verified-dot" />
                 )}

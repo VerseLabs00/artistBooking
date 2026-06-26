@@ -21,6 +21,7 @@ import {
   Camera
 } from 'lucide-react'
 import { getBookings, getBooking, cancelBooking } from '../services/bookingService'
+import { toggleFavorite, getFavorites } from '../services/favoriteService'
 import type { BookingSummary } from '../services/bookingService'
 import { useAuth } from '../context/AuthContext'
 import Footer from '../components/Footer'
@@ -64,6 +65,9 @@ export default function CustomerAccount() {
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'favorites' | 'settings'>('overview')
   const [uploading, setUploading] = useState(false)
+  const [favoritesModalOpen, setFavoritesModalOpen] = useState(false)
+  const [customerFavorites, setCustomerFavorites] = useState<Array<{ id: string; name: string; category: string; location: string; avatar_url: string }>>([])
+  const [favoritesCount, setFavoritesCount] = useState(0)
   
   // Details Modal State
   const [selectedBooking, setSelectedBooking] = useState<DetailedBooking | null>(null)
@@ -71,7 +75,18 @@ export default function CustomerAccount() {
 
   useEffect(() => {
     fetchBookings()
+    fetchFavorites()
   }, [])
+
+  const fetchFavorites = async () => {
+    try {
+      const data = await getFavorites()
+      setCustomerFavorites(data)
+      setFavoritesCount(data.length)
+    } catch (err) {
+      console.error("Failed to fetch favorites:", err)
+    }
+  }
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -302,9 +317,17 @@ export default function CustomerAccount() {
             <span className="hidden sm:inline">Back to Discovery</span>
             <span className="sm:hidden">Back</span>
           </button>
-          {/*<div className="w-10 h-10 rounded-full bg-pink flex items-center justify-center text-white font-bold">*/}
-          {/*  {user?.name?.[0] || 'C'}*/}
-          {/*</div>*/}
+          <button
+            onClick={() => setFavoritesModalOpen(true)}
+            className="relative text-gray-600 hover:text-red-500 transition-colors"
+          >
+            <Heart size={20} />
+            {favoritesCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {favoritesCount}
+              </span>
+            )}
+          </button>
         </div>
       </nav>
 
@@ -596,10 +619,45 @@ export default function CustomerAccount() {
               </div>
             )}
 
-            {(activeTab === 'favorites' || activeTab === 'settings') && (
+            {activeTab === 'favorites' && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <header>
+                  <h1 className="text-3xl font-black text-gray-900">My Favorites</h1>
+                  <p className="text-gray-500 mt-1">Artists you've saved for later.</p>
+                </header>
+                {customerFavorites.length === 0 ? (
+                  <div className="text-center py-20 bg-white rounded-3xl border border-gray-100">
+                    <Heart size={40} className="text-gray-200 mx-auto mb-3" />
+                    <h3 className="font-bold text-gray-900">No favorites yet</h3>
+                    <p className="text-gray-500 text-sm mt-2">Explore artists and tap the heart to save them here.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {customerFavorites.map(artist => (
+                      <div key={artist.id} className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <img
+                          src={artist.avatar_url || '/assets/default-avatar.png'}
+                          className="w-14 h-14 rounded-full object-cover border-2 border-gray-100"
+                          alt={artist.name}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-900 truncate">{artist.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{artist.category} · {artist.location}</p>
+                        </div>
+                        <Link to={`/artistProfile/${artist.id}`} className="text-pink hover:underline">
+                          <ChevronRight size={18} />
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {(activeTab === 'settings') && (
               <div className="flex flex-col items-center justify-center py-40 bg-white rounded-3xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
                 <div className="w-20 h-20 bg-pink/5 rounded-full flex items-center justify-center text-pink mb-4">
-                  {activeTab === 'favorites' ? <Heart size={40} /> : <Settings size={40} />}
+                  <Settings size={40} />
                 </div>
                 <h3 className="font-bold text-xl text-gray-900">Coming Soon</h3>
                 <p className="text-gray-500 text-sm mt-2">This feature is currently under development.</p>
@@ -610,6 +668,52 @@ export default function CustomerAccount() {
       </div>
 
       {/*<Footer />*/}
+
+      {/* Favorites Modal */}
+      {favoritesModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setFavoritesModalOpen(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900">Favorite Artists</h3>
+              <button onClick={() => setFavoritesModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto max-h-[60vh]">
+              {customerFavorites.length === 0 ? (
+                <div className="text-center py-10">
+                  <Heart size={40} className="text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">No favorite artists yet.</p>
+                  <p className="text-gray-400 text-xs mt-1">Explore artists and tap the heart to add them here.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {customerFavorites.map(artist => (
+                    <div key={artist.id} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors">
+                      <img
+                        src={artist.avatar_url || '/assets/default-avatar.png'}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-gray-100"
+                        alt={artist.name}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-900 truncate">{artist.name}</p>
+                        <p className="text-xs text-gray-500 truncate">{artist.category} · {artist.location}</p>
+                      </div>
+                      <Link
+                        to={`/artistProfile/${artist.id}`}
+                        className="text-xs text-pink font-semibold hover:underline whitespace-nowrap"
+                        onClick={() => setFavoritesModalOpen(false)}
+                      >
+                        View
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -9,7 +9,9 @@ import {
 import Footer from "../components/Footer";
 import api from "../lib/api";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 import { getArtists, getCategories, getNearYou, getStats } from "../services/discoveryService";
+import { toggleFavorite, getFavorites } from "../services/favoriteService";
 import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../services/discoveryService";
 import ArtistProfile from "./ArtistProfile";
 
@@ -246,6 +248,15 @@ export default function HomePage() {
     const [browseCategories, setBrowseCategories] = useState<CategoryData[]>(ALL_CATEGORIES_DATA);
     const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(true);
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
+    const [favoriteLoadingIds, setFavoriteLoadingIds] = useState<Set<string | number>>(new Set());
+
+    useEffect(() => {
+        getFavorites()
+            .then(data => {
+                setLikedArtists(new Set(data.map(f => f.id)));
+            })
+            .catch(() => {});
+    }, []);
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
     const [isClosingProfile, setIsClosingProfile] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -402,12 +413,25 @@ export default function HomePage() {
         window.open(`/categoryCustomer?name=${encodeURIComponent(category)}`, '_blank');
     };
 
-    const toggleLike = (id: string | number) => {
-        setLikedArtists(prev => {
-            const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
-            return next;
-        });
+    const toggleLike = async (id: string | number) => {
+        setFavoriteLoadingIds(prev => new Set(prev).add(id));
+        try {
+            const result = await toggleFavorite(String(id));
+            setLikedArtists(prev => {
+                const next = new Set(prev);
+                result.is_favorited ? next.add(id) : next.delete(id);
+                return next;
+            });
+        } catch (err) {
+            console.error("Failed to toggle favorite:", err);
+            toast.error("Failed to update favorite. Please try again.");
+        } finally {
+            setFavoriteLoadingIds(prev => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        }
     };
 
     const renderArtistCard = (artist: Artist) => (
@@ -427,6 +451,7 @@ export default function HomePage() {
                         className={likedArtists.has(artist.id) ? "text-red-500" : "text-gray-500"}
                         fill={likedArtists.has(artist.id) ? "#ef4444" : "none"}
                     />
+                    {favoriteLoadingIds.has(artist.id) && <Loader2 size={10} className="animate-spin absolute" />}
                 </button>
                 {artist.verified && (
                     <div className="verified-dot" />
