@@ -25,6 +25,8 @@ interface Artist {
     verified: boolean;
     startingPrice: number | null;
     maxPrice: number | null;
+    fullPrice: number | null;
+    advance: number | null;
 }
 
 interface ArtistSearchFilters {
@@ -181,6 +183,8 @@ function mapDiscoveryArtist(a: DiscoveryArtist): Artist {
         verified: extra.verification_status === "verified" || extra.verification_status === "approved",
         startingPrice: a.starting_price,
         maxPrice: a.max_price,
+        fullPrice: a.full_price,
+        advance: a.advance,
     };
 }
 
@@ -516,7 +520,11 @@ export default function ArtistHome() {
                         <span className="text-[10px] font-700 text-gray-800">{artist.rating}</span>
                         <span className="text-[10px] text-gray-400">({artist.reviews})</span>
                     </div>
-                    <span className="text-[10px] font-800 pink-text">{artist.price}</span>
+                    {artist.fullPrice != null ? (
+                        <span className="text-[10px] font-800 pink-text">Rs. {artist.fullPrice.toLocaleString("en-LK")}</span>
+                    ) : (
+                        <span className="text-[10px] font-800 pink-text">{artist.price}</span>
+                    )}
                 </div>
             </div>
         </div>
@@ -731,7 +739,7 @@ export default function ArtistHome() {
 
                 {/* HERO */}
                 <section className="relative w-full overflow-hidden bg-cover bg-center pt-28 pb-16 sm:pt-36 sm:pb-24 px-4 sm:px-6 md:px-12 lg:px-20 min-h-[480px] sm:min-h-[540px] flex items-center"
-                         style={{ backgroundImage: "url('/Cover7.jpg')" }}>
+                         style={{ backgroundImage: "url('/new_cover.jpeg')" }}>
                     <div className="absolute inset-0 bg-black/40 z-0" />
                     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10 w-full">
                         <div>

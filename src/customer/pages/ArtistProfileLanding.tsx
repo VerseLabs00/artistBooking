@@ -439,12 +439,12 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                                             <div className="text-[#FF2B6B] font-bold text-[28px] leading-none">
                                                 LKR {artist.full_price.toLocaleString()}
                                                 <span className="text-gray-600 text-[15px] font-medium ml-2">
-                                                    full price
+                                                    {/*full price*/}
                                                 </span>
                                             </div>
                                             {artist.advance && (
-                                                <p className="text-[11px] text-gray-400 mt-1">
-                                                    Advance: LKR {artist.advance.toLocaleString()}
+                                                <p className="text-md text-black-400 mt-1">
+                                                    Advance {artist.advance.toLocaleString()}
                                                 </p>
                                             )}
                                         </div>

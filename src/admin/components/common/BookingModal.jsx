@@ -1,20 +1,14 @@
 import { X } from 'lucide-react'
 
-const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
-
 export default function BookingModal({ booking, onClose }) {
   if (!booking) return null
 
   const safeFullPrice = parseFloat(booking.amount?.replace(/LKR|,/g, '') || 0)
   const safeAdvance = parseFloat(booking.deposit?.replace(/LKR|,/g, '') || 0)
-  const commissionRate = 15
-  const platformFee = +(safeAdvance * commissionRate / 100).toFixed(2)
-  const totalPayment = +(safeAdvance + platformFee).toFixed(2)
+  const platformFee = booking.platformFee ?? 0
+  const commissionRate = booking.commissionRate ?? 15
+  const totalPayment = safeAdvance + platformFee
   const balance = safeFullPrice - safeAdvance
-
-  const selectedDateParts = booking.date ? booking.date.split(/\s+/) : []
-  const selectedDay = selectedDateParts[1] || ''
-  const monthName = booking.date ? booking.date.split(' ')[0] : ''
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">

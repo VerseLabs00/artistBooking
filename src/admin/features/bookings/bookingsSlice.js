@@ -28,6 +28,7 @@ function normaliseBooking(b) {
   return {
     ...b,
     status: statusMap[b.booking_status] ?? b.booking_status ?? 'pending',
+    commissionRate: commission,
 
     customer: {
       id:     customer.id,
@@ -50,6 +51,7 @@ function normaliseBooking(b) {
     deposit:     advancePrice ? `LKR ${advancePrice.toLocaleString()}` : '—',
     balance:     totalPrice   ? `LKR ${(totalPrice - advancePrice).toLocaleString()}` : '—',
     commission:  platformFee  ? `LKR ${platformFee.toFixed(0)}` : '—',
+    platformFee: platformFee || 0,
 
     depositStatus: b.payment_status ?? 'pending',
     balanceStatus: b.booking_status === 'completed' ? 'paid' : 'pending',

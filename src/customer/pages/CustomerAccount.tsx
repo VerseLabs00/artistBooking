@@ -197,12 +197,16 @@ export default function CustomerAccount() {
             >
               <X size={24} className="text-gray-400" />
             </button>
-            
-            <div className="flex flex-col md:flex-row h-full max-h-[90vh] overflow-y-auto">
-              <div className="w-full md:w-1/3 bg-gray-100">
-                <img src={selectedBooking.artist_image} className="w-full h-full object-cover" alt="" />
+
+            <div className="flex flex-col md:flex-row max-h-[90vh]">
+              <div className="w-full md:w-1/3 bg-gray-100 sticky top-0 self-start h-64 md:h-[90vh] z-10">
+                <img
+                    src={selectedBooking.artist_image}
+                    className="w-full h-full object-cover"
+                    alt=""
+                />
               </div>
-              <div className="w-full md:w-2/3 p-8">
+              <div className="w-full md:w-2/3 p-8 overflow-y-auto max-h-[90vh]">
                 <div className="mb-6">
                   <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(selectedBooking.booking_status)}`}>
                     {selectedBooking.booking_status}
@@ -250,7 +254,7 @@ export default function CustomerAccount() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-gray-500">
                       <FileText size={16} />
-                      <span className="text-xs font-bold uppercase tracking-wider">Paid Advance</span>
+                      <span className="text-xs font-bold uppercase tracking-wider">Advance</span>
                     </div>
                     <span className="text-sm font-bold text-gray-900">Rs. {selectedBooking.advance_amount.toLocaleString()}</span>
                   </div>
@@ -376,7 +380,7 @@ export default function CustomerAccount() {
             {activeTab === 'overview' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <header>
-                  <h1 className="text-3xl font-black text-gray-900">Welcome back, {user?.name?.split(' ')[0]}!</h1>
+                  <h1 className="text-xl font-black text-gray-900">Welcome back, {user?.name?.split(' ')[0]}!</h1>
                   <p className="text-gray-500 mt-2">Manage your bookings and keep track of your favorite artists.</p>
                 </header>
 

@@ -510,14 +510,14 @@ export default function ArtistProfile() {
                                 {profile?.full_price && (
                                     <div className="mt-7 text-left">
                                         <div className="text-[#FF2B6B] font-bold text-[28px] leading-none">
-                                            ${profile.full_price}
+                                            Rs. {profile.full_price}
                                             <span className="text-gray-600 text-[15px] font-medium ml-2">
-                                                full price
+                                                {/*full price*/}
                                             </span>
                                         </div>
                                         {profile.advance && (
-                                            <p className="text-[11px] text-gray-400 mt-1">
-                                                Advance: ${profile.advance}
+                                            <p className="text-md text-black-400 mt-1">
+                                                Advance:  Rs. {profile.advance}
                                             </p>
                                         )}
                                     </div>
