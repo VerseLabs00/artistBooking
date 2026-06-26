@@ -248,10 +248,45 @@ export default function ArtistProfile() {
     const [artistStats, setArtistStats] = useState<{ total: number } | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [playingVideoId, setPlayingVideoId] = useState<number | null>(null);
     const [showFavModal, setShowFavModal] = useState(false)
     const [favCustomers, setFavCustomers] = useState<Array<{ name: string; email: string; favorited_at: string }>>([])
     const [favCount, setFavCount] = useState(0)
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxUrl, setLightboxUrl] = useState("");
+    const [lightboxType, setLightboxType] = useState<"image" | "youtube" | "spotify" | "video" | "link">("image");
+
+    const getLightboxType = (url: string): "youtube" | "spotify" | "video" | "link" => {
+        if (getYouTubeId(url)) return "youtube";
+        if (getSpotifyEmbedUrl(url)) return "spotify";
+        if (isDirectVideo(url)) return "video";
+        return "link";
+    };
+
+    const openLightbox = (url: string, type: "image" | "youtube" | "spotify" | "video" | "link" = "image") => {
+        setLightboxUrl(url);
+        setLightboxType(type);
+        setLightboxOpen(true);
+    };
+
+    const closeLightbox = () => {
+        setLightboxOpen(false);
+        setLightboxUrl("");
+        setLightboxType("image");
+    };
+
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === "Escape") closeLightbox();
+        };
+        if (lightboxOpen) {
+            document.addEventListener("keydown", handleEsc);
+            document.body.style.overflow = "hidden";
+        }
+        return () => {
+            document.removeEventListener("keydown", handleEsc);
+            document.body.style.overflow = "";
+        };
+    }, [lightboxOpen]);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -683,22 +718,27 @@ export default function ArtistProfile() {
                             )}
                         </div>
 
-                        {/* GALLERY — images rounded-xl */}
-{galleryImages.length > 0 && (
-                             <>
-                                 <h3 className="text-[24px] font-bold mt-10 mb-5">Gallery</h3>
-                                 <div className="grid grid-cols-3 gap-3">
-                                     {galleryImages.map((img) => (
-                                         <img
-                                             key={img.id}
-                                             src={img.url}
-                                             alt="gallery"
-                                             className="w-full h-[180px] object-cover rounded-xl"
-                                         />
-                                     ))}
-                                 </div>
-                             </>
-                         )}
+                         {/* GALLERY — images rounded-xl */}
+ {galleryImages.length > 0 && (
+                              <>
+                                  <h3 className="text-[24px] font-bold mt-10 mb-5">Gallery</h3>
+                                  <div className="grid grid-cols-3 gap-3">
+                                      {galleryImages.map((img) => (
+                                          <button
+                                              key={img.id}
+                                              onClick={() => openLightbox(img.url, "image")}
+                                              className="w-full h-[180px] rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#FF2B6B] focus:ring-offset-2"
+                                          >
+                                              <img
+                                                  src={img.url}
+                                                  alt="gallery"
+                                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                              />
+                                          </button>
+                                      ))}
+                                  </div>
+                              </>
+                          )}
 
                         {/* AUDIO & VIDEO */}
                         {videoLinks.length > 0 && (
@@ -710,8 +750,8 @@ export default function ArtistProfile() {
                                             key={item.id}
                                             item={item}
                                             onDelete={handleDeleteVideo}
-                                            isPlaying={playingVideoId === item.id}
-                                            onPlay={() => setPlayingVideoId(item.id)}
+                                            isPlaying={false}
+                                            onPlay={() => openLightbox(item.url, getLightboxType(item.url))}
                                         />
                                     ))}
                                 </div>
@@ -817,6 +857,68 @@ export default function ArtistProfile() {
                 </div>
             </div>
         )}
-    </>
+
+            {lightboxOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center" onClick={closeLightbox}>
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+                    <div className="relative z-10 flex items-center justify-center w-full max-w-5xl max-h-[90vh] p-4" onClick={(e) => e.stopPropagation()}>
+                        {/* Close button — only shown for non-image media */}
+                        {lightboxType !== "image" && (
+                            <button onClick={closeLightbox} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95">
+                                <X size={18} className="text-white" />
+                            </button>
+                        )}
+                        <div className="flex items-center justify-center w-full">
+                            {lightboxType === "image" ? (
+                                <div onClick={closeLightbox} className="cursor-pointer">
+                                    <img src={lightboxUrl} alt="" className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+                                </div>
+                            ) : (
+                                <>
+                                    {lightboxType === "youtube" && (() => {
+                                        const ytId = getYouTubeId(lightboxUrl);
+                                        return ytId ? (
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+                                                title="YouTube video player"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allowFullScreen
+                                                className="aspect-video w-full max-h-[85vh]"
+                                            />
+                                        ) : null;
+                                    })()}
+                                    {lightboxType === "spotify" && (() => {
+                                        const spotifyUrl = getSpotifyEmbedUrl(lightboxUrl);
+                                        return spotifyUrl ? (
+                                            <iframe
+                                                src={spotifyUrl}
+                                                width="100%"
+                                                height="100%"
+                                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                                className="border-0 w-full h-[380px] max-h-[85vh] rounded-lg bg-white"
+                                            />
+                                        ) : null;
+                                    })()}
+                                    {lightboxType === "video" && (
+                                        <video src={lightboxUrl} controls autoPlay className="max-w-full max-h-[85vh] rounded-lg shadow-2xl" />
+                                    )}
+                                    {lightboxType === "link" && (
+                                        <iframe
+                                            src={lightboxUrl}
+                                            width="100%"
+                                            height="100%"
+                                            className="border-0 w-full h-[600px] max-h-[85vh] bg-white rounded-lg shadow-2xl"
+                                        />
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
 );
 }
