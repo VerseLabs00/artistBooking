@@ -257,6 +257,26 @@ export default function HomePage() {
             })
             .catch(() => {});
     }, []);
+
+    useEffect(() => {
+        const refresh = () => {
+            getFavorites()
+                .then(data => setLikedArtists(new Set(data.map(f => f.id))))
+                .catch(() => {});
+        };
+        window.addEventListener('favorites-changed', refresh);
+        window.addEventListener('storage', refresh);
+        window.addEventListener('focus', refresh);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') refresh();
+        });
+        return () => {
+            window.removeEventListener('favorites-changed', refresh);
+            window.removeEventListener('storage', refresh);
+            window.removeEventListener('focus', refresh);
+            document.removeEventListener('visibilitychange', refresh);
+        };
+    }, []);
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
     const [isClosingProfile, setIsClosingProfile] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

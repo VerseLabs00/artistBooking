@@ -19,8 +19,11 @@ export interface FavoriteCustomer {
     favorited_at: string
 }
 
-export const toggleFavorite = (artistProfileId: string): Promise<{ is_favorited: boolean }> =>
-    api.post('/favorites/toggle', { artist_profile_id: artistProfileId }).then(r => r.data)
+export const toggleFavorite = async (artistProfileId: string): Promise<{ is_favorited: boolean }> => {
+    const result = await api.post('/favorites/toggle', { artist_profile_id: artistProfileId }).then(r => r.data)
+    window.dispatchEvent(new Event('favorites-changed'))
+    return result
+}
 
 export const getFavorites = (): Promise<FavoriteArtist[]> =>
     api.get('/favorites').then(r => r.data.favorites)

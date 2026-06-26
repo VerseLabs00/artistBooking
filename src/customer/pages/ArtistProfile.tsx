@@ -208,6 +208,20 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
             .catch(() => {});
     }, []);
 
+    useEffect(() => {
+        const refresh = () => {
+            getFavorites()
+                .then(data => setLikedArtists(new Set(data.map(f => f.id))))
+                .catch(() => {});
+        };
+        window.addEventListener('favorites-changed', refresh);
+        window.addEventListener('storage', refresh);
+        return () => {
+            window.removeEventListener('favorites-changed', refresh);
+            window.removeEventListener('storage', refresh);
+        };
+    }, []);
+
     const toggleLike = async (artistId: string | number) => {
         setFavoriteLoadingIds(prev => new Set(prev).add(artistId));
         try {
@@ -300,14 +314,127 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
             .catch(() => {});
     };
 
-    if (loading) return (
-        <div className="min-h-screen bg-[#F4F1F5] flex items-center justify-center">
-            <div className="animate-pulse flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full border-4 border-[#FF2B6B] border-t-transparent animate-spin mb-4" />
-                <p className="text-gray-400 text-sm">Loading profile...</p>
+    if (loading) {
+        const skeletonClass = "animate-pulse bg-gray-200";
+        return (
+            <div className="min-h-screen bg-[#F4F1F5]">
+                {/* Skeleton Hero + Avatar — same positioning as real component */}
+                <div className={`relative h-[160px] sm:h-[200px] md:h-[220px] w-full overflow-visible`}>
+                    <div className={`w-full h-full ${skeletonClass}`} />
+                    <div className="absolute inset-0 bg-black/20" />
+                    <div className="absolute -bottom-12 sm:-bottom-16 left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+200px)] lg:translate-x-0 z-30">
+                        <div className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[4px] sm:border-[5px] border-white shadow-lg ${skeletonClass}`} />
+                    </div>
+                </div>
+
+                <div className="max-w-6xl mx-auto px-3 sm:px-4 mt-2 sm:mt-4 relative z-20 pb-12 sm:pb-20">
+                    <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
+
+                        {/* Skeleton Left Panel */}
+                        <div className="space-y-5">
+                            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                                <div className="px-4 sm:px-6 pb-5 sm:pb-7 text-center pt-16 sm:pt-20">
+                                    <div className={`h-8 w-40 rounded ${skeletonClass} mx-auto mb-3`} />
+                                    <div className="flex items-center justify-center gap-1">
+                                        <div className={`h-4 w-24 rounded ${skeletonClass}`} />
+                                    </div>
+                                    <div className="flex flex-wrap justify-center gap-2 mt-4">
+                                        <div className={`h-6 w-20 rounded-full ${skeletonClass}`} />
+                                        <div className={`h-6 w-24 rounded-full ${skeletonClass}`} />
+                                    </div>
+                                    <div className="space-y-2 mt-6 text-left">
+                                        <div className={`h-4 w-full rounded ${skeletonClass}`} />
+                                        <div className={`h-4 w-5/6 rounded ${skeletonClass}`} />
+                                    </div>
+                                    <div className="mt-6 text-left">
+                                        <div className={`h-8 w-24 rounded ${skeletonClass} mb-2`} />
+                                        <div className={`h-4 w-16 rounded ${skeletonClass}`} />
+                                    </div>
+                                    <div className="flex gap-3 mt-6">
+                                        <div className={`h-10 bg-gray-100 rounded-full flex-1 ${skeletonClass}`} />
+                                        <div className={`h-10 bg-gray-100 rounded-full flex-1 ${skeletonClass}`} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Social Skeleton */}
+                            <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-7 shadow-sm">
+                                <div className={`h-5 w-24 rounded ${skeletonClass} mx-auto mb-5`} />
+                                <div className="flex justify-center gap-4">
+                                    <div className={`w-11 h-11 rounded-full ${skeletonClass}`} />
+                                    <div className={`w-11 h-11 rounded-full ${skeletonClass}`} />
+                                    <div className={`w-11 h-11 rounded-full ${skeletonClass}`} />
+                                    <div className={`w-11 h-11 rounded-full ${skeletonClass}`} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right Panel Skeleton */}
+                        <div className="space-y-4">
+                            <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm">
+                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <div className={`h-7 w-28 rounded ${skeletonClass} mb-2`} />
+                                        <div className="flex flex-wrap gap-5">
+                                            <div className={`h-4 w-20 rounded ${skeletonClass}`} />
+                                            <div className={`h-4 w-24 rounded ${skeletonClass}`} />
+                                        </div>
+                                    </div>
+                                    <div className={`w-10 h-10 rounded-full border border-gray-100 ${skeletonClass}`} />
+                                </div>
+                                <div className="space-y-3 mt-7">
+                                    <div className={`h-4 w-full rounded ${skeletonClass}`} />
+                                    <div className={`h-4 w-5/6 rounded ${skeletonClass}`} />
+                                    <div className={`h-4 w-4/6 rounded ${skeletonClass}`} />
+                                </div>
+                            </div>
+
+                            {/* Media Skeleton */}
+                            <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm">
+                                <div className={`h-5 w-32 rounded ${skeletonClass} mb-4`} />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {[1,2].map(i => (
+                                        <div key={i} className={`rounded-2xl ${skeletonClass}`}>
+                                            <div className="aspect-video w-full bg-gray-200" />
+                                            <div className="p-3">
+                                                <div className={`h-4 w-3/4 rounded ${skeletonClass}`} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Reviews Skeleton */}
+                            <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm">
+                                <div className={`h-5 w-24 rounded ${skeletonClass} mb-6`} />
+                                <div className="space-y-4">
+                                    {[1,2,3].map(i => (
+                                        <div key={i} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                            <div className="flex justify-between">
+                                                <div className="flex gap-3 items-center">
+                                                    <div className={`w-8 h-8 rounded-full ${skeletonClass}`} />
+                                                    <div>
+                                                        <div className={`h-4 w-24 rounded ${skeletonClass} mb-1`} />
+                                                        <div className={`h-3 w-16 rounded ${skeletonClass}`} />
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    {[1,2,3,4,5].map(j => (
+                                                        <div key={j} className={`w-3 h-3 rounded-full ${skeletonClass}`} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className={`h-4 w-full rounded ${skeletonClass} mt-3`} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
 
     if (!artist) return (
         <div className="min-h-screen bg-[#F4F1F5] flex items-center justify-center">

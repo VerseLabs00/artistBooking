@@ -16,6 +16,9 @@ interface Artist {
     reviews: number;
     price: string;
     startingPrice: number | null;
+    maxPrice: number | null;
+    fullPrice: number | null;
+    advance: number | null;
     image: string;
     verified: boolean;
 }
@@ -81,6 +84,9 @@ export default function DJsPage() {
                         reviews: extra.reviews_count ?? extra.rating?.total ?? 0,
                         price: a.starting_price ? `Rs. ${a.starting_price.toLocaleString()}+` : "Contact",
                         startingPrice: a.starting_price,
+                        maxPrice: a.max_price,
+                        fullPrice: a.full_price,
+                        advance: a.advance,
                         image: a.avatar_url || a.cover_url || defaultImg,
                         verified: extra.verification_status === "verified" || extra.verification_status === "approved",
                     };
@@ -227,7 +233,11 @@ export default function DJsPage() {
                         <span className="text-[10px] font-700 text-gray-800">{artist.rating}</span>
                         <span className="text-[10px] text-gray-400">({artist.reviews})</span>
                     </div>
-                    <span className="text-[10px] font-800 pink-text">{artist.price}</span>
+                    {artist.fullPrice != null ? (
+                        <span className="text-[10px] font-800 pink-text">Rs. {artist.fullPrice.toLocaleString("en-LK")}</span>
+                    ) : (
+                        <span className="text-[10px] font-800 pink-text">{artist.price}</span>
+                    )}
                 </div>
             </div>
         </div>
