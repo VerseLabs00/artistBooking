@@ -45,7 +45,6 @@ export default function DevGate({ children }: DevGateProps) {
             fontFamily: "'Fraunces', Georgia, serif",
         }}>
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;700;800;900&display=swap');
                 @keyframes shake {
                     0%,100%{transform:translateX(0)}
                     20%,60%{transform:translateX(-8px)}
