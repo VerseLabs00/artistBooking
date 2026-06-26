@@ -3,10 +3,9 @@ import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
 import {
   updateCommissionRate,
-  updateDepositRate,
   updateFeaturedPrice,
-  toggleAutoApprove,
   toggleMaintenance,
+  setMaintenanceMode,
   toggleNotifications,
 } from '../features/settings/settingsSlice'
 import PageHeader from '../components/common/PageHeader'
@@ -55,7 +54,6 @@ export default function Settings() {
   const settings = useSelector(s => s.settings)
 
   const [commissionInput, setCommissionInput] = useState(settings.commissionRate)
-  const [depositInput, setDepositInput] = useState(settings.depositRate)
   const [featuredInput, setFeaturedInput] = useState(settings.featuredListingPrice)
   const [loading, setLoading] = useState(false)
 
@@ -67,11 +65,10 @@ export default function Settings() {
     try {
       const data = await settingsApi.getSettings()
       setCommissionInput(data.commission_rate)
-      setDepositInput(data.deposit_rate)
       setFeaturedInput(data.featured_listing_price)
       dispatch(updateCommissionRate(data.commission_rate))
-      dispatch(updateDepositRate(data.deposit_rate))
       dispatch(updateFeaturedPrice(data.featured_listing_price))
+      dispatch(setMaintenanceMode(data.maintenance_mode))
     } catch (error) {
       console.error('Failed to load settings:', error)
     }
@@ -82,11 +79,9 @@ export default function Settings() {
     try {
       await settingsApi.updateSettings({
         commission_rate: Number(commissionInput),
-        deposit_rate: Number(depositInput),
         featured_listing_price: Number(featuredInput)
       })
       dispatch(updateCommissionRate(Number(commissionInput)))
-      dispatch(updateDepositRate(Number(depositInput)))
       dispatch(updateFeaturedPrice(Number(featuredInput)))
       toast.success('Finance settings saved!')
     } catch (error) {
@@ -121,7 +116,7 @@ export default function Settings() {
             <span className="text-sm text-gray-400">%</span>
           </div>
         </SettingsRow>
-        <SettingsRow
+        {/* <SettingsRow
           label="Deposit Rate"
           subtitle="Percentage customers pay upfront to confirm booking"
         >
@@ -136,7 +131,7 @@ export default function Settings() {
             />
             <span className="text-sm text-gray-400">%</span>
           </div>
-        </SettingsRow>
+        </SettingsRow> */}
         <SettingsRow
           label="Featured Listing Price"
           subtitle="Amount artists pay to be featured (LKR)"
@@ -160,7 +155,7 @@ export default function Settings() {
 
       {/* Platform Controls */}
       <SettingsSection title="⚙️ Platform Controls">
-        <SettingsRow
+        {/* <SettingsRow
           label="Auto-Approve Artists"
           subtitle="Skip manual verification for new artists"
         >
@@ -171,31 +166,40 @@ export default function Settings() {
               toast.success('Auto-approve updated')
             }}
           />
-        </SettingsRow>
+        </SettingsRow> */}
         <SettingsRow
           label="Maintenance Mode"
           subtitle="Temporarily disable the app for users"
         >
           <ToggleSwitch
             enabled={settings.maintenanceMode}
-            onToggle={() => {
-              dispatch(toggleMaintenance())
-              toast(settings.maintenanceMode ? 'Maintenance mode OFF' : '⚠️ Maintenance mode ON')
+            onToggle={async () => {
+              const newValue = !settings.maintenanceMode
+              try {
+                await settingsApi.updateSettings({ maintenance_mode: newValue })
+                dispatch(toggleMaintenance())
+                toast(newValue ? '⚠️ Maintenance mode ON' : 'Maintenance mode OFF')
+              } catch {
+                toast.error('Failed to update maintenance mode')
+              }
             }}
           />
         </SettingsRow>
-        <SettingsRow
-          label="Push Notifications"
-          subtitle="Send booking reminders to customers and artists"
-        >
-          <ToggleSwitch
-            enabled={settings.notificationsEnabled}
-            onToggle={() => {
-              dispatch(toggleNotifications())
-              toast.success('Notification setting updated')
-            }}
-          />
-        </SettingsRow>
+        <div style={{ filter: 'blur(2px)', opacity: 0.5, pointerEvents: 'none' }}>
+          <SettingsRow
+            label="Push Notifications"
+            subtitle="Send booking reminders to customers and artists"
+          >
+            <ToggleSwitch
+              enabled={settings.notificationsEnabled}
+              onToggle={() => {
+                dispatch(toggleNotifications())
+                toast.success('Notification setting updated')
+              }}
+            />
+          </SettingsRow>
+        </div>
+        <p className="text-xs text-gray-400 mt-1">Push Notifications — Coming soon</p>
       </SettingsSection>
 
       {/* Current settings summary */}

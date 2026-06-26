@@ -28,6 +28,9 @@ const settingsSlice = createSlice({
     toggleMaintenance(state) {
       state.maintenanceMode = !state.maintenanceMode
     },
+    setMaintenanceMode(state, action) {
+      state.maintenanceMode = action.payload
+    },
     toggleNotifications(state) {
       state.notificationsEnabled = !state.notificationsEnabled
     },
@@ -40,6 +43,7 @@ export const {
   updateFeaturedPrice,
   toggleAutoApprove,
   toggleMaintenance,
+  setMaintenanceMode,
   toggleNotifications,
 } = settingsSlice.actions
 
