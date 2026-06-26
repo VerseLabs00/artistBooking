@@ -749,7 +749,7 @@ export default function HomePage() {
                         </div>
 
                         {browseCategoriesLoading ? (
-                            <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
+                            <div className="grid grid-cols-3 xs:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                                 {Array.from({ length: ALL_CATEGORIES_DATA.length }).map((_, i) => (
                                     <div
                                         key={i}
@@ -758,7 +758,7 @@ export default function HomePage() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
+                            <div className="grid grid-cols-3 xs:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                                 {browseCategories.map(cat => (
                                     <div
                                         key={cat.name}
