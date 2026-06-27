@@ -5,6 +5,7 @@ import {
   updateCommissionRate,
   updateFeaturedPrice,
   toggleNotifications,
+  setMaintenanceMode,
 } from '../features/settings/settingsSlice'
 import PageHeader from '../components/common/PageHeader'
 import { settingsApi } from '../api/settingsApi'
@@ -54,6 +55,7 @@ export default function Settings() {
   const [commissionInput, setCommissionInput] = useState(settings.commissionRate)
   const [featuredInput, setFeaturedInput] = useState(settings.featuredListingPrice)
   const [loading, setLoading] = useState(false)
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
 
   useEffect(() => {
@@ -67,6 +69,7 @@ export default function Settings() {
       setFeaturedInput(data.featured_listing_price)
       dispatch(updateCommissionRate(data.commission_rate))
       dispatch(updateFeaturedPrice(data.featured_listing_price))
+      dispatch(setMaintenanceMode(!!data.maintenance_mode))
     } catch (error) {
       console.error('Failed to load settings:', error)
     } finally {
@@ -155,6 +158,37 @@ export default function Settings() {
       </SettingsSection>
 
       <SettingsSection title="Platform Controls">
+        <SettingsRow
+          label="Maintenance Mode"
+          subtitle="When ON, the site shows the developer login screen to all visitors"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {maintenanceLoading && (
+              <span style={{ fontSize: 11, color: '#aaa' }}>Saving...</span>
+            )}
+            <ToggleSwitch
+              enabled={settings.maintenanceMode}
+              onToggle={async () => {
+                if (maintenanceLoading) return
+                const newValue = !settings.maintenanceMode
+                setMaintenanceLoading(true)
+                try {
+                  await settingsApi.toggleMaintenance(newValue)
+                  dispatch(setMaintenanceMode(newValue))
+                  toast.success(
+                    newValue
+                      ? '🔒 Maintenance mode ON — site is now gated'
+                      : '✅ Maintenance mode OFF — site is live'
+                  )
+                } catch {
+                  toast.error('Failed to update maintenance mode')
+                } finally {
+                  setMaintenanceLoading(false)
+                }
+              }}
+            />
+          </div>
+        </SettingsRow>
         <div style={{ filter: 'blur(2px)', opacity: 0.5, pointerEvents: 'none' }}>
           <SettingsRow label="Push Notifications" subtitle="Send booking reminders to customers and artists">
             <ToggleSwitch enabled={settings.notificationsEnabled} onToggle={() => {
