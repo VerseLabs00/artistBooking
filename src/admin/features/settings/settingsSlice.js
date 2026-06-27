@@ -6,6 +6,7 @@ const initialState = {
   featuredListingPrice: 2500,
   autoApproveEnabled: false,
   notificationsEnabled: true,
+  maintenanceMode: false,
 }
 
 const settingsSlice = createSlice({
@@ -27,6 +28,9 @@ const settingsSlice = createSlice({
     toggleNotifications(state) {
       state.notificationsEnabled = !state.notificationsEnabled
     },
+    setMaintenanceMode(state, action) {
+      state.maintenanceMode = action.payload
+    },
   },
 })
 
@@ -36,6 +40,7 @@ export const {
   updateFeaturedPrice,
   toggleAutoApprove,
   toggleNotifications,
+  setMaintenanceMode,
 } = settingsSlice.actions
 
 export default settingsSlice.reducer

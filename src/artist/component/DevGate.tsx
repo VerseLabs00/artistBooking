@@ -4,62 +4,49 @@ const DEV_USERNAME = "sangeeth";
 const DEV_PASSWORD = "12348765";
 const SESSION_KEY = "performa_dev_auth";
 
-// Helper to check if storage is available (iOS ITP can block it)
-const isStorageAvailable = (storage: Storage): boolean => {
-    try {
-        const test = "__storage_test__";
-        storage.setItem(test, test);
-        storage.removeItem(test);
-        return true;
-    } catch {
-        return false;
-    }
-};
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+
+
 
 interface DevGateProps {
     children: React.ReactNode;
 }
 
 export default function DevGate({ children }: DevGateProps) {
+    // null = still loading, false = off (show site), true = on (show gate)
+    const [maintenanceMode, setMaintenanceMode] = useState<boolean | null>(null);
     const [authed, setAuthed] = useState(false);
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [shake, setShake] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [storageAvailable, setStorageAvailable] = useState(true);
 
     useEffect(() => {
-        const sessionAvailable = isStorageAvailable(sessionStorage);
-        const localAvailable = isStorageAvailable(localStorage);
-        setStorageAvailable(sessionAvailable || localAvailable);
-
-        const sessionAuth = sessionAvailable && sessionStorage.getItem(SESSION_KEY) === "true";
-        const localAuth = localAvailable && localStorage.getItem(SESSION_KEY) === "true";
-        if (sessionAuth || localAuth) {
-            setAuthed(true);
-        }
+        // Fetch maintenance mode status from the public backend endpoint
+        fetch(`${API_BASE}/settings/maintenance`)
+            .then((res) => {
+                if (!res.ok) throw new Error("Failed to fetch maintenance status");
+                return res.json();
+            })
+            .then((data) => {
+                setMaintenanceMode(!!data.maintenance_mode);
+            })
+            .catch(() => {
+                // If the request fails (e.g. backend down), default to OFF
+                // so a network error doesn't lock everyone out
+                setMaintenanceMode(false);
+            });
     }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (submitting) return;
-        
+
         setSubmitting(true);
-        
+
         if (username === DEV_USERNAME && password === DEV_PASSWORD) {
-            // Try to save to storage if available
-            try {
-                if (isStorageAvailable(sessionStorage)) {
-                    sessionStorage.setItem(SESSION_KEY, "true");
-                }
-                if (isStorageAvailable(localStorage)) {
-                    localStorage.setItem(SESSION_KEY, "true");
-                }
-            } catch (err) {
-                // Storage blocked by iOS ITP - continue anyway with in-memory auth
-                console.warn("Storage blocked by ITP, using in-memory auth");
-            }
+            // Auth is in-memory only — resets on every page load / new tab
             setAuthed(true);
         } else {
             setError("Incorrect username or password.");
@@ -71,8 +58,33 @@ export default function DevGate({ children }: DevGateProps) {
         }
     };
 
-    if (authed) return <>{children}</>;
+    // ── Loading: fetching maintenance status ──────────────────────────────────
+    if (maintenanceMode === null) {
+        return (
+            <div style={{
+                minHeight: "100vh",
+                background: "#111",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+            }}>
+                <div style={{
+                    width: 32,
+                    height: 32,
+                    border: "3px solid #2a2a2a",
+                    borderTop: "3px solid #E8194B",
+                    borderRadius: "50%",
+                    animation: "devgate-spin 0.7s linear infinite",
+                }} />
+                <style>{`@keyframes devgate-spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+        );
+    }
 
+    // ── Maintenance OFF or dev already authed: render site normally ───────────
+    if (!maintenanceMode || authed) return <>{children}</>;
+
+    // ── Maintenance ON + not authed: show dev login gate ─────────────────────
     return (
         <div style={{
             minHeight: "100vh",
@@ -136,15 +148,15 @@ export default function DevGate({ children }: DevGateProps) {
                     padding: "3px 10px",
                     marginBottom: 28,
                 }}>
-                    Dev Preview
+                    Maintenance Mode
                 </div>
 
                 <div style={{ color: "#fff", fontSize: 20, fontWeight: 800, marginBottom: 6 }}>
                     Access Required
                 </div>
                 <p style={{ color: "#666", fontSize: 13, marginBottom: 28, lineHeight: 1.5 }}>
-                    This site is currently in development.<br />
-                    Enter your credentials to continue.
+                    This site is temporarily under maintenance.<br />
+                    Enter your developer credentials to continue.
                 </p>
 
                 <form onSubmit={handleSubmit}>
