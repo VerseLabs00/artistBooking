@@ -803,11 +803,17 @@ export default function ArtistProfile() {
                                 <div key={r.id} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
                                     <div className="flex justify-between">
                                         <div className="flex gap-3 items-center">
-                                            <img
-                                                src={r.reviewer_avatar || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"}
-                                                className="w-8 h-8 rounded-full object-cover"
-                                                alt={r.reviewer_name}
-                                            />
+                                            {r.reviewer_avatar ? (
+                                                <img
+                                                    src={r.reviewer_avatar}
+                                                    className="w-8 h-8 rounded-full object-cover shrink-0"
+                                                    alt={r.reviewer_name}
+                                                />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold shrink-0">
+                                                    {r.reviewer_name?.charAt(0)?.toUpperCase() || '?'}
+                                                </div>
+                                            )}
                                             <div>
                                                 <p className="text-xs font-bold uppercase">{r.reviewer_name}</p>
                                                 <p className="text-[10px] text-gray-400">{r.created_at}</p>
