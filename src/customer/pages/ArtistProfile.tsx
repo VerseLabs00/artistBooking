@@ -340,14 +340,20 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
             return;
         }
 
-        if (!selectedStar) return;
-        submitReview(artist!.id, { rating: selectedStar, body: review })
-            .then(() => {
-                setReview("");
-                setSelectedStar(0);
-                getArtist(id!).then(setArtist);
-            })
-            .catch(() => {});
+if (!selectedStar) return;
+         submitReview(artist!.id, { rating: selectedStar, body: review })
+             .then(() => {
+                 setReview("");
+                 setSelectedStar(0);
+                 getArtist(id!).then(setArtist);
+             })
+             .catch((err) => {
+                 if (err.response?.status === 422) {
+                     toast.error(err.response.data.message || "You have already reviewed this artist.");
+                 } else {
+                     toast.error("Failed to submit review. Please try again.");
+                 }
+             });
     };
 
     if (loading) {
