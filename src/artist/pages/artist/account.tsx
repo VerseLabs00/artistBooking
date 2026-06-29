@@ -512,11 +512,15 @@ export default function ArtistProfile() {
 
             {/* HERO — overflow-visible so avatar can bleed below */}
             <div className="relative h-[220px] w-full overflow-visible">
-                <img
-                    src={profile?.cover_url || "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e"}
-                    className="w-full h-[220px] object-cover"
-                    alt="cover"
-                />
+                {profile?.cover_url ? (
+                    <img
+                        src={profile.cover_url}
+                        className="w-full h-[220px] object-cover"
+                        alt="cover"
+                    />
+                ) : (
+                    <div className="w-full h-[220px] bg-gray-300" />
+                )}
                 <div className="absolute inset-0 h-[220px] bg-black/20" />
 
                 {/* TOP BUTTONS */}
@@ -540,11 +544,17 @@ export default function ArtistProfile() {
 
                 {/* AVATAR — half inside hero, half below */}
                 <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+120px)] lg:translate-x-0 z-30">
-                    <img
-                        src={profile?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"}
-                        className="w-32 h-32 rounded-full border-[5px] border-white object-cover shadow-lg"
-                        alt="avatar"
-                    />
+                    {profile?.avatar_url ? (
+                        <img
+                            src={profile.avatar_url}
+                            className="w-32 h-32 rounded-full border-[5px] border-white object-cover shadow-lg"
+                            alt="avatar"
+                        />
+                    ) : (
+                        <div className="w-32 h-32 rounded-full border-[5px] border-white bg-gray-300 shadow-lg flex items-center justify-center text-gray-600 text-2xl font-bold">
+                            {(profile?.stage_name || profile?.full_name || "A")?.charAt(0)?.toUpperCase()}
+                        </div>
+                    )}
                 </div>
             </div>
 
