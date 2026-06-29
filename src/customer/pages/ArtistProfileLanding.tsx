@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     Heart, MoreHorizontal, Play, Music, MapPin, Star,
-    Instagram, Facebook, Twitter, Mail, X
+    Instagram, Facebook, Twitter, Mail, X, User
 } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -618,17 +618,23 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                                 {artist.rating.recent_reviews.map((r) => (
                                     <div key={r.id} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
                                         <div className="flex justify-between">
-                                            <div className="flex gap-3 items-center">
-                                                <img
-                                                    src={r.reviewer_avatar || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"}
-                                                    className="w-8 h-8 rounded-full object-cover"
-                                                    alt={r.reviewer_name}
-                                                />
-                                                <div>
-                                                    <p className="text-xs font-bold uppercase text-gray-900">{r.reviewer_name}</p>
-                                                    <p className="text-[10px] text-gray-400">{r.created_at}</p>
-                                                </div>
-                                            </div>
+<div className="flex gap-3 items-center">
+                                                 {r.reviewer_avatar ? (
+                                                     <img
+                                                         src={r.reviewer_avatar}
+                                                         className="w-8 h-8 rounded-full object-cover"
+                                                         alt={r.reviewer_name}
+                                                     />
+                                                 ) : (
+                                                     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                                         <User size={16} className="text-gray-400" />
+                                                     </div>
+                                                 )}
+                                                 <div>
+                                                     <p className="text-xs font-bold uppercase text-gray-900">{r.reviewer_name}</p>
+                                                     <p className="text-[10px] text-gray-400">{r.created_at}</p>
+                                                 </div>
+                                             </div>
                                             <div className="flex text-yellow-400">
                                                 {[...Array(5)].map((_, i) => (
                                                     <Star key={i} size={12} fill={i < r.rating ? "currentColor" : "none"} />
@@ -643,52 +649,52 @@ export default function ArtistProfileLanding({ id: propId, onClose }: { id?: str
                                 )}
                             </div>
 
-                            {/* LEAVE A REVIEW */}
-                            <div className="mt-12 bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-sm">
-                                <h3 className="text-lg font-bold text-gray-900 mb-2">Leave a Review</h3>
-                                <p className="text-xs text-gray-400 mb-6">Share your experience with the community</p>
+                            {/*/!* LEAVE A REVIEW *!/*/}
+                            {/*<div className="mt-12 bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-sm">*/}
+                            {/*    <h3 className="text-lg font-bold text-gray-900 mb-2">Leave a Review</h3>*/}
+                            {/*    <p className="text-xs text-gray-400 mb-6">Share your experience with the community</p>*/}
 
-                                <div className="flex items-center justify-center gap-1 mb-6">
-                                    {[1, 2, 3, 4, 5].map((s) => (
-                                        <button
-                                            key={s}
-                                            onMouseEnter={() => setHoverStar(s)}
-                                            onMouseLeave={() => setHoverStar(0)}
-                                            onClick={() => setSelectedStar(s)}
-                                            className="transition-transform hover:scale-110"
-                                        >
-                                            <Star
-                                                size={32}
-                                                className={`transition-colors ${s <= (hoverStar || selectedStar) ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
-                                            />
-                                        </button>
-                                    ))}
-                                </div>
+                            {/*    <div className="flex items-center justify-center gap-1 mb-6">*/}
+                            {/*        {[1, 2, 3, 4, 5].map((s) => (*/}
+                            {/*            <button*/}
+                            {/*                key={s}*/}
+                            {/*                onMouseEnter={() => setHoverStar(s)}*/}
+                            {/*                onMouseLeave={() => setHoverStar(0)}*/}
+                            {/*                onClick={() => setSelectedStar(s)}*/}
+                            {/*                className="transition-transform hover:scale-110"*/}
+                            {/*            >*/}
+                            {/*                <Star*/}
+                            {/*                    size={32}*/}
+                            {/*                    className={`transition-colors ${s <= (hoverStar || selectedStar) ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}*/}
+                            {/*                />*/}
+                            {/*            </button>*/}
+                            {/*        ))}*/}
+                            {/*    </div>*/}
 
-                                <textarea
-                                    value={review}
-                                    onChange={(e) => setReview(e.target.value)}
-                                    placeholder="Write your review here..."
-                                    rows={4}
-                                    className="w-full border border-gray-200 rounded-2xl px-5 py-4 text-sm text-gray-600 placeholder-gray-400 outline-none focus:border-[#FF2B6B] focus:ring-1 focus:ring-[#FF2B6B] resize-none transition-all"
-                                />
+                            {/*    <textarea*/}
+                            {/*        value={review}*/}
+                            {/*        onChange={(e) => setReview(e.target.value)}*/}
+                            {/*        placeholder="Write your review here..."*/}
+                            {/*        rows={4}*/}
+                            {/*        className="w-full border border-gray-200 rounded-2xl px-5 py-4 text-sm text-gray-600 placeholder-gray-400 outline-none focus:border-[#FF2B6B] focus:ring-1 focus:ring-[#FF2B6B] resize-none transition-all"*/}
+                            {/*    />*/}
 
-                                <div className="flex items-center justify-between mt-6">
-                                    <button
-                                        onClick={() => { setReview(""); setSelectedStar(0); }}
-                                        className="text-sm text-gray-400 hover:text-gray-600 transition-colors px-6 py-2"
-                                    >
-                                        Reset
-                                    </button>
-                                    <button
-                                        onClick={handleSubmitReview}
-                                        className="bg-[#FF2B6B] hover:bg-[#ff1b60] text-white font-bold text-sm px-10 py-3 rounded-full shadow-md transition-all active:scale-95 disabled:opacity-50"
-                                        disabled={!selectedStar}
-                                    >
-                                        Submit Review
-                                    </button>
-                                </div>
-                            </div>
+                            {/*    <div className="flex items-center justify-between mt-6">*/}
+                            {/*        <button*/}
+                            {/*            onClick={() => { setReview(""); setSelectedStar(0); }}*/}
+                            {/*            className="text-sm text-gray-400 hover:text-gray-600 transition-colors px-6 py-2"*/}
+                            {/*        >*/}
+                            {/*            Reset*/}
+                            {/*        </button>*/}
+                            {/*        <button*/}
+                            {/*            onClick={handleSubmitReview}*/}
+                            {/*            className="bg-[#FF2B6B] hover:bg-[#ff1b60] text-white font-bold text-sm px-10 py-3 rounded-full shadow-md transition-all active:scale-95 disabled:opacity-50"*/}
+                            {/*            disabled={!selectedStar}*/}
+                            {/*        >*/}
+                            {/*            Submit Review*/}
+                            {/*        </button>*/}
+                            {/*    </div>*/}
+                            {/*</div>*/}
                         </div>
                     </div>
                 </div>

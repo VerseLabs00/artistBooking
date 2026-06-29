@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     Heart, Play, Music, MapPin, Star,
-    Instagram, Facebook, Twitter, Mail, X, Loader2
+    Instagram, Facebook, Twitter, Mail, X, Loader2, User
 } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -340,14 +340,20 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
             return;
         }
 
-        if (!selectedStar) return;
-        submitReview(artist!.id, { rating: selectedStar, body: review })
-            .then(() => {
-                setReview("");
-                setSelectedStar(0);
-                getArtist(id!).then(setArtist);
-            })
-            .catch(() => {});
+if (!selectedStar) return;
+         submitReview(artist!.id, { rating: selectedStar, body: review })
+             .then(() => {
+                 setReview("");
+                 setSelectedStar(0);
+                 getArtist(id!).then(setArtist);
+             })
+             .catch((err) => {
+                 if (err.response?.status === 422) {
+                     toast.error(err.response.data.message || "You have already reviewed this artist.");
+                 } else {
+                     toast.error("Failed to submit review. Please try again.");
+                 }
+             });
     };
 
     if (loading) {
@@ -748,17 +754,23 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
                                 {artist.rating.recent_reviews.map((r) => (
                                     <div key={r.id} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
                                         <div className="flex justify-between">
-                                            <div className="flex gap-3 items-center">
-                                                <img
-                                                    src={r.reviewer_avatar || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"}
-                                                    className="w-8 h-8 rounded-full object-cover"
-                                                    alt={r.reviewer_name}
-                                                />
-                                                <div>
-                                                    <p className="text-xs font-bold uppercase text-gray-900">{r.reviewer_name}</p>
-                                                    <p className="text-[10px] text-gray-400">{r.created_at}</p>
-                                                </div>
-                                            </div>
+<div className="flex gap-3 items-center">
+                                                 {r.reviewer_avatar ? (
+                                                     <img
+                                                         src={r.reviewer_avatar}
+                                                         className="w-8 h-8 rounded-full object-cover"
+                                                         alt={r.reviewer_name}
+                                                     />
+                                                 ) : (
+                                                     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                                         <User size={16} className="text-gray-400" />
+                                                     </div>
+                                                 )}
+                                                 <div>
+                                                     <p className="text-xs font-bold uppercase text-gray-900">{r.reviewer_name}</p>
+                                                     <p className="text-[10px] text-gray-400">{r.created_at}</p>
+                                                 </div>
+                                             </div>
                                             <div className="flex text-yellow-400">
                                                 {[...Array(5)].map((_, i) => (
                                                     <Star key={i} size={12} fill={i < r.rating ? "currentColor" : "none"} />

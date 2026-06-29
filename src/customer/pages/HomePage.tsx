@@ -4,7 +4,7 @@ import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
     ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, Shield, TrendingUp,
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
-    Play, RefreshCw, GitCompare, BookOpen, X, Loader2, LogOut, Menu
+    Play, RefreshCw, GitCompare, BookOpen, X, Loader2, LogOut, Menu, User
 } from "lucide-react";
 import Footer from "../components/Footer";
 import api from "../lib/api";
@@ -702,19 +702,23 @@ export default function HomePage() {
                         <button className="nav-link">Events</button>
                     </div>
 
-                    {/* Auth / Account */}
-                    <div className="flex items-center gap-2 sm:gap-4">
-                        <div
-                            onClick={() => navigate("/customerAccount")}
-                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all"
-                        >
-                            <img
-                                src={displayUser?.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"}
-                                alt="Profile"
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <button
+{/* Auth / Account */}
+                     <div className="flex items-center gap-2 sm:gap-4">
+                         <div
+                             onClick={() => navigate("/customerAccount")}
+                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all flex items-center justify-center bg-gray-50"
+                         >
+                             {displayUser?.avatar_url ? (
+                                 <img
+                                     src={displayUser.avatar_url}
+                                     alt="Profile"
+                                     className="w-full h-full object-cover"
+                                 />
+                             ) : (
+                                 <User size={20} className="text-gray-400" />
+                             )}
+                         </div>
+                         <button
                             onClick={() => navigate("/loginCustomer")}
                             className="p-2 text-gray-400 hover:text-[#E8194B] transition-colors"
                             title="Sign out"
