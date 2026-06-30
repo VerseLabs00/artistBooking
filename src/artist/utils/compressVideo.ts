@@ -6,7 +6,7 @@ const MAX_VIDEO_DURATION = 300; // 5 minutes in seconds
 const MAX_WIDTH = 360; // Reduced resolution for smaller file size
 const MAX_HEIGHT = 640; // Reduced resolution for smaller file size
 const TARGET_BITRATES = [1500000, 1000000, 500000, 300000, 200000, 150000, 100000]; // Try multiple bitrates: 1.5Mbps, 1Mbps, 0.5Mbps, 0.3Mbps, 0.2Mbps, 0.15Mbps, 0.1Mbps
-const TARGET_SIZE_BYTES = 1 * 1024 * 1024; // Target 1MB
+const TARGET_SIZE_BYTES = 20 * 1024 * 1024; // Target 20MB
 
 const loadVideo = (src: string): Promise<HTMLVideoElement> =>
     new Promise((resolve, reject) => {
@@ -22,9 +22,9 @@ const loadVideo = (src: string): Promise<HTMLVideoElement> =>
 export async function compressVideo(file: File): Promise<File> {
     console.log(`Compressing video: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)}MB, type: ${file.type}`);
     
-    // If already under 1MB, return as-is
+    // If already under 20MB, return as-is
     if (file.size < TARGET_SIZE_BYTES) {
-        console.log(`Video size ${(file.size / 1024 / 1024).toFixed(2)}MB is already under 1MB, returning original`);
+        console.log(`Video size ${(file.size / 1024 / 1024).toFixed(2)}MB is already under 20MB, returning original`);
         return file;
     }
 
@@ -66,15 +66,15 @@ export async function compressVideo(file: File): Promise<File> {
         let bestCompressed: File | null = null;
         let bestSize = file.size;
 
-        // Try different bitrates to get under 1MB target
+        // Try different bitrates to get under 20MB target
         for (const bitrate of TARGET_BITRATES) {
             try {
                 const compressed = await compressWithBitrate(video, width, height, bitrate, file);
                 console.log(`Compression attempt at ${bitrate / 1000000}Mbps: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressed.size / 1024 / 1024).toFixed(2)}MB`);
                 
-                // If under 1MB, return immediately
+                // If under 20MB, return immediately
                 if (compressed.size < TARGET_SIZE_BYTES) {
-                    console.log(`✓ Target achieved: ${(compressed.size / 1024 / 1024).toFixed(2)}MB is under 1MB`);
+                    console.log(`✓ Target achieved: ${(compressed.size / 1024 / 1024).toFixed(2)}MB is under 20MB`);
                     URL.revokeObjectURL(objectUrl);
                     return compressed;
                 }
@@ -90,9 +90,9 @@ export async function compressVideo(file: File): Promise<File> {
             }
         }
 
-        // If we got a smaller file (even if not under 1MB), return it
+        // If we got a smaller file (even if not under 20MB), return it
         if (bestCompressed && bestSize < file.size) {
-            console.log(`Returning best compressed result: ${(bestSize / 1024 / 1024).toFixed(2)}MB (couldn't reach 1MB target)`);
+            console.log(`Returning best compressed result: ${(bestSize / 1024 / 1024).toFixed(2)}MB (couldn't reach 20MB target)`);
             URL.revokeObjectURL(objectUrl);
             return bestCompressed;
         }
