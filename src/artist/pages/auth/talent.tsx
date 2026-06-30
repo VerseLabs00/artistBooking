@@ -3,7 +3,6 @@ import { X, CheckCircle2, AlertCircle, Video } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import stage from "../../../../public/bg-login.png";
 import api from "../../api/axios";
-import { compressVideo } from "../../utils/compressVideo";
 import { getStats } from "../../../customer/services/discoveryService";
 
 const MAX_VIDEO_MB    = 50;
@@ -107,10 +106,8 @@ const Talent: React.FC = () => {
         try {
             const formData = new FormData();
             if (video && video.file) {
-                // iPhone videos (MOV) get MIME type correction
-                const processedVideo = await compressVideo(video.file);
-                console.log(`Uploading video: ${processedVideo.name}, size: ${(processedVideo.size / 1024 / 1024).toFixed(2)}MB, type: ${processedVideo.type}`);
-                formData.append("video", processedVideo);
+                formData.append("video", video.file);
+                console.log(`Uploading video: ${video.file.name}, size: ${(video.file.size / 1024 / 1024).toFixed(2)}MB, type: ${video.file.type}`);
                 
                 // Log FormData contents for debugging
                 console.log("FormData entries:");
