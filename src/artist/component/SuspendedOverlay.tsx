@@ -45,7 +45,7 @@ const SuspendedOverlay: React.FC<SuspendedOverlayProps> = ({ show }) => {
                             </div>
                             <div className="text-left">
                                 <p className="text-[10px] text-gray-400 font-bold uppercase">Email</p>
-                                <p className="text-sm font-bold text-gray-900">admin@perfoma.lk</p>
+                                <p className="text-sm font-bold text-gray-900">infoperforma.lk@gmail.com</p>
                             </div>
                         </a>
                         
@@ -55,7 +55,7 @@ const SuspendedOverlay: React.FC<SuspendedOverlayProps> = ({ show }) => {
                             </div>
                             <div className="text-left">
                                 <p className="text-[10px] text-gray-400 font-bold uppercase">Phone / WhatsApp</p>
-                                <p className="text-sm font-bold text-gray-900">+94 77 123 4567</p>
+                                <p className="text-sm font-bold text-gray-900">+94 70 403 5236</p>
                             </div>
                         </a>
                     </div>
