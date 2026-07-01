@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import stage from '../../../../public/bg-login.png'
 import artistImage from '../../../../public/person.png'
@@ -320,11 +320,11 @@ export default function LoginPage() {
                 </div>
             </div>
             <div className="text-white text-xs md:text-sm flex justify-center gap-4 pb-4 flex-wrap">
-                <span className="cursor-pointer hover:opacity-70 transition">About Us</span>
+                <Link to="/about-us" className="cursor-pointer hover:opacity-70 transition">About Us</Link>
                 <span>|</span>
-                <span className="cursor-pointer hover:opacity-70 transition">Privacy Policy</span>
+                <Link to="/privacy" className="cursor-pointer hover:opacity-70 transition">Privacy Policy</Link>
                 <span>|</span>
-                <span className="cursor-pointer hover:opacity-70 transition">Terms & Conditions</span>
+                <Link to="/terms" className="cursor-pointer hover:opacity-70 transition">Terms & Conditions</Link>
             </div>
         </div>
     )

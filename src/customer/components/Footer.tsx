@@ -1,4 +1,5 @@
 import React, { useState, useRef, useLayoutEffect } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../lib/api'
 
 const LOGO_PATH = "/assets/logo/logo-footer@3x.png"
@@ -460,17 +461,37 @@ export default function Footer() {
               <div>
                 <p className="text-[10.5px] font-semibold tracking-widest uppercase text-white mb-5">Quick Links</p>
                 <ul className="space-y-3.5">
-                  {quickLinks.map(({ label, sectionId }) => (
-                      <li key={label}>
-                        <a
-                            href={`#${sectionId}`}
-                            onClick={(e) => handleScrollTo(e, sectionId)}
-                            className="text-[#6b6b6b] text-sm hover:text-white transition-colors"
-                        >
-                          {label}
-                        </a>
-                      </li>
-                  ))}
+                  {quickLinks.map(({ label, sectionId }) => {
+                    if (label === 'About Us') {
+                      return (
+                          <li key={label}>
+                            <Link to="/about-us" className="text-[#6b6b6b] text-sm hover:text-white transition-colors">
+                              {label}
+                            </Link>
+                          </li>
+                      )
+                    }
+                    if (label === 'Privacy Policy') {
+                      return (
+                          <li key={label}>
+                            <Link to="/privacy" className="text-[#6b6b6b] text-sm hover:text-white transition-colors">
+                              {label}
+                            </Link>
+                          </li>
+                      )
+                    }
+                    return (
+                        <li key={label}>
+                          <a
+                              href={`#${sectionId}`}
+                              onClick={(e) => handleScrollTo(e, sectionId)}
+                              className="text-[#6b6b6b] text-sm hover:text-white transition-colors"
+                          >
+                            {label}
+                          </a>
+                        </li>
+                    )
+                  })}
                 </ul>
               </div>
 
@@ -480,9 +501,25 @@ export default function Footer() {
             <div className="border-t border-[#1e1e1e] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-[#4a4a4a] text-xs text-center sm:text-left">© 2025 Performa. All rights reserved.</p>
               <div className="flex flex-wrap justify-center gap-4 sm:gap-7">
-                {['Terms', 'Privacy Policy', 'Contact'].map(l => (
-                    <a key={l} href="#" className="text-[#5a5a5a] text-sm hover:text-white transition-colors">{l}</a>
-                ))}
+                {[
+                  { label: 'About Us', to: '/about-us' },
+                  { label: 'Terms & Conditions', to: '/terms' },
+                  { label: 'Privacy Policy', to: '/privacy' },
+                  { label: 'Contact', href: '#contact-section' },
+                ].map(({ label, to, href }) =>
+                    to ? (
+                        <Link key={label} to={to} className="text-[#5a5a5a] text-sm hover:text-white transition-colors">{label}</Link>
+                    ) : (
+                        <a
+                            key={label}
+                            href={href}
+                            onClick={(e) => handleScrollTo(e, 'contact-section')}
+                            className="text-[#5a5a5a] text-sm hover:text-white transition-colors"
+                        >
+                          {label}
+                        </a>
+                    )
+                )}
               </div>
             </div>
           </div>

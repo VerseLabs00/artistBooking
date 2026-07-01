@@ -20,6 +20,10 @@ import ArtistProfileCustomer from "./customer/pages/ArtistProfile.tsx";
 import CategoryCustomer from "./artist/pages/artist/categoryCustomer.tsx";
 import CustomerAccount from "./customer/pages/CustomerAccount.tsx";
 
+import AboutUs from "./components/AboutUs.tsx";
+import TermsAndConditions from "./components/Terms.tsx";
+import PrivacyPolicy from "./components/PrivacyPolicy.tsx";
+
 import AdminRoutes from "./admin/routes/AppRouter.jsx";
 import Category from "./artist/pages/artist/categoryLanding.tsx";
 
@@ -50,6 +54,11 @@ function App() {
                 <Route path="/artist/:id" element={<ArtistProfileLanding />} />
                 <Route path="/categoryCustomer" element={<CategoryCustomer />} />
                 <Route path="/customerAccount" element={<CustomerAccount />} />
+
+                {/* Legal Pages */}
+                <Route path="/about-us" element={<AboutUs />} />
+                <Route path="/terms" element={<TermsAndConditions />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
 
                 {/* Admin Routes */}
                 <Route path="/admin/*" element={<AdminRoutes />} />
