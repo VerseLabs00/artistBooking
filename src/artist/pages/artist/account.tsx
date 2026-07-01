@@ -753,7 +753,7 @@ export default function ArtistProfile() {
                         {/* AUDIO & VIDEO */}
                         {videoLinks.length > 0 && (
                             <>
-                                <h3 className="text-[24px] font-bold mt-10 mb-5">Audio & Video</h3>
+                                <h3 className="text-[24px] font-bold mt-10 mb-5">Media</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {videoLinks.map((item) => (
                                         <MediaPreviewCard
