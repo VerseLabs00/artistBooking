@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import stage from '../../../public/bg-login.png'
 import artistImage from '../../../public/person.png'
@@ -84,10 +84,28 @@ export default function LoginPage() {
     }
   }
 
+  const handleVerifyResetToken = async () => {
+    setError('')
+    setSuccess('')
+    if (!otp) {
+      setError('Please enter the reset code.')
+      return
+    }
+    setLoading(true)
+    try {
+      await api.post('/auth/verify-reset-token', { email: forgotEmail, token: otp })
+      setForgotStep(3)
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Invalid reset code.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleResetPassword = async () => {
     setError('')
     setSuccess('')
-    if (!otp || !newPassword || !confirmPassword) { setError('Please fill in all fields.'); return }
+    if (!newPassword || !confirmPassword) { setError('Please fill in all fields.'); return }
     if (newPassword !== confirmPassword) { setError('Passwords do not match.'); return }
     setLoading(true)
     try {
@@ -102,6 +120,10 @@ export default function LoginPage() {
         setShowForgot(false)
         setForgotStep(1)
         setSuccess('')
+        setForgotEmail('')
+        setOtp('')
+        setNewPassword('')
+        setConfirmPassword('')
       }, 3000)
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to reset password.')
@@ -155,7 +177,7 @@ export default function LoginPage() {
                       {loading ? 'Sending...' : 'Send Reset Code'}
                     </button>
                   </>
-                ) : (
+                ) : forgotStep === 2 ? (
                   <>
                     <div>
                       <p className="text-sm text-black mb-1 font-semibold">Reset Code (OTP)</p>
@@ -167,6 +189,13 @@ export default function LoginPage() {
                         className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-[#E8194B] transition-all duration-300" 
                       />
                     </div>
+                    <button onClick={handleVerifyResetToken} disabled={loading}
+                      className="w-full bg-[#E8194B] hover:bg-[#c8133b] text-white py-4 rounded-lg disabled:opacity-60 transition-colors font-bold shadow-lg shadow-pink-100">
+                      {loading ? 'Verifying...' : 'Continue'}
+                    </button>
+                  </>
+                ) : (
+                  <>
                     <div>
                       <p className="text-sm text-black mb-1 font-semibold">New Password</p>
                       <input 
@@ -193,7 +222,7 @@ export default function LoginPage() {
                     </button>
                   </>
                 )}
-                <button onClick={() => setShowForgot(false)} className="text-sm text-gray-500 hover:text-black transition-colors block w-full text-center">
+                <button onClick={() => { setShowForgot(false); setForgotStep(1) }} className="text-sm text-gray-500 hover:text-black transition-colors block w-full text-center">
                   Back to Login
                 </button>
               </div>
@@ -274,11 +303,11 @@ export default function LoginPage() {
         </div>
       </div>
       <div className="text-white text-xs md:text-sm flex justify-center gap-4 pb-4 flex-wrap">
-        <span className="cursor-pointer hover:opacity-70 transition">Contact</span>
+        <Link to="/about-us" className="cursor-pointer hover:opacity-70 transition">About Us</Link>
         <span>|</span>
-        <span className="cursor-pointer hover:opacity-70 transition">Privacy</span>
+        <Link to="/privacy" className="cursor-pointer hover:opacity-70 transition">Privacy Policy</Link>
         <span>|</span>
-        <span className="cursor-pointer hover:opacity-70 transition">Terms & Conditions</span>
+        <Link to="/terms" className="cursor-pointer hover:opacity-70 transition">Terms & Conditions</Link>
       </div>
     </div>
   )

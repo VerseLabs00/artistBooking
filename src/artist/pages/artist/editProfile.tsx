@@ -753,7 +753,7 @@ export default function EditProfile() {
                     name="full_price"
                     value={form.full_price}
                     onChange={handleChange}
-                    placeholder="75,000"
+                    placeholder="100,000"
                   />
                 </div>
               </Field>
@@ -765,7 +765,7 @@ export default function EditProfile() {
                     name="advance"
                     value={form.advance}
                     onChange={handleChange}
-                    placeholder="35,000"
+                    placeholder="5,000"
                   />
                 </div>
               </Field>
@@ -778,11 +778,11 @@ export default function EditProfile() {
               <p className="text-sm text-gray-600 leading-relaxed">
                 Set your full price and advance payment. Customers will see{" "}
                 <span className="text-gray-900 font-semibold">
-                  Rs. {form.full_price || "75,000"}
+                  Rs. {form.full_price || "100,000"}
                 </span>{" "}
                 with an advance of{" "}
                 <span className="text-gray-900 font-semibold">
-                  Rs. {form.advance || "35,000"}
+                  Rs. {form.advance || "5,000"}
                 </span>
                 .
               </p>
