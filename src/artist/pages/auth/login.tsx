@@ -122,10 +122,28 @@ export default function LoginPage() {
         }
     }
 
+    const handleVerifyResetToken = async () => {
+        setError('')
+        setSuccess('')
+        if (!otp) {
+            setError('Please enter the reset code.')
+            return
+        }
+        setLoading(true)
+        try {
+            await api.post('/auth/verify-reset-token', { email: forgotEmail, token: otp })
+            setForgotStep(3)
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Invalid reset code.')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const handleResetPassword = async () => {
         setError('')
         setSuccess('')
-        if (!otp || !newPassword || !confirmPassword) {
+        if (!newPassword || !confirmPassword) {
             setError('Please fill in all fields.')
             return
         }
@@ -146,6 +164,10 @@ export default function LoginPage() {
                 setShowForgot(false)
                 setForgotStep(1)
                 setSuccess('')
+                setForgotEmail('')
+                setOtp('')
+                setNewPassword('')
+                setConfirmPassword('')
             }, 3000)
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to reset password.')
@@ -193,7 +215,7 @@ export default function LoginPage() {
                                             {loading ? 'Sending...' : 'Send Reset Code'}
                                         </button>
                                     </>
-                                ) : (
+                                ) : forgotStep === 2 ? (
                                     <>
                                         <div>
                                             <p className="text-sm text-black mb-1 font-semibold">Reset Code (OTP)</p>
@@ -201,6 +223,13 @@ export default function LoginPage() {
                                                 placeholder="Enter 6-digit code"
                                                 className="w-full border-b border-gray-300 bg-transparent outline-none py-2 text-black focus:border-[#E8194B] transition-all duration-300" />
                                         </div>
+                                        <button onClick={handleVerifyResetToken} disabled={loading}
+                                            className="w-full bg-[#E8194B] hover:bg-[#c8133b] text-white py-4 rounded-lg disabled:opacity-60 transition-colors font-bold shadow-lg shadow-pink-100">
+                                            {loading ? 'Verifying...' : 'Continue'}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
                                         <div>
                                             <p className="text-sm text-black mb-1 font-semibold">New Password</p>
                                             <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
@@ -219,7 +248,7 @@ export default function LoginPage() {
                                         </button>
                                     </>
                                 )}
-                                <button onClick={() => setShowForgot(false)} className="text-sm text-gray-500 hover:text-black transition-colors block w-full text-center">
+                                <button onClick={() => { setShowForgot(false); setForgotStep(1) }} className="text-sm text-gray-500 hover:text-black transition-colors block w-full text-center">
                                     Back to Login
                                 </button>
                             </div>

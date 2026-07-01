@@ -140,7 +140,8 @@ export default function SignUpPage() {
                 onClick={() => step === 0 ? navigate('/loginCustomer') : setStep(s => s - 1)}
               />
             </div>
-            <h1 className="text-3xl font-bold mb-10 text-black">Sign up</h1>
+            <h1 className="text-3xl font-bold mb-2 text-black">Sign up</h1>
+            <p className="text-sm text-gray-500 mb-8">Please enter a valid email address. We'll send a verification code to confirm your registration.</p>
             {error && (
               <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</div>
             )}
