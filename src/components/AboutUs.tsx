@@ -5,7 +5,9 @@ const AboutUs: React.FC = () => {
         <>
             <style>{`
         .about-page * { margin: 0; padding: 0; box-sizing: border-box; }
-        .about-page { font-family: 'Inter', sans-serif; background: #fff; color: #111; }
+        .about-page { font-family: 'Fraunces', serif; background: #fff; color: #111; }
+
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
 
         .about-page nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 60px; background: #fff; border-bottom: 1px solid #eee; }
         .about-page nav .logo { font-size: 22px; font-weight: 800; color: #111; }

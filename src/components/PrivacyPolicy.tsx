@@ -5,7 +5,9 @@ const PrivacyPolicy: React.FC = () => {
         <>
             <style>{`
         .privacy-page * { margin: 0; padding: 0; box-sizing: border-box; }
-        .privacy-page { font-family: 'Inter', sans-serif; background: #fff; color: #111; }
+        .privacy-page { font-family: 'Fraunces', serif; background: #fff; color: #111; }
+
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400&display=swap');
 
         .privacy-page nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 60px; background: #fff; border-bottom: 1px solid #eee; }
         .privacy-page nav .logo { font-size: 22px; font-weight: 800; color: #111; }
@@ -21,11 +23,11 @@ const PrivacyPolicy: React.FC = () => {
 
         .privacy-page .layout { display: grid; grid-template-columns: 260px 1fr; }
         .privacy-page .sidebar { background: #f9f9f9; border-right: 1px solid #eee; padding: 40px 28px; position: sticky; top: 0; height: fit-content; }
+        .privacy-page .content { padding: 50px 60px; }
         .privacy-page .sidebar .sib-title { font-size: 11px; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
         .privacy-page .sidebar a { display: block; font-size: 14px; color: #888; text-decoration: none; padding: 8px 12px; border-radius: 8px; margin-bottom: 2px; transition: all 0.2s; }
         .privacy-page .sidebar a:hover { color: #111; background: #eee; }
 
-        .privacy-page .content { padding: 50px 60px; }
         .privacy-page .meta-bar { background: #f9f9f9; border: 1px solid #eee; border-radius: 12px; padding: 14px 20px; margin-bottom: 50px; font-size: 13px; color: #999; display: flex; gap: 24px; flex-wrap: wrap; }
         .privacy-page .meta-bar strong { color: #555; }
 
