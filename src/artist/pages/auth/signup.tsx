@@ -230,6 +230,22 @@ export default function SignUp() {
                                             {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                                         </button>
                                     </div>
+                                    {password && (
+                                        <div className="space-y-1.5">
+                                            {[
+                                                { label: 'At least 8 characters', valid: password.length >= 8 },
+                                                { label: 'One uppercase letter', valid: /[A-Z]/.test(password) },
+                                                { label: 'One lowercase letter', valid: /[a-z]/.test(password) },
+                                                { label: 'One number', valid: /\d/.test(password) },
+                                                { label: 'One special character', valid: /[^A-Za-z0-9]/.test(password) },
+                                            ].map((rule, idx) => (
+                                                <p key={idx} className={`text-xs flex items-center gap-2 transition-colors duration-300 ${rule.valid ? 'text-green-600' : 'text-red-500'}`}>
+                                                    <span className="inline-block w-3 h-3 rounded-full border flex items-center justify-center text-[8px] leading-none">{rule.valid ? '✓' : ''}</span>
+                                                    {rule.label}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    )}
                                     <div className="relative">
                                         <p className="text-sm text-black mb-1 font-semibold">Confirm Password</p>
                                         <input type={showPassword ? "text" : "password"} value={passwordConfirmation} onChange={e => setPasswordConfirmation(e.target.value)}
@@ -289,9 +305,9 @@ export default function SignUp() {
                 </div>
             </div>
             <div className="text-white text-xs md:text-sm flex justify-center gap-4 pb-4 flex-wrap">
-                <span className="cursor-pointer hover:opacity-70 transition">Contact</span>
+                <span className="cursor-pointer hover:opacity-70 transition">About Us</span>
                 <span>|</span>
-                <span className="cursor-pointer hover:opacity-70 transition">Privacy</span>
+                <span className="cursor-pointer hover:opacity-70 transition">Privacy Policy</span>
                 <span>|</span>
                 <span className="cursor-pointer hover:opacity-70 transition">Terms & Conditions</span>
             </div>

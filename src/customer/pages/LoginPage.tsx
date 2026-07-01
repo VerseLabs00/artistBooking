@@ -303,9 +303,9 @@ export default function LoginPage() {
         </div>
       </div>
       <div className="text-white text-xs md:text-sm flex justify-center gap-4 pb-4 flex-wrap">
-        <span className="cursor-pointer hover:opacity-70 transition">Contact</span>
+        <span className="cursor-pointer hover:opacity-70 transition">About Us</span>
         <span>|</span>
-        <span className="cursor-pointer hover:opacity-70 transition">Privacy</span>
+        <span className="cursor-pointer hover:opacity-70 transition">Privacy Policy</span>
         <span>|</span>
         <span className="cursor-pointer hover:opacity-70 transition">Terms & Conditions</span>
       </div>
