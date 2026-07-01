@@ -39,7 +39,7 @@ const SuspendedOverlay: React.FC<SuspendedOverlayProps> = ({ show }) => {
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Contact to Reactivate</p>
                     
                     <div className="space-y-4">
-                        <a href="mailto:admin@perfoma.lk" className="flex items-center gap-4 group">
+                        <a href="mailto:infoperforma.lk@gmail.com" className="flex items-center gap-4 group">
                             <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all">
                                 <Mail size={18} />
                             </div>
@@ -49,7 +49,7 @@ const SuspendedOverlay: React.FC<SuspendedOverlayProps> = ({ show }) => {
                             </div>
                         </a>
                         
-                        <a href="tel:+94771234567" className="flex items-center gap-4 group">
+                        <a href="tel:+94 70 403 5236" className="flex items-center gap-4 group">
                             <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all">
                                 <Phone size={18} />
                             </div>
