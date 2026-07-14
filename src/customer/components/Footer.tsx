@@ -1,6 +1,7 @@
 import React, { useState, useRef, useLayoutEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import api from '../lib/api'
+import { getLegalPageSource, legalPagePath } from '../../components/legalPageLinks'
 
 const LOGO_PATH = "/assets/logo/logo-footer@3x.png"
 
@@ -163,6 +164,8 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Footer() {
+  const { pathname } = useLocation()
+  const legalSource = getLegalPageSource(pathname)
   const [showContact, setShowContact] = useState(false)
   const [formData, setFormData] = useState({
     first_name: '',
@@ -465,7 +468,7 @@ export default function Footer() {
                     if (label === 'About Us') {
                       return (
                           <li key={label}>
-                            <Link to="/about-us" className="text-[#6b6b6b] text-sm hover:text-white transition-colors">
+                            <Link to={legalPagePath('/about-us', legalSource)} className="text-[#6b6b6b] text-sm hover:text-white transition-colors">
                               {label}
                             </Link>
                           </li>
@@ -474,7 +477,7 @@ export default function Footer() {
                     if (label === 'Privacy Policy') {
                       return (
                           <li key={label}>
-                            <Link to="/privacy" className="text-[#6b6b6b] text-sm hover:text-white transition-colors">
+                            <Link to={legalPagePath('/privacy', legalSource)} className="text-[#6b6b6b] text-sm hover:text-white transition-colors">
                               {label}
                             </Link>
                           </li>
@@ -502,9 +505,9 @@ export default function Footer() {
               <p className="text-[#4a4a4a] text-xs text-center sm:text-left">© 2025 Performa. All rights reserved.</p>
               <div className="flex flex-wrap justify-center gap-4 sm:gap-7">
                 {[
-                  { label: 'About Us', to: '/about-us' },
-                  { label: 'Terms & Conditions', to: '/terms' },
-                  { label: 'Privacy Policy', to: '/privacy' },
+                  { label: 'About Us', to: legalPagePath('/about-us', legalSource) },
+                  { label: 'Terms & Conditions', to: legalPagePath('/terms', legalSource) },
+                  { label: 'Privacy Policy', to: legalPagePath('/privacy', legalSource) },
                   { label: 'Contact', href: '#contact-section' },
                 ].map(({ label, to, href }) =>
                     to ? (

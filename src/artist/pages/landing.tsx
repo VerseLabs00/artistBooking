@@ -584,10 +584,9 @@ export default function HomePage() {
         .hero-bg-dots { background-image: radial-gradient(circle, #E8194B22 1.5px, transparent 1.5px); background-size: 24px 24px; }
         
         /* Offset for sticky navbar */
-        section[id] {
-            scroll-margin-top: 90px;
-        }
-
+        
+        #categories-section,
+        #artists-section,
         #how-it-works,
         #join-section,
         #contact-section {
@@ -846,7 +845,7 @@ export default function HomePage() {
                 {/* ══════════════════════════════════════════════════
           BROWSE CATEGORIES
       ══════════════════════════════════════════════════ */}
-                <section id="categories-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 py-16 sm:py-24">
+                <section id="categories-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 pt-8 sm:pt-10 pb-16 sm:pb-24">
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="section-title">Browse Categories</h2>
@@ -890,7 +889,7 @@ export default function HomePage() {
                 {/* ══════════════════════════════════════════════════
           POPULAR ARTISTS
       ══════════════════════════════════════════════════ */}
-                <section id="artists-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 py-16 sm:py-24 overflow-hidden">
+                <section id="artists-section" className="w-full px-4 sm:px-6 md:px-12 lg:px-20 pt-8 sm:pt-10 pb-16 sm:pb-24 overflow-hidden">
                     <div className="max-w-7xl mx-auto relative group">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="section-title">

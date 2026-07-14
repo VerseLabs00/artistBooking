@@ -1,6 +1,11 @@
 import React from "react";
+import { useSearchParams } from "react-router-dom";
+import LegalPageNavbar, { getLegalPageVariant } from "./LegalPageNavbar";
 
 const TermsAndConditions: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const navbarVariant = getLegalPageVariant(searchParams.get("from"));
+
     return (
         <>
             <style>{`
@@ -77,22 +82,9 @@ const TermsAndConditions: React.FC = () => {
         }
       `}</style>
 
-            <div className="terms-page">
-                {/*<nav>*/}
-                {/*    <div className="logo">*/}
-                {/*        Performa<span>.</span>*/}
-                {/*    </div>*/}
-                {/*    <div>*/}
-                {/*        <a href="#">Categories</a>*/}
-                {/*        <a href="#">Explore</a>*/}
-                {/*        <a href="#">How it works</a>*/}
-                {/*        <a href="#">Join as Artist</a>*/}
-                {/*        <a href="#" className="btn">*/}
-                {/*            Explore Talent*/}
-                {/*        </a>*/}
-                {/*    </div>*/}
-                {/*</nav>*/}
+            <LegalPageNavbar variant={navbarVariant} />
 
+            <div className="terms-page" style={{ paddingTop: "72px" }}>
                 <div className="hero">
                     <div className="tag">Legal</div>
                     <h1>
