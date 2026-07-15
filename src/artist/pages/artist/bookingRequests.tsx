@@ -94,6 +94,7 @@ export default function BookingRequests() {
 
     const handleViewEarnings = async () => {
         setEarningsModalOpen(true);
+        fetchBookings(); // refresh so admin-sent advances are reflected live
         setBankLoading(true);
         try {
             const { data } = await api.get('/profile/bank');
@@ -181,6 +182,12 @@ export default function BookingRequests() {
         if (activeTab === 'confirmed') return b.booking_status === 'confirmed' || b.booking_status === 'awaiting_confirmation';
         return b.booking_status === activeTab;
     });
+
+    // Advances the artist is still owed (excludes ones the admin has already sent)
+    const pendingAdvanceBookings = bookings.filter(
+        b => (b.booking_status === 'confirmed' || b.booking_status === 'completed') && Number(b.advance_amount) > 0 && b.advance_payment_status !== 'sent'
+    );
+    const totalExpectedAdvances = pendingAdvanceBookings.reduce((acc, b) => acc + Number(b.advance_amount || 0), 0);
 
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
@@ -303,7 +310,7 @@ export default function BookingRequests() {
                                         <div>
                                             <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Total Expected Advances</p>
                                             <h3 className="text-3xl font-black text-green-600 flex items-center gap-1">
-                                                Rs. {bookings.filter(b => (b.booking_status === 'confirmed' || b.booking_status === 'completed') && b.advance_amount > 0).reduce((acc, b) => acc + (b.advance_amount || 0), 0).toLocaleString()}
+                                                Rs. {totalExpectedAdvances.toLocaleString()}
                                             </h3>
                                         </div>
                                         <div className="text-right">
@@ -316,7 +323,7 @@ export default function BookingRequests() {
                                     
                                     <h3 className="font-bold text-gray-900 text-lg">Advance Payments</h3>
                                     <div className="space-y-3">
-                                        {bookings.filter(b => (b.booking_status === 'confirmed' || b.booking_status === 'completed') && b.advance_amount > 0).map(booking => (
+                                        {pendingAdvanceBookings.map(booking => (
                                             <div key={booking.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">
@@ -328,7 +335,7 @@ export default function BookingRequests() {
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="font-black text-gray-900">Rs. {booking.advance_amount.toLocaleString()}</p>
+                                                    <p className="font-black text-gray-900">Rs. {Number(booking.advance_amount || 0).toLocaleString()}</p>
                                                     <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
                                                         booking.advance_payment_status === 'sent'
                                                             ? 'bg-green-50 text-green-700 border-green-200'
@@ -339,7 +346,7 @@ export default function BookingRequests() {
                                                 </div>
                                             </div>
                                         ))}
-                                        {bookings.filter(b => (b.booking_status === 'confirmed' || b.booking_status === 'completed') && b.advance_amount > 0).length === 0 && (
+                                        {pendingAdvanceBookings.length === 0 && (
                                             <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 text-gray-500">
                                                 <DollarSign size={24} className="mx-auto mb-2 text-gray-300" />
                                                 <p className="text-sm">No advance payments recorded yet.</p>

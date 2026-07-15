@@ -214,9 +214,12 @@ export default function CustomerAccount() {
     }
   }
 
-  const getStatusMessage = (status: string, paymentStatus?: string) => {
+  const getStatusMessage = (status: string, paymentStatus?: string, balanceDue?: number) => {
     if (status?.toLowerCase() === 'confirmed' && paymentStatus === 'paid') {
-      return '✓ Advance paid. You\'re all set for the event!'
+      const due = typeof balanceDue === 'number' && balanceDue > 0
+        ? ` Your due balance of Rs. ${balanceDue.toLocaleString()} must be paid at the event.`
+        : ''
+      return `✓ Advance payment successful!${due}`
     }
     switch (status?.toLowerCase()) {
       case 'awaiting_confirmation': return 'Waiting for the artist to accept your request.'
@@ -302,7 +305,7 @@ export default function CustomerAccount() {
                       : <AlertCircle size={18} className="text-pink flex-shrink-0" />
                     }
                     <p className={`text-xs font-bold ${selectedBooking.booking_status === 'confirmed' && selectedBooking.payment_status === 'paid' ? 'text-green-700' : 'text-gray-700'}`}>
-                      {getStatusMessage(selectedBooking.booking_status, selectedBooking.payment_status)}
+                      {getStatusMessage(selectedBooking.booking_status, selectedBooking.payment_status, (selectedBooking.agreed_price || 0) - (selectedBooking.advance_amount || 0))}
                     </p>
                   </div>
                   <div className="flex items-center justify-between">
@@ -549,7 +552,7 @@ export default function CustomerAccount() {
                               )}
                             </div>
                             <p className={`text-[10px] font-bold mt-2 ${booking.booking_status === 'confirmed' && booking.payment_status === 'paid' ? 'text-green-600' : 'text-pink animate-pulse'}`}>
-                              {getStatusMessage(booking.booking_status, booking.payment_status)}
+                              {getStatusMessage(booking.booking_status, booking.payment_status, (booking.agreed_price || 0) - (booking.advance_amount || 0))}
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -667,7 +670,7 @@ export default function CustomerAccount() {
 
                           <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-50">
                             <p className={`mr-auto text-[10px] font-bold ${booking.booking_status === 'confirmed' && booking.payment_status === 'paid' ? 'text-green-600' : 'text-pink animate-pulse'}`}>
-                              {getStatusMessage(booking.booking_status, booking.payment_status)}
+                              {getStatusMessage(booking.booking_status, booking.payment_status, (booking.agreed_price || 0) - (booking.advance_amount || 0))}
                             </p>
                             {booking.booking_status !== 'cancelled' && booking.booking_status !== 'completed' && !(booking.booking_status === 'confirmed' && booking.payment_status === 'paid') && (
                               <button 
