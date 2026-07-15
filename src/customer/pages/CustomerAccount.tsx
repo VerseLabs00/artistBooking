@@ -97,11 +97,6 @@ export default function CustomerAccount() {
   useEffect(() => {
     fetchBookings()
     fetchFavorites()
-
-    // Re-fetch bookings when user returns to this tab (e.g. after artist accepts)
-    const onFocus = () => fetchBookings()
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
   }, [])
 
   const fetchFavorites = async () => {
@@ -324,6 +319,13 @@ export default function CustomerAccount() {
                     </div>
                     <span className="text-sm font-bold text-gray-900">Rs. {selectedBooking.advance_amount.toLocaleString()}</span>
                   </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                    <div className="flex items-center gap-2 text-pink">
+                      <CreditCard size={16} />
+                      <span className="text-xs font-bold uppercase tracking-wider">Now to Pay</span>
+                    </div>
+                    <span className="text-lg font-black text-pink">Rs. {(selectedBooking.total_payment || selectedBooking.agreed_price).toLocaleString()}</span>
+                  </div>
                 </div>
 
                 {selectedBooking.special_notes && (
@@ -539,7 +541,7 @@ export default function CustomerAccount() {
                               <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(booking.booking_status)}`}>
                                 {booking.booking_status}
                               </span>
-                              <span className="text-xs font-bold text-gray-900">Rs. {booking.agreed_price.toLocaleString()}</span>
+                              <span className="text-xs font-bold text-gray-900">Rs. {(booking.total_payment || booking.agreed_price).toLocaleString()}</span>
                               {booking.booking_status === 'confirmed' && booking.payment_status === 'paid' && (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200">
                                   ✓ Advance Paid
@@ -628,8 +630,8 @@ export default function CustomerAccount() {
                               <p className="text-pink text-sm font-semibold">{booking.event_type}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Total Price</p>
-                              <p className="text-xl font-black text-gray-900">Rs. {booking.agreed_price.toLocaleString()}</p>
+                              <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Now to Pay</p>
+                              <p className="text-xl font-black text-gray-900">Rs. {(booking.total_payment || booking.agreed_price).toLocaleString()}</p>
                             </div>
                           </div>
 
