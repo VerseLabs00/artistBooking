@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Heart, Play, Music, MapPin, Users, Star,
-    Instagram, Facebook, Twitter, Mail, Youtube, Music2, Home, LogOut, X
+    Instagram, Facebook, Twitter, Mail, Youtube, Music2, Home, LogOut, X, Camera, Image as ImageIcon
 } from "lucide-react";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
@@ -513,15 +513,33 @@ export default function ArtistProfile() {
             {/* HERO — overflow-visible so avatar can bleed below */}
             <div className="relative h-[220px] w-full overflow-visible">
                 {profile?.cover_url ? (
-                    <img
-                        src={profile.cover_url}
-                        className="w-full h-[220px] object-cover"
-                        alt="cover"
-                    />
+                    <>
+                        <img
+                            src={profile.cover_url}
+                            className="w-full h-[220px] object-cover"
+                            alt="cover"
+                        />
+                        <div className="absolute inset-0 h-[220px] bg-black/20 pointer-events-none" />
+                    </>
                 ) : (
-                    <div className="w-full h-[220px] bg-gray-300" />
+                    <div className="w-full h-[220px] bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col items-center justify-center border-b border-gray-200 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes.png')] opacity-[0.03]"></div>
+                        <div className="flex flex-col items-center justify-center relative z-10">
+                            <div className="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center mb-3 border border-gray-100">
+                                <ImageIcon size={24} className="text-gray-400" />
+                            </div>
+                            <p className="text-[15px] font-bold text-gray-700">Make it yours</p>
+                            <p className="text-xs text-gray-500 mt-1 mb-4 font-medium">Add a cover photo to stand out</p>
+                            <button 
+                                onClick={() => navigate("/editProfile")}
+                                className="px-5 py-2.5 bg-white text-gray-800 rounded-full text-xs font-bold shadow-sm border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all flex items-center gap-2 hover:-translate-y-0.5"
+                            >
+                                <Camera size={14} className="text-[#FF2B6B]" />
+                                Upload Cover
+                            </button>
+                        </div>
+                    </div>
                 )}
-                <div className="absolute inset-0 h-[220px] bg-black/20" />
 
                 {/* TOP BUTTONS */}
                 <button
@@ -551,9 +569,15 @@ export default function ArtistProfile() {
                             alt="avatar"
                         />
                     ) : (
-                        <div className="w-32 h-32 rounded-full border-[5px] border-white bg-gray-300 shadow-lg flex items-center justify-center text-gray-600 text-2xl font-bold">
-                            {(profile?.stage_name || profile?.full_name || "A")?.charAt(0)?.toUpperCase()}
-                        </div>
+                        <button 
+                            onClick={() => navigate("/editProfile")}
+                            className="w-32 h-32 rounded-full border-[5px] border-white bg-white shadow-lg flex flex-col items-center justify-center hover:shadow-xl hover:scale-105 transition-all group relative overflow-hidden"
+                        >
+                            <div className="absolute inset-1.5 border-2 border-dashed border-pink-200 rounded-full flex flex-col items-center justify-center bg-pink-50/50 group-hover:bg-pink-50 group-hover:border-pink-300 transition-colors">
+                                <Camera size={24} className="text-[#FF2B6B] opacity-70 mb-1 group-hover:opacity-100 transition-opacity group-hover:scale-110 duration-300" />
+                                <span className="text-[9px] font-bold text-[#FF2B6B] uppercase tracking-wider">Add Photo</span>
+                            </div>
+                        </button>
                     )}
                 </div>
             </div>
