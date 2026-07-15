@@ -666,8 +666,8 @@ export default function BookingRequests() {
                                                                 </div>
                                                             </div>
                                                             <div className="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
-                                                                <p className="text-gray-400 text-[9px] font-bold uppercase tracking-wider mb-0.5">Price</p>
-                                                                <p className="text-lg font-black text-gray-900">Rs. {booking.agreed_price.toLocaleString()}</p>
+                                                                <p className="text-gray-400 text-[9px] font-bold uppercase tracking-wider mb-0.5">Advance</p>
+                                                                <p className="text-lg font-black text-gray-900">Rs. {booking.advance_amount.toLocaleString()}</p>
                                                                 {(booking.booking_status === 'confirmed' || booking.booking_status === 'completed') && booking.advance_amount > 0 && (
                                                                     <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
                                                                         booking.advance_payment_status === 'sent'
