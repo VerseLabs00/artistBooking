@@ -29,6 +29,7 @@ interface DetailedBooking {
     id: string;
     booking_status: string;
     payment_status: string;
+    advance_payment_status: string; // 'pending' | 'sent' — whether admin has sent the advance
     event_date: string;
     event_start_time: string;
     event_type: string;
@@ -65,7 +66,8 @@ function normalizeBooking(b: any): DetailedBooking {
         venue: b.venue || "To be shared",
         event_start_time: b.event_start_time || "TBD",
         special_notes: b.special_notes || "",
-        payment_status: b.payment_status || "Pending"
+        payment_status: b.payment_status || "Pending",
+        advance_payment_status: b.advance_payment_status || "pending",
     };
 }
 
@@ -176,6 +178,7 @@ export default function BookingRequests() {
     const filteredBookings = bookings.filter(b => {
         if (activeTab === 'all') return true;
         if (activeTab === 'cancelled') return b.booking_status === 'rejected' || b.booking_status === 'cancelled';
+        if (activeTab === 'confirmed') return b.booking_status === 'confirmed' || b.booking_status === 'awaiting_confirmation';
         return b.booking_status === activeTab;
     });
 
@@ -184,6 +187,7 @@ export default function BookingRequests() {
             case 'confirmed': return 'bg-green-100 text-green-700 border-green-200';
             case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
             case 'pending_payment': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+            case 'awaiting_confirmation': return 'bg-blue-100 text-blue-700 border-blue-200';
             case 'rejected': return 'bg-red-100 text-red-700 border-red-200';
             case 'cancelled': return 'bg-red-100 text-red-700 border-red-200';
             case 'completed': return 'bg-blue-100 text-blue-700 border-blue-200';
@@ -325,8 +329,12 @@ export default function BookingRequests() {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="font-black text-gray-900">Rs. {booking.advance_amount.toLocaleString()}</p>
-                                                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${booking.payment_status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
-                                                        {booking.payment_status === 'completed' ? 'Completed' : 'Pending Payment'}
+                                                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                                                        booking.advance_payment_status === 'sent'
+                                                            ? 'bg-green-50 text-green-700 border-green-200'
+                                                            : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                                    }`}>
+                                                        {booking.advance_payment_status === 'sent' ? '✓ Payment Done' : 'Payment Pending'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -449,7 +457,7 @@ export default function BookingRequests() {
                                 )}
 
                                 <div className="flex gap-3">
-                                    {(selectedBooking.booking_status === "pending" || selectedBooking.booking_status === "pending_payment") && (
+                                    {(selectedBooking.booking_status === "pending" || selectedBooking.booking_status === "pending_payment" || selectedBooking.booking_status === "awaiting_confirmation") && (
                                         <>
                                             <button
                                                 onClick={() => updateStatus(selectedBooking.id, "confirmed")}
@@ -660,6 +668,15 @@ export default function BookingRequests() {
                                                             <div className="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
                                                                 <p className="text-gray-400 text-[9px] font-bold uppercase tracking-wider mb-0.5">Price</p>
                                                                 <p className="text-lg font-black text-gray-900">Rs. {booking.agreed_price.toLocaleString()}</p>
+                                                                {(booking.booking_status === 'confirmed' || booking.booking_status === 'completed') && booking.advance_amount > 0 && (
+                                                                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
+                                                                        booking.advance_payment_status === 'sent'
+                                                                            ? 'bg-green-50 text-green-700 border-green-200'
+                                                                            : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                                                    }`}>
+                                                                        {booking.advance_payment_status === 'sent' ? '✓ Advance Paid' : 'Advance Pending'}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
 
@@ -702,7 +719,7 @@ export default function BookingRequests() {
                                                             {detailsLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
                                                             View Request
                                                         </button>
-                                                        {(booking.booking_status === "pending" || booking.booking_status === "pending_payment") && (
+                                                        {(booking.booking_status === "pending" || booking.booking_status === "pending_payment" || booking.booking_status === "awaiting_confirmation") && (
                                                             <>
                                                                 <button
                                                                     onClick={() => updateStatus(booking.id, "confirmed")}

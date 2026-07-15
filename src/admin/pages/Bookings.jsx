@@ -79,7 +79,7 @@ export default function Bookings() {
                   <th className="table-header text-left">Artist</th>
                   <th className="table-header text-left hidden md:table-cell">Event</th>
                   <th className="table-header text-left hidden md:table-cell">Date</th>
-                  <th className="table-header text-left">Amount</th>
+                  <th className="table-header text-left">Advance</th>
                   <th className="table-header text-left">Status</th>
                   <th className="table-header text-left">Actions</th>
                 </tr>
@@ -113,7 +113,7 @@ export default function Bookings() {
                   <th className="table-header text-left">Artist</th>
                   <th className="table-header text-left hidden md:table-cell">Event</th>
                   <th className="table-header text-left hidden md:table-cell">Date</th>
-                  <th className="table-header text-left">Amount</th>
+                  <th className="table-header text-left">Advance</th>
                   <th className="table-header text-left">Status</th>
                   <th className="table-header text-left">Actions</th>
                 </tr>
@@ -142,7 +142,7 @@ export default function Bookings() {
                       </td>
                       <td className="table-cell text-xs text-gray-500 hidden md:table-cell">{booking.eventType}</td>
                       <td className="table-cell text-xs text-gray-500 hidden md:table-cell">{booking.date}</td>
-                      <td className="table-cell font-semibold text-sm text-gray-900">{booking.amount}</td>
+                      <td className="table-cell font-semibold text-sm text-gray-900">{booking.deposit}</td>
                       <td className="table-cell"><StatusBadge status={booking.status} /></td>
                       <td className="table-cell">
                         <div className="flex items-center gap-1 md:gap-2">

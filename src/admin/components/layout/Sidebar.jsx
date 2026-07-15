@@ -2,18 +2,19 @@ import {Link, NavLink, useNavigate} from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   LayoutDashboard, Users, UserCheck, ShoppingBag, Settings, LogOut, X,
-  Mic2, AlertCircle,
+  Mic2, AlertCircle, Banknote,
 } from 'lucide-react'
 import { logoutThunk } from '../../features/auth/authSlice'
 import toast from 'react-hot-toast'
 
 const navItems = [
-  { label: 'Dashboard',    path: '.',             icon: <LayoutDashboard size={18} /> },
-  { label: 'Artists',      path: 'artists',      icon: <Mic2 size={18} />,      countKey: 'artists' },
-  { label: 'Verification', path: 'verification', icon: <UserCheck size={18} />, countKey: 'verification', urgent: true },
-  { label: 'Customers',    path: 'customers',    icon: <Users size={18} /> },
-  { label: 'Bookings',     path: 'bookings',     icon: <ShoppingBag size={18} />, countKey: 'bookings' },
-  { label: 'Settings',     path: 'settings',     icon: <Settings size={18} /> },
+  { label: 'Dashboard',    path: '.',              icon: <LayoutDashboard size={18} /> },
+  { label: 'Artists',      path: 'artists',       icon: <Mic2 size={18} />,      countKey: 'artists' },
+  { label: 'Verification', path: 'verification',  icon: <UserCheck size={18} />, countKey: 'verification', urgent: true },
+  { label: 'Customers',    path: 'customers',     icon: <Users size={18} /> },
+  { label: 'Bookings',     path: 'bookings',      icon: <ShoppingBag size={18} />, countKey: 'bookings' },
+  { label: 'Due Payments', path: 'due-payments',  icon: <Banknote size={18} />, urgent: true },
+  { label: 'Settings',     path: 'settings',      icon: <Settings size={18} /> },
 ]
 
 export default function Sidebar({ open, onClose }) {

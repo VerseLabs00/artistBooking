@@ -19,6 +19,7 @@ import ArtistProfileLanding from "./customer/pages/ArtistProfileLanding.tsx";
 import ArtistProfileCustomer from "./customer/pages/ArtistProfile.tsx";
 import CategoryCustomer from "./artist/pages/artist/categoryCustomer.tsx";
 import CustomerAccount from "./customer/pages/CustomerAccount.tsx";
+import BookingSuccess from "./customer/pages/BookingSuccess.tsx";
 
 import AboutUs from "./components/AboutUs.tsx";
 import TermsAndConditions from "./components/Terms.tsx";
@@ -54,6 +55,7 @@ function App() {
                 <Route path="/artist/:id" element={<ArtistProfileLanding />} />
                 <Route path="/categoryCustomer" element={<CategoryCustomer />} />
                 <Route path="/customerAccount" element={<CustomerAccount />} />
+                <Route path="/booking/success" element={<BookingSuccess />} />
 
                 {/* Legal Pages */}
                 <Route path="/about-us" element={<AboutUs />} />

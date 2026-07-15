@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { 
   User, 
   Settings, 
@@ -20,12 +20,29 @@ import {
   FileText,
   Camera
 } from 'lucide-react'
-import { getBookings, getBooking, cancelBooking } from '../services/bookingService'
+import { getBookings, getBooking, cancelBooking, retryBookingPayment } from '../services/bookingService'
 import { toggleFavorite, getFavorites } from '../services/favoriteService'
 import type { BookingSummary } from '../services/bookingService'
 import { useAuth } from '../context/AuthContext'
 import Footer from '../components/Footer'
 import api from '../lib/api'
+
+// Submits a hidden form to PayHere checkout (same pattern as BookingModal)
+function submitToPayHere(payhere: Record<string, string>) {
+  const form = document.createElement('form')
+  form.method = 'POST'
+  form.action = payhere.checkout_url
+  Object.entries(payhere).forEach(([key, value]) => {
+    if (key === 'checkout_url') return
+    const input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = key
+    input.value = String(value)
+    form.appendChild(input)
+  })
+  document.body.appendChild(form)
+  form.submit()
+}
 
 // --- Extended Booking Type for UI ---
 interface DetailedBooking extends BookingSummary {
@@ -59,11 +76,14 @@ function normalizeBooking(b: any): DetailedBooking {
 
 export default function CustomerAccount() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, setUser, logout } = useAuth()
   const [bookings, setBookings] = useState<DetailedBooking[]>([])
   const [loading, setLoading] = useState(true)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'favorites' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'bookings' | 'favorites' | 'settings'>(
+    (location.state as any)?.tab === 'bookings' ? 'bookings' : 'overview'
+  )
   const [uploading, setUploading] = useState(false)
   const [favoritesModalOpen, setFavoritesModalOpen] = useState(false)
   const [customerFavorites, setCustomerFavorites] = useState<Array<{ id: string; name: string; category: string; location: string; avatar_url: string }>>([])
@@ -72,10 +92,16 @@ export default function CustomerAccount() {
   // Details Modal State
   const [selectedBooking, setSelectedBooking] = useState<DetailedBooking | null>(null)
   const [detailsLoading, setDetailsLoading] = useState<string | null>(null)
+  const [retryingPayment, setRetryingPayment] = useState(false)
 
   useEffect(() => {
     fetchBookings()
     fetchFavorites()
+
+    // Re-fetch bookings when user returns to this tab (e.g. after artist accepts)
+    const onFocus = () => fetchBookings()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
   }, [])
 
   const fetchFavorites = async () => {
@@ -135,7 +161,10 @@ export default function CustomerAccount() {
     setDetailsLoading(id)
     try {
       const data = await getBooking(id)
-      setSelectedBooking(normalizeBooking(data))
+      const normalized = normalizeBooking(data)
+      setSelectedBooking(normalized)
+      // Sync fresh status back into the list so the card updates too
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, ...normalized } : b))
     } catch (err) {
       alert("Failed to fetch booking details.")
     } finally {
@@ -160,6 +189,18 @@ export default function CustomerAccount() {
     }
   }
 
+  const handleRetryPayment = async (id: string) => {
+    setRetryingPayment(true)
+    try {
+      const data = await retryBookingPayment(id)
+      submitToPayHere(data.payhere as unknown as Record<string, string>)
+      setRetryingPayment(false)
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to retry payment. Please try again.')
+      setRetryingPayment(false)
+    }
+  }
+
   const handleLogout = async () => {
     await logout()
     navigate('/')
@@ -170,6 +211,7 @@ export default function CustomerAccount() {
       case 'confirmed': return 'bg-green-100 text-green-700 border-green-200'
       case 'pending': 
       case 'pending_payment': return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+      case 'awaiting_confirmation': return 'bg-blue-100 text-blue-700 border-blue-200'
       case 'rejected':
       case 'cancelled': return 'bg-red-100 text-red-700 border-red-200'
       case 'completed': return 'bg-blue-100 text-blue-700 border-blue-200'
@@ -177,9 +219,13 @@ export default function CustomerAccount() {
     }
   }
 
-  const getStatusMessage = (status: string) => {
+  const getStatusMessage = (status: string, paymentStatus?: string) => {
+    if (status?.toLowerCase() === 'confirmed' && paymentStatus === 'paid') {
+      return '✓ Advance paid. You\'re all set for the event!'
+    }
     switch (status?.toLowerCase()) {
-      case 'confirmed': return 'The artist has accepted your booking! Get ready for the event.'
+      case 'awaiting_confirmation': return 'Waiting for the artist to accept your request.'
+      case 'confirmed': return 'Artist accepted! Complete your advance payment to lock the booking.'
       case 'rejected': return 'The artist has declined this request. You can browse other artists.'
       case 'cancelled': return 'This booking has been cancelled.'
       case 'pending_payment': return 'Payment is pending. Please complete the advance payment.'
@@ -255,9 +301,14 @@ export default function CustomerAccount() {
                 </div>
 
                 <div className="bg-gray-50 rounded-2xl p-6 mb-8 space-y-4">
-                  <div className="bg-pink/5 rounded-xl p-4 border border-pink/10 flex items-center gap-3 mb-2">
-                    <AlertCircle size={18} className="text-pink flex-shrink-0" />
-                    <p className="text-xs font-bold text-gray-700">{getStatusMessage(selectedBooking.booking_status)}</p>
+                  <div className={`rounded-xl p-4 border flex items-center gap-3 mb-2 ${selectedBooking.booking_status === 'confirmed' && selectedBooking.payment_status === 'paid' ? 'bg-green-50 border-green-200' : 'bg-pink/5 border-pink/10'}`}>
+                    {selectedBooking.booking_status === 'confirmed' && selectedBooking.payment_status === 'paid'
+                      ? <CheckCircle size={18} className="text-green-600 flex-shrink-0" />
+                      : <AlertCircle size={18} className="text-pink flex-shrink-0" />
+                    }
+                    <p className={`text-xs font-bold ${selectedBooking.booking_status === 'confirmed' && selectedBooking.payment_status === 'paid' ? 'text-green-700' : 'text-gray-700'}`}>
+                      {getStatusMessage(selectedBooking.booking_status, selectedBooking.payment_status)}
+                    </p>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-gray-500">
@@ -285,7 +336,20 @@ export default function CustomerAccount() {
                 )}
 
                 <div className="flex gap-3">
-                  {selectedBooking.booking_status !== 'cancelled' && selectedBooking.booking_status !== 'confirmed' && (
+                  {(selectedBooking.booking_status === 'confirmed' && selectedBooking.payment_status !== 'paid') && (
+                    <button
+                      onClick={() => !retryingPayment && handleRetryPayment(selectedBooking.id)}
+                      disabled={retryingPayment}
+                      className="flex-1 btn-pink px-6 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      {retryingPayment ? (
+                        <><Loader2 size={16} className="animate-spin" /> Redirecting...</>
+                      ) : (
+                        <><CreditCard size={16} /> Complete Payment</>
+                      )}
+                    </button>
+                  )}
+                  {(selectedBooking.booking_status === 'awaiting_confirmation' || selectedBooking.booking_status === 'pending_payment') && (
                     <button 
                       onClick={() => handleCancelBooking(selectedBooking.id)}
                       disabled={cancellingId === selectedBooking.id}
@@ -476,8 +540,15 @@ export default function CustomerAccount() {
                                 {booking.booking_status}
                               </span>
                               <span className="text-xs font-bold text-gray-900">Rs. {booking.agreed_price.toLocaleString()}</span>
+                              {booking.booking_status === 'confirmed' && booking.payment_status === 'paid' && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200">
+                                  ✓ Advance Paid
+                                </span>
+                              )}
                             </div>
-                            <p className="text-[10px] font-bold mt-2 text-pink animate-pulse">{getStatusMessage(booking.booking_status)}</p>
+                            <p className={`text-[10px] font-bold mt-2 ${booking.booking_status === 'confirmed' && booking.payment_status === 'paid' ? 'text-green-600' : 'text-pink animate-pulse'}`}>
+                              {getStatusMessage(booking.booking_status, booking.payment_status)}
+                            </p>
                           </div>
                           <div className="flex gap-2">
                              <button 
@@ -487,7 +558,7 @@ export default function CustomerAccount() {
                                {detailsLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
                                Details
                              </button>
-                             {booking.booking_status !== 'cancelled' && booking.booking_status !== 'confirmed' && (
+                             {(booking.booking_status === 'awaiting_confirmation' || booking.booking_status === 'pending_payment') && (
                                <button 
                                  onClick={() => handleCancelBooking(booking.id)}
                                  disabled={cancellingId === booking.id}
@@ -593,8 +664,10 @@ export default function CustomerAccount() {
                           </div>
 
                           <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-50">
-                            <p className="mr-auto text-[10px] font-bold text-pink animate-pulse">{getStatusMessage(booking.booking_status)}</p>
-                            {booking.booking_status !== 'cancelled' && booking.booking_status !== 'confirmed' && booking.booking_status !== 'completed' && (
+                            <p className={`mr-auto text-[10px] font-bold ${booking.booking_status === 'confirmed' && booking.payment_status === 'paid' ? 'text-green-600' : 'text-pink animate-pulse'}`}>
+                              {getStatusMessage(booking.booking_status, booking.payment_status)}
+                            </p>
+                            {booking.booking_status !== 'cancelled' && booking.booking_status !== 'completed' && !(booking.booking_status === 'confirmed' && booking.payment_status === 'paid') && (
                               <button 
                                 onClick={() => handleCancelBooking(booking.id)}
                                 disabled={cancellingId === booking.id}
