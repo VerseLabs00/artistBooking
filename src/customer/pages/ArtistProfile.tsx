@@ -510,20 +510,30 @@ if (!selectedStar) return;
             <div>
                 {/* HERO */}
                 <div className="relative h-[160px] sm:h-[200px] md:h-[220px] w-full overflow-visible">
-                    <img
-                        src={artist.cover_url || "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e"}
-                        className="w-full h-full object-cover"
-                        alt="cover"
-                    />
+                    {artist.cover_url ? (
+                        <img
+                            src={artist.cover_url}
+                            className="w-full h-full object-cover"
+                            alt="cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300" />
+                    )}
                     <div className="absolute inset-0 bg-black/20" />
 
                     {/* AVATAR */}
                     <div className="absolute -bottom-12 sm:-bottom-16 left-1/2 -translate-x-1/2 lg:left-[calc((100%-72rem)/2+200px)] lg:translate-x-0 z-30">
-                        <img
-                            src={artist.avatar_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"}
-                            className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[4px] sm:border-[5px] border-white object-cover shadow-lg"
-                            alt="avatar"
-                        />
+                        {artist.avatar_url ? (
+                            <img
+                                src={artist.avatar_url}
+                                className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[4px] sm:border-[5px] border-white object-cover shadow-lg"
+                                alt="avatar"
+                            />
+                        ) : (
+                            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[4px] sm:border-[5px] border-white bg-gray-200 flex items-center justify-center shadow-lg">
+                                <User size={44} className="text-gray-400" />
+                            </div>
+                        )}
                     </div>
                 </div>
 
