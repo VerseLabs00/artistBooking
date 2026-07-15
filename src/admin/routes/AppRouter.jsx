@@ -11,6 +11,7 @@ import Customers from "../pages/Customers";
 import CustomerDetail from "../pages/CustomerDetail";
 import Bookings from "../pages/Bookings";
 import BookingDetail from "../pages/BookingDetail";
+import DuePayments from "../pages/DuePayments";
 import Settings from "../pages/Settings";
 
 export default function AdminRoutes() {
@@ -38,6 +39,7 @@ export default function AdminRoutes() {
         <Route path="customers/:id" element={<CustomerDetail />} />
         <Route path="bookings" element={<Bookings />} />
         <Route path="bookings/:id" element={<BookingDetail />} />
+        <Route path="due-payments" element={<DuePayments />} />
         <Route path="settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/admin" replace />} />

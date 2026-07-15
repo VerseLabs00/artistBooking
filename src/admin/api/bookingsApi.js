@@ -11,3 +11,11 @@ export const getBookingApi = (id) =>
 // PUT /api/admin/bookings/:id/status  (body: { status })
 export const updateBookingStatusApi = (id, status) =>
   api.put(`/admin/bookings/${id}/status`, { status })
+
+// GET /api/admin/due-payments
+export const getDuePaymentsApi = (params = {}) =>
+  api.get('/admin/due-payments', { params })
+
+// POST /api/admin/due-payments/:id/mark-sent
+export const markAdvanceSentApi = (id) =>
+  api.post(`/admin/due-payments/${id}/mark-sent`)

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Trash2, Check, X } from 'lucide-react'
+import { Trash2, Check, X, Landmark, Loader2 } from 'lucide-react'
+import api from '../api/axios'
 import {
   fetchArtists,
   verifyArtist,
@@ -40,6 +41,43 @@ function ConfirmModal({ open, title, message, confirmLabel, confirmClass, onConf
   )
 }
 
+function BankDetailsModal({ open, artist, bankDetails, loading, onClose }) {
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-7 w-full max-w-md mx-4 border border-gray-100">
+        <div className="flex justify-between items-start mb-5">
+          <h3 className="text-lg font-bold text-gray-900">Bank Details</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        </div>
+        
+        {loading ? (
+          <div className="py-8 flex justify-center"><Loader2 className="animate-spin text-gray-400" size={24} /></div>
+        ) : bankDetails ? (
+          <div className="space-y-4">
+            <div><p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Artist Name</p><p className="font-semibold text-gray-900">{artist?.name}</p></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Bank Name</p><p className="font-semibold text-gray-900">{bankDetails.bank_name}</p></div>
+              <div><p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Branch</p><p className="font-semibold text-gray-900">{bankDetails.branch || '-'}</p></div>
+            </div>
+            <div><p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Account Holder</p><p className="font-semibold text-gray-900">{bankDetails.account_holder_name}</p></div>
+            <div><p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Account Number</p><p className="font-semibold text-gray-900">{bankDetails.account_number}</p></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Account Type</p><p className="font-semibold text-gray-900 capitalize">{bankDetails.account_type}</p></div>
+              <div><p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">IFSC/SWIFT</p><p className="font-semibold text-gray-900">{bankDetails.ifsc_code || '-'}</p></div>
+            </div>
+          </div>
+        ) : (
+          <div className="py-8 text-center text-gray-500">
+            <Landmark size={32} className="mx-auto mb-3 text-gray-300" />
+            <p>No bank details provided by this artist yet.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Artists() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -51,6 +89,25 @@ export default function Artists() {
 
   const [modal, setModal] = useState(null)
   const [selectedArtist, setSelectedArtist] = useState(null)
+
+  const [bankModalOpen, setBankModalOpen] = useState(false)
+  const [bankDetails, setBankDetails] = useState(null)
+  const [loadingBank, setLoadingBank] = useState(false)
+
+  const handleViewBank = async (artist) => {
+    setSelectedArtist(artist)
+    setBankModalOpen(true)
+    setLoadingBank(true)
+    try {
+      const { data } = await api.get(`/admin/artists/${artist.id}`)
+      setBankDetails(data.bank_details || null)
+    } catch (err) {
+      toast.error('Failed to load bank details.')
+      setBankDetails(null)
+    } finally {
+      setLoadingBank(false)
+    }
+  }
 
   useEffect(() => {
     dispatch(fetchArtists())
@@ -212,6 +269,14 @@ export default function Artists() {
                           )}
 
                           <button 
+                            onClick={() => handleViewBank(artist)} 
+                            className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
+                            title="View Bank Details"
+                          >
+                            <Landmark size={16} />
+                          </button>
+
+                          <button 
                             onClick={() => { setSelectedArtist(artist); setModal('delete'); }} 
                             className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
                             title="Delete Artist"
@@ -242,6 +307,14 @@ export default function Artists() {
           onCancel={() => { setModal(null); setSelectedArtist(null); }} 
         />
       )}
+
+      <BankDetailsModal 
+        open={bankModalOpen} 
+        artist={selectedArtist} 
+        bankDetails={bankDetails} 
+        loading={loadingBank} 
+        onClose={() => { setBankModalOpen(false); setSelectedArtist(null); setBankDetails(null); }} 
+      />
     </div>
   )
 }

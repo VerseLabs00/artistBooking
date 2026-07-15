@@ -10,6 +10,7 @@ import { getBookingsApi, getBookingApi, updateBookingStatusApi } from '../../api
 // Relations: customer{id,name,email}, artistProfile{id,stage_name,full_name,category,email,avatar_url}
 function normaliseBooking(b) {
   const statusMap = {
+    awaiting_confirmation: 'awaiting',
     pending_payment: 'pending',
     confirmed:       'confirmed',
     rejected:        'suspended',

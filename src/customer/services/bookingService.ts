@@ -61,3 +61,6 @@ export const getBooking = (id: string) =>
 
 export const cancelBooking = (id: string): Promise<void> =>
   api.post(`/bookings/${id}/cancel`).then(() => {})
+
+export const retryBookingPayment = (id: string): Promise<InitiateBookingResponse> =>
+  api.post(`/bookings/${id}/retry-payment`).then(r => r.data)

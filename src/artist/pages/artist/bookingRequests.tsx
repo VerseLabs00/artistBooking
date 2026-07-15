@@ -17,7 +17,10 @@ import {
     TrendingUp,
     Phone,
     Mail,
-    ArrowLeft
+    ArrowLeft,
+    Landmark,
+    DollarSign,
+    Save
 } from 'lucide-react'
 import api from "../../api/axios";
 
@@ -26,6 +29,7 @@ interface DetailedBooking {
     id: string;
     booking_status: string;
     payment_status: string;
+    advance_payment_status: string; // 'pending' | 'sent' — whether admin has sent the advance
     event_date: string;
     event_start_time: string;
     event_type: string;
@@ -33,6 +37,8 @@ interface DetailedBooking {
     agreed_price: number;
     advance_amount: number;
     balance_due: number;
+    platform_fee: number;
+    artist_amount: number;
     customer_name: string;
     created_at: string;
     customer?: any;
@@ -60,7 +66,8 @@ function normalizeBooking(b: any): DetailedBooking {
         venue: b.venue || "To be shared",
         event_start_time: b.event_start_time || "TBD",
         special_notes: b.special_notes || "",
-        payment_status: b.payment_status || "Pending"
+        payment_status: b.payment_status || "Pending",
+        advance_payment_status: b.advance_payment_status || "pending",
     };
 }
 
@@ -72,6 +79,49 @@ export default function BookingRequests() {
     const [selectedBooking, setSelectedBooking] = useState<DetailedBooking | null>(null);
     const [detailsLoading, setDetailsLoading] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'all' | 'cancelled' | 'confirmed' | 'completed'>('all');
+
+    const [earningsModalOpen, setEarningsModalOpen] = useState(false);
+    const [bankDetails, setBankDetails] = useState<any>(null);
+    const [bankLoading, setBankLoading] = useState(false);
+    const [bankFormData, setBankFormData] = useState({
+        account_holder_name: '',
+        bank_name: '',
+        branch: '',
+        account_number: '',
+        account_type: 'savings',
+        ifsc_code: ''
+    });
+
+    const handleViewEarnings = async () => {
+        setEarningsModalOpen(true);
+        fetchBookings(); // refresh so admin-sent advances are reflected live
+        setBankLoading(true);
+        try {
+            const { data } = await api.get('/profile/bank');
+            if (data.bank_details) {
+                setBankDetails(data.bank_details);
+                setBankFormData(data.bank_details);
+            }
+        } catch (err) {
+            console.error("Failed to load bank details", err);
+        } finally {
+            setBankLoading(false);
+        }
+    };
+
+    const handleSaveBankDetails = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setBankLoading(true);
+        try {
+            const { data } = await api.post('/profile/bank', bankFormData);
+            setBankDetails(data.bank_details);
+            alert("Bank details saved successfully!");
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Failed to save bank details.");
+        } finally {
+            setBankLoading(false);
+        }
+    };
 
     useEffect(() => { fetchBookings(); }, []);
 
@@ -129,14 +179,22 @@ export default function BookingRequests() {
     const filteredBookings = bookings.filter(b => {
         if (activeTab === 'all') return true;
         if (activeTab === 'cancelled') return b.booking_status === 'rejected' || b.booking_status === 'cancelled';
+        if (activeTab === 'confirmed') return b.booking_status === 'confirmed' || b.booking_status === 'awaiting_confirmation';
         return b.booking_status === activeTab;
     });
+
+    // Advances the artist is still owed (excludes ones the admin has already sent)
+    const pendingAdvanceBookings = bookings.filter(
+        b => (b.booking_status === 'confirmed' || b.booking_status === 'completed') && Number(b.advance_amount) > 0 && b.advance_payment_status !== 'sent'
+    );
+    const totalExpectedAdvances = pendingAdvanceBookings.reduce((acc, b) => acc + Number(b.advance_amount || 0), 0);
 
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
             case 'confirmed': return 'bg-green-100 text-green-700 border-green-200';
             case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
             case 'pending_payment': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+            case 'awaiting_confirmation': return 'bg-blue-100 text-blue-700 border-blue-200';
             case 'rejected': return 'bg-red-100 text-red-700 border-red-200';
             case 'cancelled': return 'bg-red-100 text-red-700 border-red-200';
             case 'completed': return 'bg-blue-100 text-blue-700 border-blue-200';
@@ -157,6 +215,150 @@ export default function BookingRequests() {
                 .animate-fade-in { animation: fadeIn 0.3s ease-out; }
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
             `}</style>
+
+            {/* Earnings Modal */}
+            {earningsModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white w-full max-w-4xl rounded-[40px] overflow-hidden shadow-2xl relative max-h-[90vh] flex flex-col">
+                        <button
+                            onClick={() => setEarningsModalOpen(false)}
+                            className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
+                        >
+                            <X size={24} className="text-gray-400" />
+                        </button>
+                        
+                        <div className="p-8 border-b border-gray-100">
+                            <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+                                <Landmark className="text-green-500" /> Earnings & Payouts
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-1">Manage your bank details and track your advances.</p>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-8 bg-gray-50/50">
+                            {bankLoading && !bankDetails ? (
+                                <div className="flex justify-center py-12"><Loader2 className="animate-spin text-gray-400" size={32} /></div>
+                            ) : !bankDetails ? (
+                                <div className="max-w-xl mx-auto bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                                    <div className="text-center mb-6">
+                                        <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 mx-auto mb-4">
+                                            <Landmark size={32} />
+                                        </div>
+                                        <h3 className="text-lg font-bold text-gray-900">Add Bank Details</h3>
+                                        <p className="text-sm text-gray-500 mt-1">Please provide your bank details to receive advance payments and view your earnings.</p>
+                                    </div>
+                                    <form onSubmit={handleSaveBankDetails} className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Account Holder Name</label>
+                                            <input required type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50" 
+                                                value={bankFormData.account_holder_name} onChange={e => setBankFormData({...bankFormData, account_holder_name: e.target.value})} />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Bank Name</label>
+                                                <input required type="text" list="sri-lanka-banks" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50" 
+                                                    value={bankFormData.bank_name} onChange={e => setBankFormData({...bankFormData, bank_name: e.target.value})} placeholder="Select or type your bank" />
+                                                <datalist id="sri-lanka-banks">
+                                                    <option value="Commercial Bank of Ceylon" />
+                                                    <option value="Bank of Ceylon (BOC)" />
+                                                    <option value="Sampath Bank" />
+                                                    <option value="Hatton National Bank (HNB)" />
+                                                    <option value="People's Bank" />
+                                                    <option value="Seylan Bank" />
+                                                    <option value="National Development Bank (NDB)" />
+                                                    <option value="Nations Trust Bank (NTB)" />
+                                                    <option value="DFCC Bank" />
+                                                    <option value="Pan Asia Bank" />
+                                                    <option value="Union Bank" />
+                                                    <option value="Amana Bank" />
+                                                    <option value="Cargills Bank" />
+                                                    <option value="Sanasa Development Bank (SDB)" />
+                                                </datalist>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Branch Name</label>
+                                                <input required type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50" 
+                                                    value={bankFormData.branch} onChange={e => setBankFormData({...bankFormData, branch: e.target.value})} placeholder="e.g. Colombo 03" />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Account Number</label>
+                                                <input required type="text" pattern="\d+" title="Please enter only numeric digits for your account number" 
+                                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50" 
+                                                    value={bankFormData.account_number} 
+                                                    onChange={e => setBankFormData({...bankFormData, account_number: e.target.value.replace(/\D/g, '')})} 
+                                                    minLength={6} maxLength={20} placeholder="e.g. 1002345678" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Account Type</label>
+                                                <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50" 
+                                                    value={bankFormData.account_type} onChange={e => setBankFormData({...bankFormData, account_type: e.target.value})}>
+                                                    <option value="savings">Savings Account</option>
+                                                    <option value="current">Current Account</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button type="submit" disabled={bankLoading} className="w-full btn-pink py-4 rounded-xl font-bold flex items-center justify-center gap-2 mt-2">
+                                            {bankLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                            Save Details
+                                        </button>
+                                    </form>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Total Expected Advances</p>
+                                            <h3 className="text-3xl font-black text-green-600 flex items-center gap-1">
+                                                Rs. {totalExpectedAdvances.toLocaleString()}
+                                            </h3>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-xs text-gray-400 font-bold uppercase">Payout Account</p>
+                                            <p className="font-semibold text-gray-900 text-sm">{bankDetails.bank_name}</p>
+                                            <p className="text-xs text-gray-500">{bankDetails.account_number_masked || bankDetails.account_number}</p>
+                                            <button onClick={() => setBankDetails(null)} className="text-[10px] font-bold text-pink mt-1 hover:underline uppercase">Edit Account</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <h3 className="font-bold text-gray-900 text-lg">Advance Payments</h3>
+                                    <div className="space-y-3">
+                                        {pendingAdvanceBookings.map(booking => (
+                                            <div key={booking.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                                                        <DollarSign size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-900">{booking.customer_name}</p>
+                                                        <p className="text-xs text-gray-500">{booking.event_date} &bull; {booking.event_type}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-black text-gray-900">Rs. {Number(booking.advance_amount || 0).toLocaleString()}</p>
+                                                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                                                        booking.advance_payment_status === 'sent'
+                                                            ? 'bg-green-50 text-green-700 border-green-200'
+                                                            : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                                    }`}>
+                                                        {booking.advance_payment_status === 'sent' ? '✓ Payment Done' : 'Payment Pending'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {pendingAdvanceBookings.length === 0 && (
+                                            <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 text-gray-500">
+                                                <DollarSign size={24} className="mx-auto mb-2 text-gray-300" />
+                                                <p className="text-sm">No advance payments recorded yet.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Booking Details Modal */}
             {selectedBooking && (
@@ -262,7 +464,7 @@ export default function BookingRequests() {
                                 )}
 
                                 <div className="flex gap-3">
-                                    {(selectedBooking.booking_status === "pending" || selectedBooking.booking_status === "pending_payment") && (
+                                    {(selectedBooking.booking_status === "pending" || selectedBooking.booking_status === "pending_payment" || selectedBooking.booking_status === "awaiting_confirmation") && (
                                         <>
                                             <button
                                                 onClick={() => updateStatus(selectedBooking.id, "confirmed")}
@@ -373,9 +575,18 @@ export default function BookingRequests() {
                     {/* MAIN CONTENT */}
                     <main className="flex-1 min-w-0">
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <header>
-                                <h1 className="text-xl font-black text-gray-900">Booking Requests</h1>
-                                <p className="text-gray-500 mt-2">View and manage your incoming booking requests.</p>
+                            <header className="flex justify-between items-start">
+                                <div>
+                                    <h1 className="text-xl font-black text-gray-900">Booking Requests</h1>
+                                    <p className="text-gray-500 mt-2">View and manage your incoming booking requests.</p>
+                                </div>
+                                <button 
+                                    onClick={() => handleViewEarnings()}
+                                    className="px-5 py-2.5 bg-green-50 text-green-700 rounded-xl text-sm font-bold border border-green-200 hover:bg-green-100 transition-colors flex items-center gap-2"
+                                >
+                                    <Landmark size={18} />
+                                    Earnings
+                                </button>
                             </header>
 
                             {loading ? (
@@ -462,8 +673,17 @@ export default function BookingRequests() {
                                                                 </div>
                                                             </div>
                                                             <div className="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
-                                                                <p className="text-gray-400 text-[9px] font-bold uppercase tracking-wider mb-0.5">Price</p>
-                                                                <p className="text-lg font-black text-gray-900">Rs. {booking.agreed_price.toLocaleString()}</p>
+                                                                <p className="text-gray-400 text-[9px] font-bold uppercase tracking-wider mb-0.5">Advance</p>
+                                                                <p className="text-lg font-black text-gray-900">Rs. {booking.advance_amount.toLocaleString()}</p>
+                                                                {(booking.booking_status === 'confirmed' || booking.booking_status === 'completed') && booking.advance_amount > 0 && (
+                                                                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
+                                                                        booking.advance_payment_status === 'sent'
+                                                                            ? 'bg-green-50 text-green-700 border-green-200'
+                                                                            : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                                                    }`}>
+                                                                        {booking.advance_payment_status === 'sent' ? '✓ Advance Paid' : 'Advance Pending'}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
 
@@ -506,7 +726,7 @@ export default function BookingRequests() {
                                                             {detailsLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
                                                             View Request
                                                         </button>
-                                                        {(booking.booking_status === "pending" || booking.booking_status === "pending_payment") && (
+                                                        {(booking.booking_status === "pending" || booking.booking_status === "pending_payment" || booking.booking_status === "awaiting_confirmation") && (
                                                             <>
                                                                 <button
                                                                     onClick={() => updateStatus(booking.id, "confirmed")}

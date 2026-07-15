@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { initiateBooking } from '../../services/bookingService'
 import { getArtistCalendar, type CalendarEntry } from '../../services/discoveryService'
 
@@ -325,7 +326,7 @@ function Step3({
         </div>
 
         <p className="text-xs text-gray-400 text-center px-2">
-          You will be redirected to PayHere to complete the payment securely.
+          Your booking request will be sent to the artist. Once they accept, you'll be able to complete the advance payment.
         </p>
 
         {error && <p className="text-sm text-red-500 text-center">{error}</p>}
@@ -343,7 +344,7 @@ function Step3({
           disabled={loading}
           className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors flex items-center gap-2"
         >
-          {loading ? 'Processing...' : 'Pay with PayHere'}
+          {loading ? 'Sending...' : 'Send Booking Request'}
         </button>
       </div>
     </div>
@@ -369,11 +370,64 @@ function submitToPayHere(payhere: Record<string, string>) {
 const stepInfo = [
    { title: 'Set Date & Time', desc: 'Choose your preferred event date and start time.' },
    { title: 'Event Details', desc: 'Tell us where the event is and what type it is.' },
-   { title: 'Confirm & Pay', desc: 'Review your booking and pay the advance plus platform fee via PayHere.' },
+   { title: 'Confirm & Send', desc: 'Review your booking details and send the request to the artist.' },
  ]
 
+function BookingSentStep({
+  artistName,
+  totalPayment,
+  onViewBookings,
+  onClose,
+}: {
+  artistName: string
+  totalPayment: number
+  onViewBookings: () => void
+  onClose: () => void
+}) {
+  return (
+    <div className="flex flex-col h-full items-center justify-center text-center py-4">
+      {/* Checkmark */}
+      <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mb-6">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+      </div>
+
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Booking Request Sent!</h2>
+      <p className="text-sm text-gray-500 mb-6 max-w-xs leading-relaxed">
+        Your request has been sent to <strong>{artistName}</strong>. Once they accept, you'll need to complete the advance payment.
+      </p>
+
+      {/* Payment info box */}
+      <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 text-left">
+        <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Payment due after acceptance</p>
+        <p className="text-2xl font-black text-amber-800">LKR {totalPayment.toLocaleString()}</p>
+        <p className="text-xs text-amber-600 mt-1">Advance + platform fee · Only charged after artist accepts</p>
+      </div>
+
+      <div className="flex flex-col gap-3 w-full">
+        <button
+          onClick={onViewBookings}
+          className="w-full bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-6 py-3 rounded-full transition-colors"
+        >
+          View My Bookings
+        </button>
+        <button
+          onClick={onClose}
+          className="w-full text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors"
+        >
+          Continue Browsing
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function BookingModal({ onClose, artistProfileId, artistName, fullPrice, advance }: BookingModalProps) {
+  const navigate = useNavigate()
   const [step, setStep] = useState(1)
+  const [sent, setSent] = useState(false)
+  const [sentTotalPayment, setSentTotalPayment] = useState(0)
 
   const [selectedDateKey, setSelectedDateKey] = useState('')
   const [hour, setHour] = useState('10:00')
@@ -387,7 +441,9 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const info = stepInfo[step - 1]
+  const info = sent
+    ? { title: 'Request Sent!', desc: 'Your booking request is awaiting artist confirmation.' }
+    : stepInfo[step - 1]
 
   const handleConfirm = async () => {
     setError('')
@@ -409,7 +465,9 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
         special_notes: specialNotes || undefined,
       })
 
-      submitToPayHere(data.payhere as unknown as Record<string, string>)
+      // No PayHere redirect — just show success panel
+      setSentTotalPayment(Number(data.booking.total_payment))
+      setSent(true)
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
       const errors = axiosErr.response?.data?.errors
@@ -417,6 +475,7 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
         ? Object.values(errors).flat()[0]
         : axiosErr.response?.data?.message ?? 'Something went wrong. Please try again.'
       setError(String(msg))
+    } finally {
       setLoading(false)
     }
   }
@@ -454,7 +513,17 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
           >
             Cancel
           </button>
-          {step === 1 && (
+          {sent ? (
+            <BookingSentStep
+              artistName={artistName}
+              totalPayment={sentTotalPayment}
+              onViewBookings={() => {
+                onClose()
+                navigate('/customerAccount', { state: { tab: 'bookings' } })
+              }}
+              onClose={onClose}
+            />
+          ) : step === 1 ? (
             <Step1
               artistProfileId={artistProfileId}
               selectedDateKey={selectedDateKey}
@@ -465,8 +534,7 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
               setPeriod={setPeriod}
               onContinue={() => setStep(2)}
             />
-          )}
-          {step === 2 && (
+          ) : step === 2 ? (
             <Step2
               venue={venue}
               setVenue={setVenue}
@@ -479,8 +547,7 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
               onPrev={() => setStep(1)}
               onContinue={() => setStep(3)}
             />
-          )}
-          {step === 3 && (
+          ) : (
             <Step3
               artistName={artistName}
               fullPrice={fullPrice}
