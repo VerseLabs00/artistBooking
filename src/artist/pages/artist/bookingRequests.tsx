@@ -366,15 +366,22 @@ export default function BookingRequests() {
             {/* Booking Details Modal */}
             {selectedBooking && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white w-full max-w-4xl rounded-[40px] overflow-hidden shadow-2xl relative">
+                    <div className="bg-white w-full max-w-4xl rounded-[40px] overflow-hidden shadow-2xl relative flex flex-col md:flex-row max-h-[90vh]">
                         <button
                             onClick={() => setSelectedBooking(null)}
-                            className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
+                            className="absolute top-4 right-4 md:top-6 md:right-6 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
                         >
                             <X size={24} className="text-gray-400" />
                         </button>
 
-                        <div className="p-6 md:p-8 overflow-y-auto max-h-[90vh]">
+                        <div className="w-full md:w-1/3 bg-gray-100 shrink-0">
+                            <img
+                                src={selectedBooking.customer_avatar}
+                                className="w-full h-64 md:h-full object-cover"
+                                alt=""
+                            />
+                        </div>
+                        <div className="flex-1 p-6 md:p-8 overflow-y-auto max-h-[90vh]">
                             <div className="mb-6">
                                 <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(selectedBooking.booking_status)}`}>
                                     {selectedBooking.booking_status}

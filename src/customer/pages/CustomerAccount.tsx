@@ -249,7 +249,7 @@ export default function CustomerAccount() {
       {/* Booking Details Modal */}
       {selectedBooking && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white w-full max-w-2xl rounded-[40px] overflow-hidden shadow-2xl relative">
+          <div className="bg-white w-full max-w-4xl rounded-[40px] overflow-hidden shadow-2xl relative">
             <button 
               onClick={() => setSelectedBooking(null)}
               className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
@@ -298,13 +298,48 @@ export default function CustomerAccount() {
                   </div>
                 </div>
 
+                {selectedBooking.special_notes && (
+                  <div className="mb-8">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Special Notes</p>
+                    <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl italic">
+                      "{selectedBooking.special_notes}"
+                    </p>
+                  </div>
+                )}
+
                 <div className="bg-gray-50 rounded-2xl p-6 mb-8 space-y-4">
-                  <div className={`rounded-xl p-4 border flex items-center gap-3 mb-2 ${selectedBooking.booking_status === 'confirmed' && selectedBooking.payment_status === 'paid' ? 'bg-green-50 border-green-200' : 'bg-pink/5 border-pink/10'}`}>
+                  <div className={`rounded-xl p-4 border flex items-center gap-3 mb-2 ${
+                    selectedBooking.booking_status === 'confirmed' && selectedBooking.payment_status === 'paid'
+                      ? 'bg-green-50 border-green-200'
+                      : selectedBooking.booking_status === 'confirmed'
+                        ? 'bg-blue-50 border-blue-200'
+                        : selectedBooking.booking_status === 'awaiting_confirmation'
+                          ? 'bg-amber-50 border-amber-300'
+                          : selectedBooking.booking_status === 'rejected' || selectedBooking.booking_status === 'cancelled'
+                            ? 'bg-red-50 border-red-200'
+                            : 'bg-pink/5 border-pink/10'
+                  }`}>
                     {selectedBooking.booking_status === 'confirmed' && selectedBooking.payment_status === 'paid'
                       ? <CheckCircle size={18} className="text-green-600 flex-shrink-0" />
-                      : <AlertCircle size={18} className="text-pink flex-shrink-0" />
+                      : selectedBooking.booking_status === 'confirmed'
+                        ? <CreditCard size={18} className="text-blue-600 flex-shrink-0" />
+                        : selectedBooking.booking_status === 'awaiting_confirmation'
+                          ? <AlertCircle size={18} className="text-amber-500 flex-shrink-0" />
+                          : selectedBooking.booking_status === 'rejected' || selectedBooking.booking_status === 'cancelled'
+                            ? <XCircle size={18} className="text-red-500 flex-shrink-0" />
+                            : <AlertCircle size={18} className="text-pink flex-shrink-0" />
                     }
-                    <p className={`text-xs font-bold ${selectedBooking.booking_status === 'confirmed' && selectedBooking.payment_status === 'paid' ? 'text-green-700' : 'text-gray-700'}`}>
+                    <p className={`text-xs font-bold ${
+                      selectedBooking.booking_status === 'confirmed' && selectedBooking.payment_status === 'paid'
+                        ? 'text-green-700'
+                        : selectedBooking.booking_status === 'confirmed'
+                          ? 'text-blue-700'
+                          : selectedBooking.booking_status === 'awaiting_confirmation'
+                            ? 'text-amber-700'
+                            : selectedBooking.booking_status === 'rejected' || selectedBooking.booking_status === 'cancelled'
+                              ? 'text-red-700'
+                              : 'text-gray-700'
+                    }`}>
                       {getStatusMessage(selectedBooking.booking_status, selectedBooking.payment_status, (selectedBooking.agreed_price || 0) - (selectedBooking.advance_amount || 0))}
                     </p>
                   </div>
@@ -330,15 +365,6 @@ export default function CustomerAccount() {
                     <span className="text-lg font-black text-pink">Rs. {(selectedBooking.total_payment || selectedBooking.agreed_price).toLocaleString()}</span>
                   </div>
                 </div>
-
-                {selectedBooking.special_notes && (
-                  <div className="mb-8">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Special Notes</p>
-                    <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl italic">
-                      "{selectedBooking.special_notes}"
-                    </p>
-                  </div>
-                )}
 
                 <div className="flex gap-3">
                   {(selectedBooking.booking_status === 'confirmed' && selectedBooking.payment_status !== 'paid') && (
