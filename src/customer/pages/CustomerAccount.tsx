@@ -18,7 +18,8 @@ import {
   X,
   CreditCard,
   FileText,
-  Camera
+  Camera,
+  MessageCircle
 } from 'lucide-react'
 import { getBookings, getBooking, cancelBooking, retryBookingPayment } from '../services/bookingService'
 import { toggleFavorite, getFavorites } from '../services/favoriteService'
@@ -86,6 +87,15 @@ export default function CustomerAccount() {
   )
   const [uploading, setUploading] = useState(false)
   const [favoritesModalOpen, setFavoritesModalOpen] = useState(false)
+  const [notificationsModalOpen, setNotificationsModalOpen] = useState(false)
+  const [readNotifications, setReadNotifications] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('readNotifications')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
   const [customerFavorites, setCustomerFavorites] = useState<Array<{ id: string; name: string; category: string; location: string; avatar_url: string }>>([])
   const [favoritesCount, setFavoritesCount] = useState(0)
   
@@ -167,6 +177,18 @@ export default function CustomerAccount() {
     }
   }
 
+  const handleNotificationClick = (bookingId: string, status: string) => {
+    setNotificationsModalOpen(false)
+    handleShowDetails(bookingId)
+    
+    const notifKey = `${bookingId}-${status}`
+    if (!readNotifications.includes(notifKey)) {
+      const updated = [...readNotifications, notifKey]
+      setReadNotifications(updated)
+      localStorage.setItem('readNotifications', JSON.stringify(updated))
+    }
+  }
+
   const handleCancelBooking = async (id: string) => {
     if (!window.confirm("Are you sure you want to cancel this booking? This action cannot be undone.")) return
     
@@ -231,6 +253,10 @@ export default function CustomerAccount() {
       default: return 'Your request is being processed.'
     }
   }
+
+  const activeNotificationsCount = bookings.filter(b => 
+    !readNotifications.includes(`${b.id}-${b.booking_status}`)
+  ).length;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{ fontFamily: "'Fraunces', serif" }}>
@@ -408,9 +434,16 @@ export default function CustomerAccount() {
           <img src="/assets/logo/logo-navbar-light@3x.png" alt="Perfoma" className="h-8 sm:h-10 w-auto object-contain" />
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
-          <button onClick={() => navigate('/home')} className="text-gray-600 hover:text-black transition-colors text-xs sm:text-sm font-semibold whitespace-nowrap">
-            <span className="hidden sm:inline">Back to Discovery</span>
-            <span className="sm:hidden">Back</span>
+          <button
+            onClick={() => setNotificationsModalOpen(true)}
+            className="relative text-gray-600 hover:text-pink transition-colors"
+          >
+            <MessageCircle size={20} />
+            {activeNotificationsCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-pink text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {activeNotificationsCount}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setFavoritesModalOpen(true)}
@@ -772,6 +805,59 @@ export default function CustomerAccount() {
       </div>
 
       {/*<Footer />*/}
+
+      {/* Notifications Modal */}
+      {notificationsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setNotificationsModalOpen(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900">Notifications</h3>
+              <button onClick={() => setNotificationsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto max-h-[60vh]">
+              {bookings.length === 0 ? (
+                <div className="text-center py-10">
+                  <MessageCircle size={40} className="text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">No notifications yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {bookings.map(booking => {
+                    const isRead = readNotifications.includes(`${booking.id}-${booking.booking_status}`)
+                    return (
+                      <div 
+                        key={`${booking.id}-${booking.booking_status}`} 
+                        className={`flex items-start gap-4 p-4 rounded-2xl border transition-colors cursor-pointer ${
+                          isRead ? 'bg-white border-gray-100 hover:bg-gray-50 opacity-70' : 'bg-pink/5 border-pink/20 hover:bg-pink/10'
+                        }`} 
+                        onClick={() => handleNotificationClick(booking.id, booking.booking_status)}
+                      >
+                        <img
+                          src={booking.artist_image || '/assets/default-avatar.png'}
+                          className="w-10 h-10 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                          alt={booking.artist_name}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-bold text-gray-900 truncate ${!isRead ? 'text-gray-900' : 'text-gray-600'}`}>Booking with {booking.artist_name}</p>
+                          <p className={`text-xs mt-1 leading-relaxed ${!isRead && booking.booking_status === 'confirmed' && booking.payment_status === 'paid' ? 'text-green-600 font-semibold' : !isRead ? 'text-pink font-semibold' : 'text-gray-500'}`}>
+                            {getStatusMessage(booking.booking_status, booking.payment_status, (booking.agreed_price || 0) - (booking.advance_amount || 0))}
+                          </p>
+                          <p className="text-[10px] text-gray-400 mt-2 font-semibold uppercase">{booking.event_date}</p>
+                        </div>
+                        {!isRead && (
+                          <div className="w-2 h-2 rounded-full bg-pink mt-2 flex-shrink-0" />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Favorites Modal */}
       {favoritesModalOpen && (
