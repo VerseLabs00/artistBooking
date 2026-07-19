@@ -56,6 +56,10 @@ function Step1({
   setHour,
   period,
   setPeriod,
+  endHour,
+  setEndHour,
+  endPeriod,
+  setEndPeriod,
   onContinue,
 }: {
   artistProfileId: string
@@ -65,6 +69,10 @@ function Step1({
   setHour: (h: string) => void
   period: string
   setPeriod: (p: string) => void
+  endHour: string
+  setEndHour: (h: string) => void
+  endPeriod: string
+  setEndPeriod: (p: string) => void
   onContinue: () => void
 }) {
   const [viewDate, setViewDate] = useState(() => new Date())
@@ -178,6 +186,19 @@ function Step1({
               </select>
             </div>
           </div>
+          <p className="font-semibold text-gray-800 mt-5 mb-4">End time</p>
+          <div className="flex flex-col gap-3">
+            <div className="border border-gray-200 rounded-xl px-3 py-2.5 bg-white">
+              <select value={endHour} onChange={e => setEndHour(e.target.value)} className="w-full text-sm text-gray-700 outline-none bg-transparent cursor-pointer">
+                {['06','07','08','09','10','11','12','01','02','03','04','05'].map(h => <option key={h}>{h}:00</option>)}
+              </select>
+            </div>
+            <div className="border border-gray-200 rounded-xl px-3 py-2.5 bg-white">
+              <select value={endPeriod} onChange={e => setEndPeriod(e.target.value)} className="w-full text-sm text-gray-700 outline-none bg-transparent cursor-pointer">
+                <option>AM</option><option>PM</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -278,15 +299,15 @@ function Step2({
 }
 
 function Step3({
-   artistName, fullPrice, advance, selectedDateKey, hour, period, venue, eventType, customerPhone,
+   artistName, fullPrice, advance, selectedDateKey, hour, period, endHour, endPeriod, venue, eventType, customerPhone,
    onPrev, onConfirm, loading, error,
  }: {
    artistName: string; fullPrice: number; advance: number
-   selectedDateKey: string; hour: string; period: string
+   selectedDateKey: string; hour: string; period: string; endHour: string; endPeriod: string
    venue: string; eventType: string; customerPhone: string
    onPrev: () => void; onConfirm: () => void
    loading: boolean; error: string
- }) {
+  }) {
   const [commissionRate, setCommissionRate] = useState(15)
   const safeFullPrice = Number(fullPrice) || 0
   const safeAdvance = Number(advance) || 0
@@ -312,6 +333,7 @@ function Step3({
           <div className="flex justify-between"><span className="text-gray-500">Artist</span><span className="font-medium text-gray-900">{artistName}</span></div>
           <div className="flex justify-between"><span className="text-gray-500">Date</span><span className="font-medium text-gray-900">{MONTH_NAMES[m - 1]} {d}, {y}</span></div>
           <div className="flex justify-between"><span className="text-gray-500">Time</span><span className="font-medium text-gray-900">{hour} {period}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500">End Time</span><span className="font-medium text-gray-900">{endHour} {endPeriod}</span></div>
           <div className="flex justify-between"><span className="text-gray-500">Venue</span><span className="font-medium text-gray-900 text-right max-w-[200px]">{venue}</span></div>
           <div className="flex justify-between"><span className="text-gray-500">Event Type</span><span className="font-medium text-gray-900">{eventType}</span></div>
           <div className="flex justify-between"><span className="text-gray-500">Phone</span><span className="font-medium text-gray-900">{customerPhone}</span></div>
@@ -432,6 +454,8 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
   const [selectedDateKey, setSelectedDateKey] = useState('')
   const [hour, setHour] = useState('10:00')
   const [period, setPeriod] = useState('AM')
+  const [endHour, setEndHour] = useState('12:00')
+  const [endPeriod, setEndPeriod] = useState('PM')
 
   const [venue, setVenue] = useState('')
   const [eventType, setEventType] = useState('')
@@ -455,10 +479,17 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
       if (period === 'AM' && hNum === 12) hNum = 0
       const timeStr = `${String(hNum).padStart(2, '0')}:00`
 
+      let [eh] = endHour.split(':')
+      let ehNum = parseInt(eh)
+      if (endPeriod === 'PM' && ehNum !== 12) ehNum += 12
+      if (endPeriod === 'AM' && ehNum === 12) ehNum = 0
+      const endStr = `${String(ehNum).padStart(2, '0')}:00`
+
       const data = await initiateBooking({
         artist_profile_id: artistProfileId,
         event_date: selectedDateKey,
         event_start_time: timeStr,
+        event_end_time: endStr,
         event_type: eventType,
         venue,
         customer_phone: customerPhone.trim(),
@@ -532,6 +563,10 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
               setHour={setHour}
               period={period}
               setPeriod={setPeriod}
+              endHour={endHour}
+              setEndHour={setEndHour}
+              endPeriod={endPeriod}
+              setEndPeriod={setEndPeriod}
               onContinue={() => setStep(2)}
             />
           ) : step === 2 ? (
@@ -555,6 +590,8 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
               selectedDateKey={selectedDateKey}
               hour={hour}
               period={period}
+              endHour={endHour}
+              endPeriod={endPeriod}
               venue={venue}
               eventType={eventType}
               customerPhone={customerPhone}

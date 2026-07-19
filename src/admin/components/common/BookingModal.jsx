@@ -27,6 +27,9 @@ export default function BookingModal({ booking, onClose }) {
             <div className="flex justify-between"><span className="text-gray-500">Artist</span><span className="font-medium text-gray-900">{booking.artist?.name}</span></div>
             <div className="flex justify-between"><span className="text-gray-500">Date</span><span className="font-medium text-gray-900">{booking.date}</span></div>
             <div className="flex justify-between"><span className="text-gray-500">Time</span><span className="font-medium text-gray-900">{booking.time}</span></div>
+            {booking.endTime && (
+              <div className="flex justify-between"><span className="text-gray-500">End Time</span><span className="font-medium text-gray-900">{booking.endTime}</span></div>
+            )}
             <div className="flex justify-between"><span className="text-gray-500">Venue</span><span className="font-medium text-gray-900 text-right max-w-[200px]">{booking.venue}</span></div>
             <div className="flex justify-between"><span className="text-gray-500">Event Type</span><span className="font-medium text-gray-900">{booking.eventType}</span></div>
             <div className="flex justify-between"><span className="text-gray-500">Phone</span><span className="font-medium text-gray-900">{booking.customer?.phone}</span></div>

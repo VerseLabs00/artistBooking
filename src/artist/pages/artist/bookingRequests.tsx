@@ -32,6 +32,7 @@ interface DetailedBooking {
     advance_payment_status: string; // 'pending' | 'sent' — whether admin has sent the advance
     event_date: string;
     event_start_time: string;
+    event_end_time?: string | null;
     event_type: string;
     venue: string;
     agreed_price: number;
@@ -60,12 +61,14 @@ function normalizeBooking(b: any): DetailedBooking {
         customer_name: b.customer_name || customer.name || customer.full_name || "Customer",
         customer_avatar: b.customer_avatar || customer.avatar_url || customer.avatar || `https://i.pravatar.cc/150?u=c${customer.id || b.customer_id || b.id}`,
         customer_email: b.customer_email || customer.email || "N/A",
-        customer_phone: b.customer_phone || customer.phone || b.customer_phone || "N/A",
         event_date: b.event_date || "N/A",
         event_type: b.event_type || "N/A",
-        venue: b.venue || "To be shared",
+        venue: b.venue || "N/A",
+        event_duration_hours: b.event_duration_hours ?? undefined,
         event_start_time: b.event_start_time || "TBD",
+        event_end_time: b.event_end_time ?? null,
         special_notes: b.special_notes || "",
+        customer_phone: b.customer_phone || customer.phone || "N/A",
         payment_status: b.payment_status || "Pending",
         advance_payment_status: b.advance_payment_status || "pending",
     };
@@ -363,7 +366,7 @@ export default function BookingRequests() {
             {/* Booking Details Modal */}
             {selectedBooking && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white w-full max-w-2xl rounded-[40px] overflow-hidden shadow-2xl relative">
+                    <div className="bg-white w-full max-w-4xl rounded-[40px] overflow-hidden shadow-2xl relative">
                         <button
                             onClick={() => setSelectedBooking(null)}
                             className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
@@ -371,24 +374,30 @@ export default function BookingRequests() {
                             <X size={24} className="text-gray-400" />
                         </button>
 
-                        <div className="flex flex-col md:flex-row max-h-[90vh]">
-                            <div className="w-full md:w-1/3 bg-gray-100 sticky top-0 self-start h-64 md:h-[90vh] z-10">
-                                <img
-                                    src={selectedBooking.customer_avatar}
-                                    className="w-full h-full object-cover"
-                                    alt=""
-                                />
+                        <div className="p-6 md:p-8 overflow-y-auto max-h-[90vh]">
+                            <div className="mb-6">
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(selectedBooking.booking_status)}`}>
+                                    {selectedBooking.booking_status}
+                                </span>
+                                <h2 className="text-3xl font-black text-gray-900 mt-3">{selectedBooking.customer_name}</h2>
                             </div>
-                            <div className="w-full md:w-2/3 p-8 overflow-y-auto max-h-[90vh]">
-                                <div className="mb-6">
-                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(selectedBooking.booking_status)}`}>
-                                        {selectedBooking.booking_status}
-                                    </span>
-                                    <h2 className="text-3xl font-black text-gray-900 mt-3">{selectedBooking.customer_name}</h2>
-                                    <p className="text-pink font-bold text-sm">{selectedBooking.event_type}</p>
-                                </div>
 
-                                <div className="grid grid-cols-2 gap-6 mb-8">
+                            <div className="flex flex-col md:flex-row gap-8 mb-8">
+                                <div className="flex-1 flex flex-col gap-5">
+                                    <div>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Event Type</p>
+                                        <div className="flex items-center gap-2 text-gray-900 font-bold">
+                                            <FileText size={16} className="text-pink" />
+                                            <span>{selectedBooking.event_type}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Venue</p>
+                                        <div className="flex items-center gap-2 text-gray-900 font-bold">
+                                            <MapPin size={16} className="text-pink" />
+                                            <span>{selectedBooking.venue}</span>
+                                        </div>
+                                    </div>
                                     <div>
                                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Event Date</p>
                                         <div className="flex items-center gap-2 text-gray-900 font-bold">
@@ -396,6 +405,8 @@ export default function BookingRequests() {
                                             <span>{selectedBooking.event_date}</span>
                                         </div>
                                     </div>
+                                </div>
+                                <div className="flex-1 flex flex-col gap-5">
                                     <div>
                                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Start Time</p>
                                         <div className="flex items-center gap-2 text-gray-900 font-bold">
@@ -403,101 +414,112 @@ export default function BookingRequests() {
                                             <span>{selectedBooking.event_start_time}</span>
                                         </div>
                                     </div>
-                                    <div className="col-span-2">
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Venue</p>
-                                        <div className="flex items-center gap-2 text-gray-900 font-bold">
-                                            <MapPin size={16} className="text-pink" />
-                                            <span>{selectedBooking.venue}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-gray-50 rounded-2xl p-6 mb-8 space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2 text-gray-500">
-                                            <CreditCard size={16} />
-                                            <span className="text-xs font-bold uppercase tracking-wider">Total Price</span>
-                                        </div>
-                                        <span className="text-lg font-black text-gray-900">Rs. {selectedBooking.agreed_price.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2 text-gray-500">
-                                            <FileText size={16} />
-                                            <span className="text-xs font-bold uppercase tracking-wider">Advance</span>
-                                        </div>
-                                        <span className="text-sm font-bold text-gray-900">Rs. {selectedBooking.advance_amount.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2 text-gray-500">
-                                            <AlertCircle size={16} />
-                                            <span className="text-xs font-bold uppercase tracking-wider">Balance Due</span>
-                                        </div>
-                                        <span className="text-sm font-bold text-gray-900">Rs. {selectedBooking.balance_due.toLocaleString()}</span>
-                                    </div>
-                                </div>
-
-                                <div className="mb-8 p-6 bg-pink/5 rounded-2xl border border-pink/10">
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Customer Contact</p>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink shadow-sm">
-                                                <Mail size={14} />
+                                    {selectedBooking.event_end_time && (
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">End Time</p>
+                                            <div className="flex items-center gap-2 text-gray-900 font-bold">
+                                                <Clock size={16} className="text-pink" />
+                                                <span>{selectedBooking.event_end_time}</span>
                                             </div>
-                                            <p className="text-sm font-bold text-gray-700">{selectedBooking.customer_email}</p>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink shadow-sm">
-                                                <Phone size={14} />
-                                            </div>
-                                            <p className="text-sm font-bold text-gray-700">{selectedBooking.customer_phone}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {selectedBooking.special_notes && (
-                                    <div className="mb-8">
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Special Notes</p>
-                                        <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl italic">
-                                            "{selectedBooking.special_notes}"
-                                        </p>
-                                    </div>
-                                )}
-
-                                <div className="flex gap-3">
-                                    {(selectedBooking.booking_status === "pending" || selectedBooking.booking_status === "pending_payment" || selectedBooking.booking_status === "awaiting_confirmation") && (
-                                        <>
-                                            <button
-                                                onClick={() => updateStatus(selectedBooking.id, "confirmed")}
-                                                disabled={actionLoading === selectedBooking.id}
-                                                className="flex-1 btn-pink py-4 rounded-2xl font-bold text-sm disabled:opacity-50"
-                                            >
-                                                {actionLoading === selectedBooking.id ? 'Accepting...' : 'Accept Request'}
-                                            </button>
-                                            <button
-                                                onClick={() => updateStatus(selectedBooking.id, "rejected")}
-                                                disabled={actionLoading === selectedBooking.id}
-                                                className="flex-1 px-6 py-4 border border-red-200 text-red-500 rounded-2xl font-bold text-sm hover:bg-red-50 transition-colors disabled:opacity-50"
-                                            >
-                                                {actionLoading === selectedBooking.id ? 'Declining...' : 'Decline Request'}
-                                            </button>
-                                        </>
                                     )}
-                                    {selectedBooking.booking_status === "confirmed" && (
+                                    {selectedBooking.event_duration_hours != null && (
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Duration</p>
+                                            <div className="flex items-center gap-2 text-gray-900 font-bold">
+                                                <Clock size={16} className="text-pink" />
+                                                <span>{selectedBooking.event_duration_hours} hrs</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {selectedBooking.special_notes && (
+                                <div className="mb-8">
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Special Notes</p>
+                                    <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl italic">
+                                        "{selectedBooking.special_notes}"
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="mb-8 p-6 bg-pink/5 rounded-2xl border border-pink/10">
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Customer Contact</p>
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink shadow-sm">
+                                            <Mail size={14} />
+                                        </div>
+                                        <p className="text-sm font-bold text-gray-700">{selectedBooking.customer_email}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink shadow-sm">
+                                            <Phone size={14} />
+                                        </div>
+                                        <p className="text-sm font-bold text-gray-700">{selectedBooking.customer_phone}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-2xl p-6 mb-8 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-gray-500">
+                                        <CreditCard size={16} />
+                                        <span className="text-xs font-bold uppercase tracking-wider">Total Price</span>
+                                    </div>
+                                    <span className="text-lg font-black text-gray-900">Rs. {selectedBooking.agreed_price.toLocaleString()}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-gray-500">
+                                        <FileText size={16} />
+                                        <span className="text-xs font-bold uppercase tracking-wider">Advance</span>
+                                    </div>
+                                    <span className="text-sm font-bold text-gray-900">Rs. {selectedBooking.advance_amount.toLocaleString()}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-gray-500">
+                                        <AlertCircle size={16} />
+                                        <span className="text-xs font-bold uppercase tracking-wider">Balance Due</span>
+                                    </div>
+                                    <span className="text-sm font-bold text-gray-900">Rs. {selectedBooking.balance_due.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                {(selectedBooking.booking_status === "pending" || selectedBooking.booking_status === "pending_payment" || selectedBooking.booking_status === "awaiting_confirmation") && (
+                                    <>
                                         <button
-                                            onClick={() => updateStatus(selectedBooking.id, "completed")}
+                                            onClick={() => updateStatus(selectedBooking.id, "confirmed")}
                                             disabled={actionLoading === selectedBooking.id}
                                             className="flex-1 btn-pink py-4 rounded-2xl font-bold text-sm disabled:opacity-50"
                                         >
-                                            {actionLoading === selectedBooking.id ? 'Updating...' : 'Mark Completed'}
+                                            {actionLoading === selectedBooking.id ? 'Accepting...' : 'Accept Request'}
                                         </button>
-                                    )}
+                                        <button
+                                            onClick={() => updateStatus(selectedBooking.id, "rejected")}
+                                            disabled={actionLoading === selectedBooking.id}
+                                            className="flex-1 px-6 py-4 border border-red-200 text-red-500 rounded-2xl font-bold text-sm hover:bg-red-50 transition-colors disabled:opacity-50"
+                                        >
+                                            {actionLoading === selectedBooking.id ? 'Declining...' : 'Decline Request'}
+                                        </button>
+                                    </>
+                                )}
+                                {selectedBooking.booking_status === "confirmed" && (
                                     <button
-                                        onClick={() => setSelectedBooking(null)}
-                                        className="flex-1 bg-gray-900 text-white rounded-2xl font-bold text-sm hover:bg-black transition-colors px-6 py-4"
+                                        onClick={() => updateStatus(selectedBooking.id, "completed")}
+                                        disabled={actionLoading === selectedBooking.id}
+                                        className="flex-1 btn-pink py-4 rounded-2xl font-bold text-sm disabled:opacity-50"
                                     >
-                                        Close
+                                        {actionLoading === selectedBooking.id ? 'Updating...' : 'Mark Completed'}
                                     </button>
-                                </div>
+                                )}
+                                <button
+                                    onClick={() => setSelectedBooking(null)}
+                                    className="flex-1 bg-gray-900 text-white rounded-2xl font-bold text-sm hover:bg-black transition-colors px-6 py-4"
+                                >
+                                    Close
+                                </button>
                             </div>
                         </div>
                     </div>

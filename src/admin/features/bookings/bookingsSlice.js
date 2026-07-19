@@ -62,6 +62,7 @@ function normaliseBooking(b) {
       ? new Date(b.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
       : '—',
     time:         b.event_start_time || '—',
+    endTime:      b.event_end_time || null,
     duration:     b.event_duration_hours ? `${b.event_duration_hours} hrs` : '—',
     eventType:    b.event_type    || '—',
     venue:        b.venue         || '—',

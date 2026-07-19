@@ -4,6 +4,7 @@ export interface InitiateBookingPayload {
   artist_profile_id: string
   event_date: string
   event_start_time: string
+  event_end_time?: string
   event_type: string
   venue: string
   customer_phone: string
