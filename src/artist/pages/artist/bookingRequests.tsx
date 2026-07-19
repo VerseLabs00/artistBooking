@@ -82,6 +82,7 @@ export default function BookingRequests() {
     const [selectedBooking, setSelectedBooking] = useState<DetailedBooking | null>(null);
     const [detailsLoading, setDetailsLoading] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'all' | 'cancelled' | 'confirmed' | 'completed'>('all');
+    const [artistAvatar, setArtistAvatar] = useState<string | null>(null);
 
     const [earningsModalOpen, setEarningsModalOpen] = useState(false);
     const [bankDetails, setBankDetails] = useState<any>(null);
@@ -127,6 +128,12 @@ export default function BookingRequests() {
     };
 
     useEffect(() => { fetchBookings(); }, []);
+
+    useEffect(() => {
+        api.get("/profile").then(({ data }) => {
+            if (data?.profile?.avatar_url) setArtistAvatar(data.profile.avatar_url);
+        }).catch(() => {});
+    }, []);
 
     const fetchBookings = async () => {
         setLoading(true);
@@ -537,9 +544,9 @@ export default function BookingRequests() {
             <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
                 <div className="flex items-center gap-4">
                     <button 
-                        onClick={() => navigate(-1)}
+                        onClick={() => navigate('/account')}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-pink-600"
-                        title="Go back"
+                        title="Go to account"
                     >
                         <ArrowLeft size={22} />
                     </button>
@@ -563,8 +570,15 @@ export default function BookingRequests() {
                     <aside className="w-full md:w-64 flex-shrink-0">
                         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sticky top-24">
                             <div className="text-center mb-8">
-                                <div className="w-20 h-20 rounded-full bg-pink/10 flex items-center justify-center text-pink mx-auto mb-4 border-2 border-pink/20">
-                                    <User size={32} />
+                                <div 
+                                    onClick={() => navigate('/account')}
+                                    className="w-20 h-20 rounded-full mx-auto mb-4 border-2 border-pink/20 overflow-hidden cursor-pointer hover:border-pink transition-all bg-gray-200"
+                                >
+                                    {artistAvatar ? (
+                                        <img src={artistAvatar} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User size={32} className="w-full h-full text-pink p-4" />
+                                    )}
                                 </div>
                                 <h2 className="font-bold text-xl text-gray-900">Artist Panel</h2>
                                 <p className="text-gray-500 text-xs mt-1">Manage Requests</p>
