@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { getBookingsApi, getBookingApi, updateBookingStatusApi } from '../../api/bookingsApi'
+import { getBookingsApi, getBookingApi, updateBookingStatusApi, deleteBookingApi } from '../../api/bookingsApi'
 
 // ── Normalise backend Booking → UI shape ─────────────────────────────────────
 // Backend fields (from Booking model):
@@ -125,6 +125,18 @@ export const updateBookingStatus = createAsyncThunk(
   }
 )
 
+export const deleteBooking = createAsyncThunk(
+  'bookings/delete',
+  async (id, { rejectWithValue }) => {
+    try {
+      await deleteBookingApi(id)
+      return id
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Delete failed')
+    }
+  }
+)
+
 // ── Slice ─────────────────────────────────────────────────────────────────────
 
 const bookingsSlice = createSlice({
@@ -168,6 +180,11 @@ const bookingsSlice = createSlice({
         const idx = state.list.findIndex(b => b.id === updated.id)
         if (idx !== -1) state.list[idx] = updated
         if (state.selected?.id === updated.id) state.selected = updated
+      })
+
+      .addCase(deleteBooking.fulfilled, (state, { payload: id }) => {
+        state.list = state.list.filter(b => b.id !== id)
+        if (state.selected?.id === id) state.selected = null
       })
   },
 })

@@ -12,6 +12,10 @@ export const getBookingApi = (id) =>
 export const updateBookingStatusApi = (id, status) =>
   api.put(`/admin/bookings/${id}/status`, { status })
 
+// DELETE /api/admin/bookings/:id
+export const deleteBookingApi = (id) =>
+  api.delete(`/admin/bookings/${id}`)
+
 // GET /api/admin/due-payments
 export const getDuePaymentsApi = (params = {}) =>
   api.get('/admin/due-payments', { params })

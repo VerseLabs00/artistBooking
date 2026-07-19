@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import {
   fetchBookings,
   updateBookingStatus,
+  deleteBooking,
   setFilter,
   setSearchQuery,
   selectFilteredBookings,
@@ -47,6 +48,15 @@ export default function Bookings() {
       toast.error(`Booking #${booking.id} cancelled`)
     } else {
       toast.error(result.payload || 'Failed to cancel')
+    }
+  }
+
+  const handleDelete = async (booking) => {
+    const result = await dispatch(deleteBooking(booking.id))
+    if (deleteBooking.fulfilled.match(result)) {
+      toast.success(`Booking #${booking.id} deleted`)
+    } else {
+      toast.error(result.payload || 'Failed to delete')
     }
   }
 
@@ -149,6 +159,9 @@ export default function Bookings() {
                           <button onClick={() => { setSelectedBooking(booking); setModalOpen(true) }} className="btn-secondary text-xs px-2 md:px-3 py-1.5">View</button>
                           {booking.status !== 'cancelled' && booking.status !== 'completed' && (
                             <button onClick={() => handleCancel(booking)} className="btn-danger text-xs px-2 md:px-3 py-1.5 hidden sm:inline-flex">Cancel</button>
+                          )}
+                          {booking.status === 'cancelled' && (
+                            <button onClick={() => handleDelete(booking)} className="btn-danger text-xs px-2 md:px-3 py-1.5 hidden sm:inline-flex">Delete</button>
                           )}
                         </div>
                       </td>
