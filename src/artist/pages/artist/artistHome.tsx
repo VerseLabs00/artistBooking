@@ -729,8 +729,12 @@ export default function ArtistHome() {
                 </nav>
 
                 {/* HERO */}
-                <section className="relative w-full overflow-hidden bg-cover bg-center pt-28 pb-16 sm:pt-36 sm:pb-24 px-4 sm:px-6 md:px-12 lg:px-20 min-h-[480px] sm:min-h-[540px] flex items-center"
-                         style={{ backgroundImage: "url('/new_cover.jpeg')" }}>
+                <section id="hero-section"
+                         className="relative w-full overflow-hidden bg-cover bg-center py-10 sm:py-12 px-4 sm:px-6 md:px-12 lg:px-20 pt-36 sm:pt-36"
+                         style={{
+                             backgroundImage: "url('https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
+                         }}
+                >
                     <div className="absolute inset-0 bg-black/40 z-0" />
                     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10 w-full">
                         <div>
