@@ -190,10 +190,12 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [lightboxUrl, setLightboxUrl] = useState("");
     const [lightboxType, setLightboxType] = useState<"image" | "youtube" | "spotify" | "video" | "link">("image");
+    const [lightboxIndex, setLightboxIndex] = useState(0);
 
-    const openLightbox = (url: string, type: "image" | "youtube" | "spotify" | "video" | "link" = "image") => {
+    const openLightbox = (url: string, type: "image" | "youtube" | "spotify" | "video" | "link" = "image", index: number = 0) => {
         setLightboxUrl(url);
         setLightboxType(type);
+        setLightboxIndex(index);
         setLightboxOpen(true);
     };
 
@@ -208,6 +210,21 @@ export default function ArtistProfile({ id: propId, onClose }: { id?: string; on
         setLightboxOpen(false);
         setLightboxUrl("");
         setLightboxType("image");
+    };
+
+    const handleLightboxAdvance = () => {
+        if (lightboxType === "image") {
+            const displayCount = Math.min(galleryImages.length, 3);
+            if (lightboxIndex < displayCount - 1) {
+                const next = lightboxIndex + 1;
+                setLightboxUrl(galleryImages[next].url);
+                setLightboxIndex(next);
+            } else {
+                closeLightbox();
+            }
+        } else {
+            closeLightbox();
+        }
     };
 
     useEffect(() => {
@@ -691,10 +708,10 @@ if (!selectedStar) return;
                                 <>
                                     <h3 className="text-[24px] font-bold mt-10 mb-5">Gallery</h3>
                                     <div className="grid grid-cols-3 gap-3">
-                                        {galleryImages.slice(0, 3).map((img) => (
+                                        {galleryImages.slice(0, 3).map((img, i) => (
                                             <button
                                                 key={img.id}
-                                                onClick={() => openLightbox(img.url, "image")}
+                                                onClick={() => openLightbox(img.url, "image", i)}
                                                 className="w-full h-[180px] rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#FF2B6B] focus:ring-offset-2"
                                             >
                                                 <img
@@ -859,9 +876,9 @@ if (!selectedStar) return;
             )}
 
             {lightboxOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center" onClick={closeLightbox}>
+                <div className="fixed inset-0 z-[200] flex items-center justify-center" onClick={handleLightboxAdvance}>
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-                    <div className="relative z-10 flex items-center justify-center w-full max-w-5xl max-h-[90vh] p-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="relative z-10 flex items-center justify-center w-full max-w-5xl max-h-[90vh] p-4" onClick={lightboxType === "image" ? (e) => { e.stopPropagation(); handleLightboxAdvance(); } : (e) => e.stopPropagation()}>
                         {/* Close button — only shown for non-image media */}
                         {lightboxType !== "image" && (
                             <button onClick={closeLightbox} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95">
@@ -870,7 +887,7 @@ if (!selectedStar) return;
                         )}
                         <div className="flex items-center justify-center w-full">
                             {lightboxType === "image" ? (
-                                <div onClick={closeLightbox} className="cursor-pointer">
+                                <div className="cursor-pointer">
                                     <img src={lightboxUrl} alt="" className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
                                 </div>
                             ) : (
