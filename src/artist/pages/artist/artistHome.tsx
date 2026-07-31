@@ -300,12 +300,28 @@ export default function ArtistHome() {
 
     const [unreadNotifications, setUnreadNotifications] = useState<Notification[]>([]);
     const [activeNotification, setActiveNotification] = useState<Notification | null>(null);
+    const [newBookingCount, setNewBookingCount] = useState<number>(0);
 
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
     const [isClosingProfile, setIsClosingProfile] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const popularArtistsRef = useRef<HTMLDivElement>(null);
+
+    const fetchNewBookingCount = async () => {
+        try {
+            const { data } = await api.get("/artist/bookings");
+            const raw: any[] = Array.isArray(data) ? data : (data.data || []);
+            const pending = raw.filter((b: any) => 
+                b.booking_status === 'pending' || 
+                b.booking_status === 'pending_payment' || 
+                b.booking_status === 'awaiting_confirmation'
+            );
+            setNewBookingCount(pending.length);
+        } catch (err) {
+            console.error("Failed to load new booking count", err);
+        }
+    };
 
     const handleCloseProfile = () => {
         setIsClosingProfile(true);
@@ -328,6 +344,12 @@ export default function ArtistHome() {
     useEffect(() => {
         fetchProfile();
         fetchNotifications();
+        fetchNewBookingCount();
+
+        const handleStatusUpdate = () => {
+            fetchNewBookingCount();
+        };
+        window.addEventListener('booking_status_updated', handleStatusUpdate);
 
         getStats()
             .then(data => {
@@ -365,6 +387,10 @@ export default function ArtistHome() {
             })
             .catch(() => setBrowseCategories(ALL_CATEGORIES_DATA))
             .finally(() => setBrowseCategoriesLoading(false));
+
+        return () => {
+            window.removeEventListener('booking_status_updated', handleStatusUpdate);
+        };
     }, []);
 
     const fetchNotifications = async () => {
@@ -686,18 +712,30 @@ export default function ArtistHome() {
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-4">
-                        <div
-                            onClick={() => navigate("/account")}
-                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all bg-gray-200 flex items-center justify-center"
-                        >
-                            {profile?.avatar_url ? (
-                                <img
-                                    src={profile.avatar_url}
-                                    alt="Profile"
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <User size={20} className="text-gray-400" />
+                        <div className="relative">
+                            <div
+                                onClick={() => navigate("/account")}
+                                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all bg-gray-200 flex items-center justify-center"
+                                title="My Account"
+                            >
+                                {profile?.avatar_url ? (
+                                    <img
+                                        src={profile.avatar_url}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <User size={20} className="text-gray-400" />
+                                )}
+                            </div>
+                            {newBookingCount > 0 && (
+                                <span
+                                    onClick={() => navigate("/bookingRequests")}
+                                    className="absolute -top-1 -right-1 z-10 bg-[#E8194B] text-white text-[10px] font-black min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center border-2 border-white shadow-md cursor-pointer hover:scale-110 transition-transform animate-pulse"
+                                    title={`${newBookingCount} new booking request${newBookingCount > 1 ? 's' : ''}`}
+                                >
+                                    {newBookingCount > 99 ? '99+' : newBookingCount}
+                                </span>
                             )}
                         </div>
                         <button
