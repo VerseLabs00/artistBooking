@@ -47,7 +47,7 @@ interface DetailedBooking {
     special_notes?: string;
     customer_email?: string;
     customer_phone?: string;
-    customer_avatar?: string;
+    customer_avatar?: string | null;
 }
 
 // --- Normalization Helper ---
@@ -59,7 +59,7 @@ function normalizeBooking(b: any): DetailedBooking {
         ...b,
         id: String(b.id),
         customer_name: b.customer_name || customer.name || customer.full_name || "Customer",
-        customer_avatar: b.customer_avatar || customer.avatar_url || customer.avatar || `https://i.pravatar.cc/150?u=c${customer.id || b.customer_id || b.id}`,
+        customer_avatar: b.customer_avatar || customer.avatar_url || customer.avatar || null,
         customer_email: b.customer_email || customer.email || "N/A",
         event_date: b.event_date || "N/A",
         event_type: b.event_type || "N/A",
@@ -81,7 +81,7 @@ export default function BookingRequests() {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [selectedBooking, setSelectedBooking] = useState<DetailedBooking | null>(null);
     const [detailsLoading, setDetailsLoading] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'all' | 'cancelled' | 'confirmed' | 'completed'>('all');
+    const [activeTab, setActiveTab] = useState<'all' | 'new' | 'cancelled' | 'confirmed' | 'completed'>('all');
     const [artistAvatar, setArtistAvatar] = useState<string | null>(null);
 
     const [earningsModalOpen, setEarningsModalOpen] = useState(false);
@@ -141,12 +141,12 @@ export default function BookingRequests() {
             const { data } = await api.get("/artist/bookings");
             // Robust check for data location (handle wrapped or direct array)
             const raw = Array.isArray(data) ? data : (data.data || []);
-            
+
             // Sort by created_at descending (newest first)
-            const sorted = raw.sort((a: any, b: any) => 
+            const sorted = raw.sort((a: any, b: any) =>
                 new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             );
-            
+
             setBookings(sorted.map(normalizeBooking));
         } catch (err: any) {
             console.error("Failed to load bookings", err);
@@ -174,11 +174,12 @@ export default function BookingRequests() {
         try {
             const { data } = await api.put(`/artist/bookings/${id}/status`, { status });
             const updated = normalizeBooking(data.data || data);
-            
+
             setBookings(prev => prev.map(b => b.id === id ? updated : b));
             if (selectedBooking?.id === id) {
                 setSelectedBooking(updated);
             }
+            window.dispatchEvent(new Event('booking_status_updated'));
         } catch (err: any) {
             alert(err.response?.data?.message || "Action failed.");
         } finally {
@@ -186,10 +187,14 @@ export default function BookingRequests() {
         }
     };
 
+    const isNewRequest = (status: string) =>
+        status === 'pending' || status === 'pending_payment' || status === 'awaiting_confirmation';
+
     const filteredBookings = bookings.filter(b => {
         if (activeTab === 'all') return true;
+        if (activeTab === 'new') return isNewRequest(b.booking_status);
         if (activeTab === 'cancelled') return b.booking_status === 'rejected' || b.booking_status === 'cancelled';
-        if (activeTab === 'confirmed') return b.booking_status === 'confirmed' || b.booking_status === 'awaiting_confirmation';
+        if (activeTab === 'confirmed') return b.booking_status === 'confirmed';
         return b.booking_status === activeTab;
     });
 
@@ -201,13 +206,14 @@ export default function BookingRequests() {
 
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
-            case 'confirmed': return 'bg-green-100 text-green-700 border-green-200';
-            case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-            case 'pending_payment': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-            case 'awaiting_confirmation': return 'bg-blue-100 text-blue-700 border-blue-200';
+            case 'pending':
+            case 'pending_payment':
+            case 'awaiting_confirmation':
+                return 'bg-emerald-600 text-white border-emerald-700 font-extrabold shadow-sm';
+            case 'confirmed': return 'bg-blue-100 text-blue-700 border-blue-200';
             case 'rejected': return 'bg-red-100 text-red-700 border-red-200';
             case 'cancelled': return 'bg-red-100 text-red-700 border-red-200';
-            case 'completed': return 'bg-blue-100 text-blue-700 border-blue-200';
+            case 'completed': return 'bg-purple-100 text-purple-700 border-purple-200';
             default: return 'bg-gray-100 text-gray-700 border-gray-200';
         }
     };
@@ -236,14 +242,14 @@ export default function BookingRequests() {
                         >
                             <X size={24} className="text-gray-400" />
                         </button>
-                        
+
                         <div className="p-8 border-b border-gray-100">
                             <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
                                 <Landmark className="text-green-500" /> Earnings & Payouts
                             </h2>
                             <p className="text-sm text-gray-500 mt-1">Manage your bank details and track your advances.</p>
                         </div>
-                        
+
                         <div className="flex-1 overflow-y-auto p-8 bg-gray-50/50">
                             {bankLoading && !bankDetails ? (
                                 <div className="flex justify-center py-12"><Loader2 className="animate-spin text-gray-400" size={32} /></div>
@@ -259,14 +265,14 @@ export default function BookingRequests() {
                                     <form onSubmit={handleSaveBankDetails} className="space-y-4">
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Account Holder Name</label>
-                                            <input required type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50" 
-                                                value={bankFormData.account_holder_name} onChange={e => setBankFormData({...bankFormData, account_holder_name: e.target.value})} />
+                                            <input required type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50"
+                                                   value={bankFormData.account_holder_name} onChange={e => setBankFormData({...bankFormData, account_holder_name: e.target.value})} />
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Bank Name</label>
-                                                <input required type="text" list="sri-lanka-banks" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50" 
-                                                    value={bankFormData.bank_name} onChange={e => setBankFormData({...bankFormData, bank_name: e.target.value})} placeholder="Select or type your bank" />
+                                                <input required type="text" list="sri-lanka-banks" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50"
+                                                       value={bankFormData.bank_name} onChange={e => setBankFormData({...bankFormData, bank_name: e.target.value})} placeholder="Select or type your bank" />
                                                 <datalist id="sri-lanka-banks">
                                                     <option value="Commercial Bank of Ceylon" />
                                                     <option value="Bank of Ceylon (BOC)" />
@@ -286,23 +292,23 @@ export default function BookingRequests() {
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Branch Name</label>
-                                                <input required type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50" 
-                                                    value={bankFormData.branch} onChange={e => setBankFormData({...bankFormData, branch: e.target.value})} placeholder="e.g. Colombo 03" />
+                                                <input required type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50"
+                                                       value={bankFormData.branch} onChange={e => setBankFormData({...bankFormData, branch: e.target.value})} placeholder="e.g. Colombo 03" />
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Account Number</label>
-                                                <input required type="text" pattern="\d+" title="Please enter only numeric digits for your account number" 
-                                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50" 
-                                                    value={bankFormData.account_number} 
-                                                    onChange={e => setBankFormData({...bankFormData, account_number: e.target.value.replace(/\D/g, '')})} 
-                                                    minLength={6} maxLength={20} placeholder="e.g. 1002345678" />
+                                                <input required type="text" pattern="\d+" title="Please enter only numeric digits for your account number"
+                                                       className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50"
+                                                       value={bankFormData.account_number}
+                                                       onChange={e => setBankFormData({...bankFormData, account_number: e.target.value.replace(/\D/g, '')})}
+                                                       minLength={6} maxLength={20} placeholder="e.g. 1002345678" />
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Account Type</label>
-                                                <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50" 
-                                                    value={bankFormData.account_type} onChange={e => setBankFormData({...bankFormData, account_type: e.target.value})}>
+                                                <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink/50"
+                                                        value={bankFormData.account_type} onChange={e => setBankFormData({...bankFormData, account_type: e.target.value})}>
                                                     <option value="savings">Savings Account</option>
                                                     <option value="current">Current Account</option>
                                                 </select>
@@ -330,7 +336,7 @@ export default function BookingRequests() {
                                             <button onClick={() => setBankDetails(null)} className="text-[10px] font-bold text-pink mt-1 hover:underline uppercase">Edit Account</button>
                                         </div>
                                     </div>
-                                    
+
                                     <h3 className="font-bold text-gray-900 text-lg">Advance Payments</h3>
                                     <div className="space-y-3">
                                         {pendingAdvanceBookings.map(booking => (
@@ -382,18 +388,34 @@ export default function BookingRequests() {
                         </button>
 
                         <div className="w-full md:w-1/3 bg-gray-100 shrink-0">
-                            <img
-                                src={selectedBooking.customer_avatar}
-                                className="w-full h-64 md:h-full object-cover"
-                                alt=""
-                            />
+                            {selectedBooking.customer_avatar ? (
+                                <img
+                                    src={selectedBooking.customer_avatar}
+                                    className="w-full h-64 md:h-full object-cover"
+                                    alt=""
+                                />
+                            ) : (
+                                <div className="w-full h-64 md:h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                                    <User size={64} />
+                                </div>
+                            )}
                         </div>
                         <div className="flex-1 p-6 md:p-8 overflow-y-auto max-h-[90vh]">
                             <div className="mb-6">
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(selectedBooking.booking_status)}`}>
-                                    {selectedBooking.booking_status}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase border ${getStatusColor(selectedBooking.booking_status)}`}>
+                                        {isNewRequest(selectedBooking.booking_status) ? 'NEW REQUEST' : selectedBooking.booking_status}
+                                    </span>
+                                </div>
                                 <h2 className="text-3xl font-black text-gray-900 mt-3">{selectedBooking.customer_name}</h2>
+                                {isNewRequest(selectedBooking.booking_status) && (
+                                    <div className="mt-3 p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center gap-2.5">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping shrink-0" />
+                                        <p className="text-xs font-bold text-emerald-800">
+                                            New Request — Click "Accept Request" or "Decline Request" below.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex flex-col md:flex-row gap-8 mb-8">
@@ -543,7 +565,7 @@ export default function BookingRequests() {
             {/* NAVBAR */}
             <nav className="w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white border-b border-gray-100 sticky top-0 z-50">
                 <div className="flex items-center gap-4">
-                    <button 
+                    <button
                         onClick={() => navigate('/account')}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-pink-600"
                         title="Go to account"
@@ -570,7 +592,7 @@ export default function BookingRequests() {
                     <aside className="w-full md:w-64 flex-shrink-0">
                         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sticky top-24">
                             <div className="text-center mb-8">
-                                <div 
+                                <div
                                     onClick={() => navigate('/account')}
                                     className="w-20 h-20 rounded-full mx-auto mb-4 border-2 border-pink/20 overflow-hidden cursor-pointer hover:border-pink transition-all bg-gray-200"
                                 >
@@ -587,30 +609,45 @@ export default function BookingRequests() {
                             <nav className="space-y-2">
                                 {[
                                     { id: 'all', icon: <Search size={18} />, label: 'All Requests' },
-                                    { id: 'cancelled', icon: <XCircle size={18} />, label: 'Cancel' },
+                                    { id: 'new', icon: <AlertCircle size={18} />, label: 'New Requests' },
                                     { id: 'confirmed', icon: <CheckCircle size={18} />, label: 'Confirmed' },
                                     { id: 'completed', icon: <TrendingUp size={18} />, label: 'Completed' },
-                                ].map(item => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => setActiveTab(item.id as any)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                                            activeTab === item.id
-                                                ? 'bg-pink text-white shadow-lg shadow-pink/20'
-                                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                                        }`}
-                                    >
-                                        {item.icon}
-                                        {item.label}
-                                        <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTab === item.id ? 'bg-white/20' : 'bg-gray-100'}`}>
-                                            {bookings.filter(b => {
-                                                if (item.id === 'all') return true;
-                                                if (item.id === 'cancelled') return b.booking_status === 'rejected' || b.booking_status === 'cancelled';
-                                                return b.booking_status === item.id;
-                                            }).length}
-                                        </span>
-                                    </button>
-                                ))}
+                                    { id: 'cancelled', icon: <XCircle size={18} />, label: 'Cancel' },
+                                ].map(item => {
+                                    const count = bookings.filter(b => {
+                                        if (item.id === 'all') return true;
+                                        if (item.id === 'new') return isNewRequest(b.booking_status);
+                                        if (item.id === 'cancelled') return b.booking_status === 'rejected' || b.booking_status === 'cancelled';
+                                        return b.booking_status === item.id;
+                                    }).length;
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => setActiveTab(item.id as any)}
+                                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                                                activeTab === item.id
+                                                    ? item.id === 'new'
+                                                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30'
+                                                        : 'bg-pink text-white shadow-lg shadow-pink/20'
+                                                    : item.id === 'new' && count > 0
+                                                        ? 'text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100/70'
+                                                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                                            }`}
+                                        >
+                                            {item.icon}
+                                            {item.label}
+                                            <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                                activeTab === item.id
+                                                    ? 'bg-white/20'
+                                                    : item.id === 'new' && count > 0
+                                                        ? 'bg-emerald-600 text-white font-black animate-pulse'
+                                                        : 'bg-gray-100'
+                                            }`}>
+                                                {count}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
                             </nav>
                         </div>
                     </aside>
@@ -623,7 +660,7 @@ export default function BookingRequests() {
                                     <h1 className="text-xl font-black text-gray-900">Booking Requests</h1>
                                     <p className="text-gray-500 mt-2">View and manage your incoming booking requests.</p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => handleViewEarnings()}
                                     className="px-5 py-2.5 bg-green-50 text-green-700 rounded-xl text-sm font-bold border border-green-200 hover:bg-green-100 transition-colors flex items-center gap-2"
                                 >
@@ -694,116 +731,140 @@ export default function BookingRequests() {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 gap-4">
-                                    {filteredBookings.map(booking => (
-                                        <div key={booking.id} className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group">
-                                            <div className="flex flex-col md:flex-row gap-6">
-                                                <div className="relative w-full md:w-32 h-32 rounded-[20px] overflow-hidden flex-shrink-0 shadow-inner">
-                                                    <img src={booking.customer_avatar} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={booking.customer_name} />
-                                                    <div className={`absolute top-3 left-3 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border glass-card ${getStatusColor(booking.booking_status)}`}>
-                                                        {booking.booking_status}
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex-1 flex flex-col justify-between py-1">
-                                                    <div>
-                                                        <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
-                                                            <div>
-                                                                <h3 className="text-lg font-black text-gray-900">{booking.customer_name}</h3>
-                                                                <div className="flex items-center gap-2 mt-0.5">
-                                                                    <span className="text-pink font-bold text-xs">{booking.event_type}</span>
-                                                                    <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                                                                    <span className="text-gray-400 text-[10px] font-bold uppercase tracking-tighter">ID: #{booking.id.slice(0, 8)}</span>
-                                                                </div>
+                                    {filteredBookings.map(booking => {
+                                        const isNew = isNewRequest(booking.booking_status);
+                                        return (
+                                            <div
+                                                key={booking.id}
+                                                className={`p-5 rounded-[24px] transition-all duration-300 group relative ${
+                                                    isNew
+                                                        ? 'bg-gradient-to-r from-emerald-50/80 via-emerald-50/30 to-white border-2 border-emerald-400 shadow-lg shadow-emerald-100/60 ring-2 ring-emerald-400/20'
+                                                        : 'bg-white border border-gray-100 shadow-sm hover:shadow-xl'
+                                                }`}
+                                            >
+                                                <div className="flex flex-col md:flex-row gap-6">
+                                                    <div className="relative w-full md:w-32 h-32 rounded-[20px] overflow-hidden flex-shrink-0 shadow-inner">
+                                                        {booking.customer_avatar ? (
+                                                            <img src={booking.customer_avatar} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={booking.customer_name} />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                                                                <User size={40} />
                                                             </div>
-                                                            <div className="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
-                                                                <p className="text-gray-400 text-[9px] font-bold uppercase tracking-wider mb-0.5">Advance</p>
-                                                                <p className="text-lg font-black text-gray-900">Rs. {booking.advance_amount.toLocaleString()}</p>
-                                                                {(booking.booking_status === 'confirmed' || booking.booking_status === 'completed') && booking.advance_amount > 0 && (
-                                                                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
-                                                                        booking.advance_payment_status === 'sent'
-                                                                            ? 'bg-green-50 text-green-700 border-green-200'
-                                                                            : 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                                                    }`}>
+                                                        )}
+                                                        <div className={`absolute top-3 left-3 px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${getStatusColor(booking.booking_status)} !text-black`}>
+                                                            {isNew ? 'NEW' : booking.booking_status}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex-1 flex flex-col justify-between py-1">
+                                                        <div>
+                                                            <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
+                                                                <div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <h3 className="text-lg font-black text-gray-900">{booking.customer_name}</h3>
+                                                                        {isNew && (
+                                                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-sm shadow-emerald-200 animate-pulse">
+                                                                                <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                                                                                NEW REQUEST
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                                        <span className="text-pink font-bold text-xs">{booking.event_type}</span>
+                                                                        <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                                                        <span className="text-gray-400 text-[10px] font-bold uppercase tracking-tighter">ID: #{booking.id.slice(0, 8)}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
+                                                                    <p className="text-gray-400 text-[9px] font-bold uppercase tracking-wider mb-0.5">Advance</p>
+                                                                    <p className="text-lg font-black text-gray-900">Rs. {booking.advance_amount.toLocaleString()}</p>
+                                                                    {(booking.booking_status === 'confirmed' || booking.booking_status === 'completed') && booking.advance_amount > 0 && (
+                                                                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
+                                                                            booking.advance_payment_status === 'sent'
+                                                                                ? 'bg-green-50 text-green-700 border-green-200'
+                                                                                : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                                                        }`}>
                                                                         {booking.advance_payment_status === 'sent' ? '✓ Advance Paid' : 'Advance Pending'}
                                                                     </span>
-                                                                )}
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 rounded-lg bg-pink/5 flex items-center justify-center text-pink">
+                                                                        <Calendar size={16} />
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-[9px] text-gray-400 font-bold uppercase">Date</p>
+                                                                        <p className="text-xs font-bold text-gray-900">{booking.event_date}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 rounded-lg bg-pink/5 flex items-center justify-center text-pink">
+                                                                        <Clock size={16} />
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-[9px] text-gray-400 font-bold uppercase">Start</p>
+                                                                        <p className="text-xs font-bold text-gray-900">{booking.event_start_time}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 rounded-lg bg-pink/5 flex items-center justify-center text-pink">
+                                                                        <MapPin size={16} />
+                                                                    </div>
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-[9px] text-gray-400 font-bold uppercase">Venue</p>
+                                                                        <p className="text-xs font-bold text-gray-900 truncate">{booking.venue}</p>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
 
-                                                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 rounded-lg bg-pink/5 flex items-center justify-center text-pink">
-                                                                    <Calendar size={16} />
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-[9px] text-gray-400 font-bold uppercase">Date</p>
-                                                                    <p className="text-xs font-bold text-gray-900">{booking.event_date}</p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 rounded-lg bg-pink/5 flex items-center justify-center text-pink">
-                                                                    <Clock size={16} />
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-[9px] text-gray-400 font-bold uppercase">Start</p>
-                                                                    <p className="text-xs font-bold text-gray-900">{booking.event_start_time}</p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 rounded-lg bg-pink/5 flex items-center justify-center text-pink">
-                                                                    <MapPin size={16} />
-                                                                </div>
-                                                                <div className="min-w-0">
-                                                                    <p className="text-[9px] text-gray-400 font-bold uppercase">Venue</p>
-                                                                    <p className="text-xs font-bold text-gray-900 truncate">{booking.venue}</p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-50">
-                                                        <button
-                                                            onClick={() => handleShowDetails(booking.id)}
-                                                            className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-colors flex items-center gap-2"
-                                                        >
-                                                            {detailsLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
-                                                            View Request
-                                                        </button>
-                                                        {(booking.booking_status === "pending" || booking.booking_status === "pending_payment" || booking.booking_status === "awaiting_confirmation") && (
-                                                            <>
+                                                        <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-50">
+                                                            <button
+                                                                onClick={() => handleShowDetails(booking.id)}
+                                                                className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-colors flex items-center gap-2"
+                                                            >
+                                                                {detailsLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
+                                                                View Request
+                                                            </button>
+                                                            {(booking.booking_status === "pending" || booking.booking_status === "pending_payment" || booking.booking_status === "awaiting_confirmation") && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => updateStatus(booking.id, "confirmed")}
+                                                                        disabled={actionLoading === booking.id}
+                                                                        className="btn-pink px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2"
+                                                                    >
+                                                                        {actionLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
+                                                                        Accept
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => updateStatus(booking.id, "rejected")}
+                                                                        disabled={actionLoading === booking.id}
+                                                                        className="px-6 py-2.5 border border-red-200 text-red-500 rounded-xl text-xs font-bold hover:bg-red-50 transition-colors flex items-center gap-2"
+                                                                    >
+                                                                        {actionLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
+                                                                        Decline
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            {booking.booking_status === "confirmed" && (
                                                                 <button
-                                                                    onClick={() => updateStatus(booking.id, "confirmed")}
+                                                                    onClick={() => updateStatus(booking.id, "completed")}
                                                                     disabled={actionLoading === booking.id}
                                                                     className="btn-pink px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2"
                                                                 >
                                                                     {actionLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
-                                                                    Accept
+                                                                    Mark Completed
                                                                 </button>
-                                                                <button
-                                                                    onClick={() => updateStatus(booking.id, "rejected")}
-                                                                    disabled={actionLoading === booking.id}
-                                                                    className="px-6 py-2.5 border border-red-200 text-red-500 rounded-xl text-xs font-bold hover:bg-red-50 transition-colors flex items-center gap-2"
-                                                                >
-                                                                    {actionLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
-                                                                    Decline
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                        {booking.booking_status === "confirmed" && (
-                                                            <button
-                                                                onClick={() => updateStatus(booking.id, "completed")}
-                                                                disabled={actionLoading === booking.id}
-                                                                className="btn-pink px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2"
-                                                            >
-                                                                {actionLoading === booking.id && <Loader2 size={12} className="animate-spin" />}
-                                                                Mark Completed
-                                                            </button>
-                                                        )}
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

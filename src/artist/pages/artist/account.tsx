@@ -246,6 +246,7 @@ export default function ArtistProfile() {
     const [media, setMedia] = useState<Media[]>([]);
     const [rating, setRating] = useState<Rating | null>(null);
     const [artistStats, setArtistStats] = useState<{ total: number } | null>(null);
+    const [newBookingCount, setNewBookingCount] = useState<number>(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showFavModal, setShowFavModal] = useState(false)
@@ -310,6 +311,14 @@ export default function ArtistProfile() {
         fetchProfile();
         fetchStats();
         fetchFavoritedBy();
+
+        const handleStatusUpdate = () => {
+            fetchStats();
+        };
+        window.addEventListener('booking_status_updated', handleStatusUpdate);
+        return () => {
+            window.removeEventListener('booking_status_updated', handleStatusUpdate);
+        };
     }, []);
 
     const fetchProfile = async () => {
@@ -331,6 +340,15 @@ export default function ArtistProfile() {
 
     const fetchStats = async () => {
         try {
+            const { data: bookingsData } = await api.get("/artist/bookings");
+            const rawBookings: any[] = Array.isArray(bookingsData) ? bookingsData : (bookingsData.data || []);
+            const pendingRequests = rawBookings.filter((b: any) => 
+                b.booking_status === 'pending' || 
+                b.booking_status === 'pending_payment' || 
+                b.booking_status === 'awaiting_confirmation'
+            );
+            setNewBookingCount(pendingRequests.length);
+
             const { data } = await api.get("/bookings/dashboard");
             setArtistStats(data.stats);
         } catch (err) {
@@ -672,7 +690,7 @@ export default function ArtistProfile() {
                                         onClick={() => navigate("/bookingRequests")}
                                         className="flex-1 bg-[#FF2B6B] hover:bg-[#ff1b60] transition text-white py-3 rounded-full font-semibold text-sm shadow-md"
                                     >
-                                        My Bookings ({artistStats?.total ?? 0})
+                                        My Bookings ({newBookingCount})
                                     </button>
                                     <button
                                         onClick={() => navigate("/editProfile")}
