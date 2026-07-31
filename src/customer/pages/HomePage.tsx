@@ -12,6 +12,8 @@ import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import { getArtists, getCategories, getNearYou, getStats } from "../services/discoveryService";
 import { toggleFavorite, getFavorites } from "../services/favoriteService";
+import { getBookings } from "../services/bookingService";
+import type { BookingSummary } from "../services/bookingService";
 import type { ArtistCard as DiscoveryArtist, ArtistSearchParams } from "../services/discoveryService";
 import ArtistProfile from "./ArtistProfile";
 
@@ -249,6 +251,7 @@ export default function HomePage() {
     const [browseCategoriesLoading, setBrowseCategoriesLoading] = useState(true);
     const [likedArtists, setLikedArtists] = useState<Set<string | number>>(new Set());
     const [favoriteLoadingIds, setFavoriteLoadingIds] = useState<Set<string | number>>(new Set());
+    const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
     useEffect(() => {
         getFavorites()
@@ -273,10 +276,52 @@ export default function HomePage() {
         return () => {
             window.removeEventListener('favorites-changed', refresh);
             window.removeEventListener('storage', refresh);
+        window.removeEventListener('focus', refresh);
+        document.removeEventListener('visibilitychange', refresh);
+    };
+    }, []);
+
+    const fetchUnreadNotificationsCount = useCallback(async () => {
+        if (!authUser) {
+            setUnreadNotificationsCount(0);
+            return;
+        }
+        try {
+            const response = await getBookings();
+            const raw = Array.isArray(response) ? response : (response.data || []);
+            let readNotifications: string[] = [];
+            try {
+                const saved = localStorage.getItem('readNotifications');
+                readNotifications = saved ? JSON.parse(saved) : [];
+            } catch {
+                readNotifications = [];
+            }
+            const count = raw.filter((b: BookingSummary) =>
+                !readNotifications.includes(`${b.id}-${b.booking_status}`)
+            ).length;
+            setUnreadNotificationsCount(count);
+        } catch (err) {
+            console.error("Failed to fetch unread notifications count", err);
+        }
+    }, [authUser]);
+
+    useEffect(() => {
+        fetchUnreadNotificationsCount();
+        const refresh = () => { fetchUnreadNotificationsCount(); };
+        window.addEventListener('favorites-changed', refresh);
+        window.addEventListener('storage', refresh);
+        window.addEventListener('focus', refresh);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') refresh();
+        });
+        return () => {
+            window.removeEventListener('favorites-changed', refresh);
+            window.removeEventListener('storage', refresh);
             window.removeEventListener('focus', refresh);
             document.removeEventListener('visibilitychange', refresh);
         };
-    }, []);
+    }, [fetchUnreadNotificationsCount]);
+
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
     const [isClosingProfile, setIsClosingProfile] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -705,19 +750,26 @@ export default function HomePage() {
                     </div>
 
 {/* Auth / Account */}
-                     <div className="flex items-center gap-2 sm:gap-4">
-                         <div
-                             onClick={() => navigate("/customerAccount")}
-                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all flex items-center justify-center bg-gray-50"
-                         >
-                             {displayUser?.avatar_url ? (
-                                 <img
-                                     src={displayUser.avatar_url}
-                                     alt="Profile"
-                                     className="w-full h-full object-cover"
-                                 />
-                             ) : (
-                                 <User size={20} className="text-gray-400" />
+                      <div className="flex items-center gap-2 sm:gap-4">
+                         <div className="relative">
+                             <div
+                                 onClick={() => navigate("/customerAccount")}
+                                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-gray-100 overflow-hidden cursor-pointer hover:border-[#E8194B] transition-all flex items-center justify-center bg-gray-50"
+                             >
+                                 {displayUser?.avatar_url ? (
+                                     <img
+                                         src={displayUser.avatar_url}
+                                         alt="Profile"
+                                         className="w-full h-full object-cover"
+                                     />
+                                 ) : (
+                                     <User size={20} className="text-gray-400" />
+                                 )}
+                             </div>
+                             {unreadNotificationsCount > 0 && (
+                                 <span className="absolute -top-1 -right-1 z-10 bg-pink text-white text-[10px] font-black min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center border-2 border-white shadow-md">
+                                     {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
+                                 </span>
                              )}
                          </div>
                          <button
