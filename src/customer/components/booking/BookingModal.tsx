@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { initiateBooking } from '../../services/bookingService'
@@ -37,42 +37,107 @@ function getCalendarCells(viewDate: Date): (number | null)[] {
 
 function StepIndicator({ current }: { current: number }) {
   return (
-    <div className="flex items-end gap-10 mb-6">
-      {[1, 2, 3].map((s) => (
-        <div key={s} className="flex flex-col items-center gap-1">
-          <span className={`text-base font-medium ${current === s ? 'text-red-600' : 'text-gray-400'}`}>{s}</span>
-          <div className={`h-0.5 w-8 rounded-full ${current === s ? 'bg-red-600' : 'bg-transparent'}`} />
+      <div className="flex items-end gap-10 mb-6">
+        {[1, 2, 3].map((s) => (
+            <div key={s} className="flex flex-col items-center gap-1">
+              <span className={`text-base font-medium ${current === s ? 'text-red-600' : 'text-gray-400'}`}>{s}</span>
+              <div className={`h-0.5 w-8 rounded-full ${current === s ? 'bg-red-600' : 'bg-transparent'}`} />
+            </div>
+        ))}
+      </div>
+  )
+}
+
+function Clock24({ value, onChange }: { value: number; onChange: (h: number) => void }) {
+  const ITEM_H = 44
+  const VISIBLE = 3
+  const CONTAINER_H = ITEM_H * VISIBLE
+  const PADDING = ITEM_H // centers the middle row
+  const hours = Array.from({ length: 24 }, (_, i) => i)
+  const listRef = useRef<HTMLDivElement>(null)
+  const scrollTimeout = useRef<ReturnType<typeof setTimeout>>()
+
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: value * ITEM_H, behavior: 'auto' })
+  }, [])
+
+  const scrollToHour = (h: number, smooth = true) => {
+    listRef.current?.scrollTo({ top: h * ITEM_H, behavior: smooth ? 'smooth' : 'auto' })
+  }
+
+  const handleScroll = () => {
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current)
+    scrollTimeout.current = setTimeout(() => {
+      const el = listRef.current
+      if (!el) return
+      const index = Math.min(23, Math.max(0, Math.round(el.scrollTop / ITEM_H)))
+      scrollToHour(index)
+      if (index !== value) onChange(index)
+    }, 120)
+  }
+
+  return (
+      <div className="flex flex-col items-center w-full">
+        <p className="text-[11px] text-gray-400 mb-2 tracking-wide uppercase">Start time</p>
+
+        <div className="relative w-36">
+          <div
+              ref={listRef}
+              onScroll={handleScroll}
+              className="hour-scroll overflow-y-scroll snap-y snap-mandatory rounded-2xl bg-gray-50 border border-gray-100"
+              style={{ height: CONTAINER_H, paddingTop: PADDING, paddingBottom: PADDING, scrollbarWidth: 'none' }}
+          >
+            {hours.map(h => (
+                <button
+                    key={h}
+                    type="button"
+                    onClick={() => { onChange(h); scrollToHour(h) }}
+                    className={`w-full snap-center flex items-center justify-center transition-all duration-150 ${
+                        h === value ? 'text-red-600 text-2xl font-bold scale-105' : 'text-gray-300 text-base font-medium'
+                    }`}
+                    style={{ height: ITEM_H }}
+                >
+                  {String(h).padStart(2, '0')}:00
+                </button>
+            ))}
+          </div>
+
+          {/* selection band */}
+          <div
+              className="pointer-events-none absolute left-0 right-0 border-y-2 border-red-200 rounded-md"
+              style={{ top: PADDING, height: ITEM_H }}
+          />
+
+          {/* fade edges */}
+          <div className="pointer-events-none absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-gray-50 to-transparent rounded-t-2xl" />
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-50 to-transparent rounded-b-2xl" />
+
+          <style>{`.hour-scroll::-webkit-scrollbar { display: none; }`}</style>
         </div>
-      ))}
-    </div>
+
+        <div className="mt-4 flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-1.5 shadow-sm">
+        <span className="text-lg font-bold text-gray-800 tracking-wide tabular-nums">
+          {String(value).padStart(2, '0')}:00
+        </span>
+          <span className="text-[10px] text-gray-400 font-medium">24H</span>
+        </div>
+      </div>
   )
 }
 
 function Step1({
-  artistProfileId,
-  selectedDateKey,
-  setSelectedDateKey,
-  hour,
-  setHour,
-  period,
-  setPeriod,
-  endHour,
-  setEndHour,
-  endPeriod,
-  setEndPeriod,
-  onContinue,
-}: {
+                 artistProfileId,
+                 selectedDateKey,
+                 setSelectedDateKey,
+                 startHour,
+                 setStartHour,
+                 onContinue,
+               }: {
   artistProfileId: string
   selectedDateKey: string
   setSelectedDateKey: (key: string) => void
-  hour: string
-  setHour: (h: string) => void
-  period: string
-  setPeriod: (p: string) => void
-  endHour: string
-  setEndHour: (h: string) => void
-  endPeriod: string
-  setEndPeriod: (p: string) => void
+  startHour: number
+  setStartHour: (h: number) => void
   onContinue: () => void
 }) {
   const [viewDate, setViewDate] = useState(() => new Date())
@@ -99,9 +164,9 @@ function Step1({
     let cancelled = false
     setLoadingCalendar(true)
     getArtistCalendar(artistProfileId, toMonthKey(viewDate))
-      .then(data => { if (!cancelled) setEntries(data) })
-      .catch(() => { if (!cancelled) setEntries([]) })
-      .finally(() => { if (!cancelled) setLoadingCalendar(false) })
+        .then(data => { if (!cancelled) setEntries(data) })
+        .catch(() => { if (!cancelled) setEntries([]) })
+        .finally(() => { if (!cancelled) setLoadingCalendar(false) })
     return () => { cancelled = true }
   }, [artistProfileId, viewDate])
 
@@ -114,119 +179,101 @@ function Step1({
   const selectedDay = selectedParts ? selectedParts[2] : 0
 
   return (
-    <div className="flex flex-col h-full">
-      <h2 className="text-xl font-bold text-gray-900 mb-2">Set Date & Time</h2>
-      <p className="text-xs text-gray-500 mb-4">Dates marked in red are already booked and cannot be selected.</p>
+      <div className="flex flex-col h-full">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Set Date & Time</h2>
+        <p className="text-xs text-gray-500 mb-4">Dates marked in red are already booked and cannot be selected.</p>
 
-      <div className="flex gap-6 flex-1">
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-4">
-            <button type="button" onClick={() => goMonth(-1)} className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50">
-              <ChevronLeft size={16} />
-            </button>
-            <p className="font-semibold text-gray-800">{MONTH_NAMES[month]} {year}</p>
-            <button type="button" onClick={() => goMonth(1)} className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50">
-              <ChevronRight size={16} />
-            </button>
-          </div>
+        <div className="flex gap-6 flex-1">
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-4">
+              <button type="button" onClick={() => goMonth(-1)} className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50">
+                <ChevronLeft size={16} />
+              </button>
+              <p className="font-semibold text-gray-800">{MONTH_NAMES[month]} {year}</p>
+              <button type="button" onClick={() => goMonth(1)} className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50">
+                <ChevronRight size={16} />
+              </button>
+            </div>
 
-          {loadingCalendar ? (
-            <p className="text-xs text-gray-400 text-center py-6">Loading availability...</p>
-          ) : (
-            <>
-              <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                {WEEKDAYS.map((d, i) => <span key={i} className="text-xs text-gray-400 font-medium py-1">{d}</span>)}
-              </div>
-              <div className="grid grid-cols-7 gap-1 text-center">
-                {cells.map((day, i) => {
-                  if (!day) return <div key={`empty-${i}`} className="h-9" />
+            {loadingCalendar ? (
+                <p className="text-xs text-gray-400 text-center py-6">Loading availability...</p>
+            ) : (
+                <>
+                  <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                    {WEEKDAYS.map((d, i) => <span key={i} className="text-xs text-gray-400 font-medium py-1">{d}</span>)}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1 text-center">
+                    {cells.map((day, i) => {
+                      if (!day) return <div key={`empty-${i}`} className="h-9" />
 
-                  const dateKey = toDateKey(year, month, day)
-                  const isPast = dateKey < todayKey
-                  const dayEntries = entriesByDate.get(dateKey) ?? []
-                  const isBooked = dayEntries.length > 0
-                  const isSelected = selectedDateKey === dateKey
-                  const isDisabled = isPast || isBooked
+                      const dateKey = toDateKey(year, month, day)
+                      const isPast = dateKey < todayKey
+                      const dayEntries = entriesByDate.get(dateKey) ?? []
+                      const isBooked = dayEntries.length > 0
+                      const isSelected = selectedDateKey === dateKey
+                      const isDisabled = isPast || isBooked
 
-                  return (
-                    <button
-                      key={dateKey}
-                      type="button"
-                      disabled={isDisabled}
-                      title={isBooked ? dayEntries.map(e => e.title).join(', ') : undefined}
-                      onClick={() => {
-                        if (!isDisabled) setSelectedDateKey(dateKey)
-                      }}
-                      className={`h-9 w-9 mx-auto rounded-full text-sm font-medium transition-colors relative
+                      return (
+                          <button
+                              key={dateKey}
+                              type="button"
+                              disabled={isDisabled}
+                              title={isBooked ? dayEntries.map(e => e.title).join(', ') : undefined}
+                              onClick={() => {
+                                if (!isDisabled) setSelectedDateKey(dateKey)
+                              }}
+                              className={`h-9 w-9 mx-auto rounded-full text-sm font-medium transition-colors relative
                         ${isSelected ? 'bg-red-600 text-white' : isBooked ? 'bg-red-100 text-red-600 cursor-not-allowed line-through' : isPast ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
-                    >
-                      {day}
-                      {isBooked && !isSelected && (
-                        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-500" />
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="w-36 flex-shrink-0">
-          <p className="font-semibold text-gray-800 mb-4">Pick a time</p>
-          <div className="flex flex-col gap-3">
-            <div className="border border-gray-200 rounded-xl px-3 py-2.5 bg-white">
-              <select value={hour} onChange={e => setHour(e.target.value)} className="w-full text-sm text-gray-700 outline-none bg-transparent cursor-pointer">
-                {['06','07','08','09','10','11','12','01','02','03','04','05'].map(h => <option key={h}>{h}:00</option>)}
-              </select>
-            </div>
-            <div className="border border-gray-200 rounded-xl px-3 py-2.5 bg-white">
-              <select value={period} onChange={e => setPeriod(e.target.value)} className="w-full text-sm text-gray-700 outline-none bg-transparent cursor-pointer">
-                <option>AM</option><option>PM</option>
-              </select>
-            </div>
+                          >
+                            {day}
+                            {isBooked && !isSelected && (
+                                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-500" />
+                            )}
+                          </button>
+                      )
+                    })}
+                  </div>
+                </>
+            )}
           </div>
-          <p className="font-semibold text-gray-800 mt-5 mb-4">End time</p>
-          <div className="flex flex-col gap-3">
-            <div className="border border-gray-200 rounded-xl px-3 py-2.5 bg-white">
-              <select value={endHour} onChange={e => setEndHour(e.target.value)} className="w-full text-sm text-gray-700 outline-none bg-transparent cursor-pointer">
-                {['06','07','08','09','10','11','12','01','02','03','04','05'].map(h => <option key={h}>{h}:00</option>)}
-              </select>
-            </div>
-            <div className="border border-gray-200 rounded-xl px-3 py-2.5 bg-white">
-              <select value={endPeriod} onChange={e => setEndPeriod(e.target.value)} className="w-full text-sm text-gray-700 outline-none bg-transparent cursor-pointer">
-                <option>AM</option><option>PM</option>
-              </select>
-            </div>
+
+          <div className="w-60 flex-shrink-0 flex flex-col items-center">
+            <p className="font-semibold text-gray-800 mb-4 self-start">Pick a start time</p>
+            {selectedDateKey ? (
+                <Clock24 value={startHour} onChange={setStartHour} />
+            ) : (
+                <div className="flex-1 flex items-center justify-center text-center px-4">
+                  <p className="text-xs text-gray-400">Select an available date to choose a start time</p>
+                </div>
+            )}
           </div>
         </div>
-      </div>
 
-      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-        <p className="text-sm text-gray-500">
-          {selectedDateKey
-            ? `${DAY_NAMES[new Date(year, month, selectedDay).getDay()]}, ${MONTH_NAMES[month]} ${selectedDay} at ${hour} ${period}`
-            : 'Select an available date'}
-        </p>
-        <button
-          onClick={onContinue}
-          disabled={!selectedDateKey}
-          className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold px-6 py-2.5 rounded-full flex items-center gap-2 transition-colors"
-        >
-          Continue
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+          <p className="text-sm text-gray-500">
+            {selectedDateKey
+                ? `${DAY_NAMES[new Date(year, month, selectedDay).getDay()]}, ${MONTH_NAMES[month]} ${selectedDay} at ${String(startHour).padStart(2, '0')}:00`
+                : 'Select an available date'}
+          </p>
+          <button
+              onClick={onContinue}
+              disabled={!selectedDateKey}
+              className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold px-6 py-2.5 rounded-full flex items-center gap-2 transition-colors"
+          >
+            Continue
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
       </div>
-    </div>
   )
 }
 
 function Step2({
-  venue, setVenue, eventType, setEventType, customerPhone, setCustomerPhone, specialNotes, setSpecialNotes,
-  onPrev, onContinue,
-}: {
+                 venue, setVenue, eventType, setEventType, customerPhone, setCustomerPhone, specialNotes, setSpecialNotes,
+                 onPrev, onContinue,
+               }: {
   venue: string; setVenue: (v: string) => void
   eventType: string; setEventType: (t: string) => void
   customerPhone: string; setCustomerPhone: (p: string) => void
@@ -234,142 +281,141 @@ function Step2({
   onPrev: () => void; onContinue: () => void
 }) {
   return (
-    <div className="flex flex-col h-full">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Event Details</h2>
+      <div className="flex flex-col h-full">
+        <h2 className="text-xl font-bold text-gray-900 mb-6">Event Details</h2>
 
-      <div className="flex flex-col gap-4 flex-1 overflow-y-auto pr-1">
-        <div>
-          <label className="block text-xs text-gray-400 mb-1">Venue / Address</label>
-          <input
-            value={venue}
-            onChange={e => setVenue(e.target.value)}
-            placeholder="e.g. Colombo 2, Senanayaka Road"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400 transition-colors"
-          />
+        <div className="flex flex-col gap-4 flex-1 overflow-y-auto pr-1">
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Venue / Address</label>
+            <input
+                value={venue}
+                onChange={e => setVenue(e.target.value)}
+                placeholder="e.g. Colombo 2, Senanayaka Road"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400 transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Event Type</label>
+            <input
+                value={eventType}
+                onChange={e => setEventType(e.target.value)}
+                placeholder="e.g. Wedding, Birthday, Corporate"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400 transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Your Phone Number</label>
+            <input
+                type="tel"
+                value={customerPhone}
+                onChange={e => setCustomerPhone(e.target.value)}
+                placeholder="e.g. 077 123 4567"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400 transition-colors"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">So the artist can contact you about the event.</p>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Special Notes (optional)</label>
+            <textarea
+                value={specialNotes}
+                onChange={e => setSpecialNotes(e.target.value)}
+                placeholder="Any special requirements..."
+                rows={2}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400 resize-none transition-colors"
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-xs text-gray-400 mb-1">Event Type</label>
-          <input
-            value={eventType}
-            onChange={e => setEventType(e.target.value)}
-            placeholder="e.g. Wedding, Birthday, Corporate"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400 transition-colors"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-400 mb-1">Your Phone Number</label>
-          <input
-            type="tel"
-            value={customerPhone}
-            onChange={e => setCustomerPhone(e.target.value)}
-            placeholder="e.g. 077 123 4567"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400 transition-colors"
-          />
-          <p className="text-[10px] text-gray-400 mt-1">So the artist can contact you about the event.</p>
-        </div>
-        <div>
-          <label className="block text-xs text-gray-400 mb-1">Special Notes (optional)</label>
-          <textarea
-            value={specialNotes}
-            onChange={e => setSpecialNotes(e.target.value)}
-            placeholder="Any special requirements..."
-            rows={2}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400 resize-none transition-colors"
-          />
+
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+          <button onClick={onPrev} className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-800 transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Previous
+          </button>
+          <button
+              onClick={onContinue}
+              disabled={!venue || !eventType || !customerPhone.trim()}
+              className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors"
+          >
+            Continue
+          </button>
         </div>
       </div>
-
-      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-        <button onClick={onPrev} className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-800 transition-colors">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          Previous
-        </button>
-        <button
-          onClick={onContinue}
-          disabled={!venue || !eventType || !customerPhone.trim()}
-          className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors"
-        >
-          Continue
-        </button>
-      </div>
-    </div>
   )
 }
 
 function Step3({
-   artistName, fullPrice, advance, selectedDateKey, hour, period, endHour, endPeriod, venue, eventType, customerPhone,
-   onPrev, onConfirm, loading, error,
- }: {
-   artistName: string; fullPrice: number; advance: number
-   selectedDateKey: string; hour: string; period: string; endHour: string; endPeriod: string
-   venue: string; eventType: string; customerPhone: string
-   onPrev: () => void; onConfirm: () => void
-   loading: boolean; error: string
-  }) {
+                 artistName, fullPrice, advance, selectedDateKey, startHour, venue, eventType, customerPhone,
+                 onPrev, onConfirm, loading, error,
+               }: {
+  artistName: string; fullPrice: number; advance: number
+  selectedDateKey: string; startHour: number
+  venue: string; eventType: string; customerPhone: string
+  onPrev: () => void; onConfirm: () => void
+  loading: boolean; error: string
+}) {
   const [commissionRate, setCommissionRate] = useState(15)
   const safeFullPrice = Number(fullPrice) || 0
   const safeAdvance = Number(advance) || 0
   const platformFee = +(safeAdvance * commissionRate / 100).toFixed(2)
   const totalPayment = +(safeAdvance + platformFee).toFixed(2)
   const balance = safeFullPrice - safeAdvance
-   const [y, m, d] = selectedDateKey.split('-').map(Number)
+  const [y, m, d] = selectedDateKey.split('-').map(Number)
 
-   useEffect(() => {
-     // Fetch commission rate from public settings endpoint
-     fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'}/settings`)
-       .then(res => res.json())
-       .then(data => setCommissionRate(data.commission_rate || 15))
-       .catch(() => setCommissionRate(15))
-   }, [])
+  useEffect(() => {
+    // Fetch commission rate from public settings endpoint
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'}/settings`)
+        .then(res => res.json())
+        .then(data => setCommissionRate(data.commission_rate || 15))
+        .catch(() => setCommissionRate(15))
+  }, [])
 
-   return (
-    <div className="flex flex-col h-full">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Confirm Booking</h2>
+  return (
+      <div className="flex flex-col h-full">
+        <h2 className="text-xl font-bold text-gray-900 mb-6">Confirm Booking</h2>
 
-      <div className="flex-1 space-y-3">
-        <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-2">
-          <div className="flex justify-between"><span className="text-gray-500">Artist</span><span className="font-medium text-gray-900">{artistName}</span></div>
-          <div className="flex justify-between"><span className="text-gray-500">Date</span><span className="font-medium text-gray-900">{MONTH_NAMES[m - 1]} {d}, {y}</span></div>
-          <div className="flex justify-between"><span className="text-gray-500">Time</span><span className="font-medium text-gray-900">{hour} {period}</span></div>
-          <div className="flex justify-between"><span className="text-gray-500">End Time</span><span className="font-medium text-gray-900">{endHour} {endPeriod}</span></div>
-          <div className="flex justify-between"><span className="text-gray-500">Venue</span><span className="font-medium text-gray-900 text-right max-w-[200px]">{venue}</span></div>
-          <div className="flex justify-between"><span className="text-gray-500">Event Type</span><span className="font-medium text-gray-900">{eventType}</span></div>
-          <div className="flex justify-between"><span className="text-gray-500">Phone</span><span className="font-medium text-gray-900">{customerPhone}</span></div>
+        <div className="flex-1 space-y-3">
+          <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-2">
+            <div className="flex justify-between"><span className="text-gray-500">Artist</span><span className="font-medium text-gray-900">{artistName}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Date</span><span className="font-medium text-gray-900">{MONTH_NAMES[m - 1]} {d}, {y}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Start Time</span><span className="font-medium text-gray-900">{String(startHour).padStart(2, '0')}:00</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Venue</span><span className="font-medium text-gray-900 text-right max-w-[200px]">{venue}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Event Type</span><span className="font-medium text-gray-900">{eventType}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Phone</span><span className="font-medium text-gray-900">{customerPhone}</span></div>
+          </div>
+
+          <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-2">
+            <div className="flex justify-between"><span className="text-gray-500">Total Price</span><span className="font-medium text-gray-900">LKR {safeFullPrice.toLocaleString()}</span></div>
+            <div className="flex justify-between text-red-600"><span>Advance</span><span className="font-bold">LKR {safeAdvance.toLocaleString()}</span></div>
+            <div className="flex justify-between text-blue-600"><span>Platform Booking Fee ({commissionRate}%)</span><span className="font-bold">LKR {platformFee.toLocaleString()}</span></div>
+            <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-200"><span>Total to Pay Now</span><span>LKR {totalPayment.toLocaleString()}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Balance Due</span><span className="font-medium text-gray-500">LKR {balance.toLocaleString()}</span></div>
+          </div>
+
+          <p className="text-xs text-gray-400 text-center px-2">
+            Your booking request will be sent to the artist. Once they accept, you'll be able to complete the advance payment.
+          </p>
+
+          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-2">
-          <div className="flex justify-between"><span className="text-gray-500">Total Price</span><span className="font-medium text-gray-900">LKR {safeFullPrice.toLocaleString()}</span></div>
-          <div className="flex justify-between text-red-600"><span>Advance</span><span className="font-bold">LKR {safeAdvance.toLocaleString()}</span></div>
-          <div className="flex justify-between text-blue-600"><span>Platform Booking Fee ({commissionRate}%)</span><span className="font-bold">LKR {platformFee.toLocaleString()}</span></div>
-          <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-200"><span>Total to Pay Now</span><span>LKR {totalPayment.toLocaleString()}</span></div>
-          <div className="flex justify-between"><span className="text-gray-500">Balance Due</span><span className="font-medium text-gray-500">LKR {balance.toLocaleString()}</span></div>
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+          <button onClick={onPrev} className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-800 transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Previous
+          </button>
+          <button
+              onClick={onConfirm}
+              disabled={loading}
+              className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors flex items-center gap-2"
+          >
+            {loading ? 'Sending...' : 'Send Booking Request'}
+          </button>
         </div>
-
-        <p className="text-xs text-gray-400 text-center px-2">
-          Your booking request will be sent to the artist. Once they accept, you'll be able to complete the advance payment.
-        </p>
-
-        {error && <p className="text-sm text-red-500 text-center">{error}</p>}
       </div>
-
-      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-        <button onClick={onPrev} className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-800 transition-colors">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          Previous
-        </button>
-        <button
-          onClick={onConfirm}
-          disabled={loading}
-          className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors flex items-center gap-2"
-        >
-          {loading ? 'Sending...' : 'Send Booking Request'}
-        </button>
-      </div>
-    </div>
   )
 }
 
@@ -390,58 +436,58 @@ function submitToPayHere(payhere: Record<string, string>) {
 }
 
 const stepInfo = [
-   { title: 'Set Date & Time', desc: 'Choose your preferred event date and start time.' },
-   { title: 'Event Details', desc: 'Tell us where the event is and what type it is.' },
-   { title: 'Confirm & Send', desc: 'Review your booking details and send the request to the artist.' },
- ]
+  { title: 'Set Date & Time', desc: 'Choose your preferred event date and start time.' },
+  { title: 'Event Details', desc: 'Tell us where the event is and what type it is.' },
+  { title: 'Confirm & Send', desc: 'Review your booking details and send the request to the artist.' },
+]
 
 function BookingSentStep({
-  artistName,
-  totalPayment,
-  onViewBookings,
-  onClose,
-}: {
+                           artistName,
+                           totalPayment,
+                           onViewBookings,
+                           onClose,
+                         }: {
   artistName: string
   totalPayment: number
   onViewBookings: () => void
   onClose: () => void
 }) {
   return (
-    <div className="flex flex-col h-full items-center justify-center text-center py-4">
-      {/* Checkmark */}
-      <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mb-6">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
-          <path d="M20 6L9 17l-5-5" />
-        </svg>
-      </div>
+      <div className="flex flex-col h-full items-center justify-center text-center py-4">
+        {/* Checkmark */}
+        <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mb-6">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        </div>
 
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Booking Request Sent!</h2>
-      <p className="text-sm text-gray-500 mb-6 max-w-xs leading-relaxed">
-        Your request has been sent to <strong>{artistName}</strong>. Once they accept, you'll need to complete the advance payment.
-      </p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Booking Request Sent!</h2>
+        <p className="text-sm text-gray-500 mb-6 max-w-xs leading-relaxed">
+          Your request has been sent to <strong>{artistName}</strong>. Once they accept, you'll need to complete the advance payment.
+        </p>
 
-      {/* Payment info box */}
-      <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 text-left">
-        <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Payment due after acceptance</p>
-        <p className="text-2xl font-black text-amber-800">LKR {totalPayment.toLocaleString()}</p>
-        <p className="text-xs text-amber-600 mt-1">Advance + platform fee · Only charged after artist accepts</p>
-      </div>
+        {/* Payment info box */}
+        <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 text-left">
+          <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Payment due after acceptance</p>
+          <p className="text-2xl font-black text-amber-800">LKR {totalPayment.toLocaleString()}</p>
+          <p className="text-xs text-amber-600 mt-1">Advance + platform fee · Only charged after artist accepts</p>
+        </div>
 
-      <div className="flex flex-col gap-3 w-full">
-        <button
-          onClick={onViewBookings}
-          className="w-full bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-6 py-3 rounded-full transition-colors"
-        >
-          View My Bookings
-        </button>
-        <button
-          onClick={onClose}
-          className="w-full text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors"
-        >
-          Continue Browsing
-        </button>
+        <div className="flex flex-col gap-3 w-full">
+          <button
+              onClick={onViewBookings}
+              className="w-full bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-6 py-3 rounded-full transition-colors"
+          >
+            View My Bookings
+          </button>
+          <button
+              onClick={onClose}
+              className="w-full text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors"
+          >
+            Continue Browsing
+          </button>
+        </div>
       </div>
-    </div>
   )
 }
 
@@ -452,10 +498,7 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
   const [sentTotalPayment, setSentTotalPayment] = useState(0)
 
   const [selectedDateKey, setSelectedDateKey] = useState('')
-  const [hour, setHour] = useState('10:00')
-  const [period, setPeriod] = useState('AM')
-  const [endHour, setEndHour] = useState('12:00')
-  const [endPeriod, setEndPeriod] = useState('PM')
+  const [startHour, setStartHour] = useState(10)
 
   const [venue, setVenue] = useState('')
   const [eventType, setEventType] = useState('')
@@ -466,30 +509,19 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
   const [error, setError] = useState('')
 
   const info = sent
-    ? { title: 'Request Sent!', desc: 'Your booking request is awaiting artist confirmation.' }
-    : stepInfo[step - 1]
+      ? { title: 'Request Sent!', desc: 'Your booking request is awaiting artist confirmation.' }
+      : stepInfo[step - 1]
 
   const handleConfirm = async () => {
     setError('')
     setLoading(true)
     try {
-      let [h] = hour.split(':')
-      let hNum = parseInt(h)
-      if (period === 'PM' && hNum !== 12) hNum += 12
-      if (period === 'AM' && hNum === 12) hNum = 0
-      const timeStr = `${String(hNum).padStart(2, '0')}:00`
-
-      let [eh] = endHour.split(':')
-      let ehNum = parseInt(eh)
-      if (endPeriod === 'PM' && ehNum !== 12) ehNum += 12
-      if (endPeriod === 'AM' && ehNum === 12) ehNum = 0
-      const endStr = `${String(ehNum).padStart(2, '0')}:00`
+      const timeStr = `${String(startHour).padStart(2, '0')}:00`
 
       const data = await initiateBooking({
         artist_profile_id: artistProfileId,
         event_date: selectedDateKey,
         event_start_time: timeStr,
-        event_end_time: endStr,
         event_type: eventType,
         venue,
         customer_phone: customerPhone.trim(),
@@ -503,8 +535,8 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
       const axiosErr = err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
       const errors = axiosErr.response?.data?.errors
       const msg = errors
-        ? Object.values(errors).flat()[0]
-        : axiosErr.response?.data?.message ?? 'Something went wrong. Please try again.'
+          ? Object.values(errors).flat()[0]
+          : axiosErr.response?.data?.message ?? 'Something went wrong. Please try again.'
       setError(String(msg))
     } finally {
       setLoading(false)
@@ -512,97 +544,88 @@ export default function BookingModal({ onClose, artistProfileId, artistName, ful
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-red-900/20 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-red-900/20 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative bg-[#f2f2f2] rounded-2xl flex flex-col md:flex-row w-full max-w-[95vw] md:max-w-[880px] mx-2 sm:mx-0 overflow-hidden shadow-2xl min-h-0 md:min-h-[500px] max-h-[95vh]">
+        <div className="relative bg-[#f2f2f2] rounded-2xl flex flex-col md:flex-row w-full max-w-[95vw] md:max-w-[880px] mx-2 sm:mx-0 overflow-hidden shadow-2xl min-h-0 md:min-h-[500px] max-h-[95vh]">
 
-        <div className="w-full md:w-64 flex-shrink-0 bg-[#ebebeb] px-4 sm:px-6 py-3 sm:py-6 flex flex-row md:flex-col items-center md:items-stretch gap-4 md:gap-0">
-          <div className="hidden md:block">
-            <StepIndicator current={step} />
+          <div className="w-full md:w-64 flex-shrink-0 bg-[#ebebeb] px-4 sm:px-6 py-3 sm:py-6 flex flex-row md:flex-col items-center md:items-stretch gap-4 md:gap-0">
+            <div className="hidden md:block">
+              <StepIndicator current={step} />
+            </div>
+
+            <div className="flex flex-row md:flex-col items-center text-center flex-1 justify-center gap-3 md:gap-0 min-w-0">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-red-100 flex items-center justify-center md:mb-4 shrink-0">
+                <span className="text-lg md:text-2xl font-bold text-red-600">{step}</span>
+              </div>
+              <div className="text-left md:text-center min-w-0">
+                <h3 className="text-sm md:text-base font-bold text-gray-900 md:mt-3 truncate">{info.title}</h3>
+                <p className="text-[11px] md:text-xs text-gray-500 mt-1 md:mt-2 leading-relaxed line-clamp-2 md:line-clamp-none">{info.desc}</p>
+              </div>
+            </div>
+
+            <button onClick={onClose} className="hidden md:block text-sm text-gray-500 hover:text-gray-700 mt-6 text-center w-full transition-colors">
+              Cancel
+            </button>
           </div>
 
-          <div className="flex flex-row md:flex-col items-center text-center flex-1 justify-center gap-3 md:gap-0 min-w-0">
-            <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-red-100 flex items-center justify-center md:mb-4 shrink-0">
-              <span className="text-lg md:text-2xl font-bold text-red-600">{step}</span>
-            </div>
-            <div className="text-left md:text-center min-w-0">
-              <h3 className="text-sm md:text-base font-bold text-gray-900 md:mt-3 truncate">{info.title}</h3>
-              <p className="text-[11px] md:text-xs text-gray-500 mt-1 md:mt-2 leading-relaxed line-clamp-2 md:line-clamp-none">{info.desc}</p>
-            </div>
+          <div className="flex-1 bg-white px-4 sm:px-8 py-4 sm:py-6 overflow-y-auto relative">
+            <button
+                onClick={onClose}
+                className="md:hidden absolute top-3 right-3 text-xs text-gray-500 hover:text-gray-700 font-semibold z-10"
+            >
+              Cancel
+            </button>
+            {sent ? (
+                <BookingSentStep
+                    artistName={artistName}
+                    totalPayment={sentTotalPayment}
+                    onViewBookings={() => {
+                      onClose()
+                      navigate('/customerAccount', { state: { tab: 'bookings' } })
+                    }}
+                    onClose={onClose}
+                />
+            ) : step === 1 ? (
+                <Step1
+                    artistProfileId={artistProfileId}
+                    selectedDateKey={selectedDateKey}
+                    setSelectedDateKey={setSelectedDateKey}
+                    startHour={startHour}
+                    setStartHour={setStartHour}
+                    onContinue={() => setStep(2)}
+                />
+            ) : step === 2 ? (
+                <Step2
+                    venue={venue}
+                    setVenue={setVenue}
+                    eventType={eventType}
+                    setEventType={setEventType}
+                    customerPhone={customerPhone}
+                    setCustomerPhone={setCustomerPhone}
+                    specialNotes={specialNotes}
+                    setSpecialNotes={setSpecialNotes}
+                    onPrev={() => setStep(1)}
+                    onContinue={() => setStep(3)}
+                />
+            ) : (
+                <Step3
+                    artistName={artistName}
+                    fullPrice={fullPrice}
+                    advance={advance}
+                    selectedDateKey={selectedDateKey}
+                    startHour={startHour}
+                    venue={venue}
+                    eventType={eventType}
+                    customerPhone={customerPhone}
+                    onPrev={() => setStep(2)}
+                    onConfirm={handleConfirm}
+                    loading={loading}
+                    error={error}
+                />
+            )}
           </div>
-
-          <button onClick={onClose} className="hidden md:block text-sm text-gray-500 hover:text-gray-700 mt-6 text-center w-full transition-colors">
-            Cancel
-          </button>
-        </div>
-
-        <div className="flex-1 bg-white px-4 sm:px-8 py-4 sm:py-6 overflow-y-auto relative">
-          <button
-            onClick={onClose}
-            className="md:hidden absolute top-3 right-3 text-xs text-gray-500 hover:text-gray-700 font-semibold z-10"
-          >
-            Cancel
-          </button>
-          {sent ? (
-            <BookingSentStep
-              artistName={artistName}
-              totalPayment={sentTotalPayment}
-              onViewBookings={() => {
-                onClose()
-                navigate('/customerAccount', { state: { tab: 'bookings' } })
-              }}
-              onClose={onClose}
-            />
-          ) : step === 1 ? (
-            <Step1
-              artistProfileId={artistProfileId}
-              selectedDateKey={selectedDateKey}
-              setSelectedDateKey={setSelectedDateKey}
-              hour={hour}
-              setHour={setHour}
-              period={period}
-              setPeriod={setPeriod}
-              endHour={endHour}
-              setEndHour={setEndHour}
-              endPeriod={endPeriod}
-              setEndPeriod={setEndPeriod}
-              onContinue={() => setStep(2)}
-            />
-          ) : step === 2 ? (
-            <Step2
-              venue={venue}
-              setVenue={setVenue}
-              eventType={eventType}
-              setEventType={setEventType}
-              customerPhone={customerPhone}
-              setCustomerPhone={setCustomerPhone}
-              specialNotes={specialNotes}
-              setSpecialNotes={setSpecialNotes}
-              onPrev={() => setStep(1)}
-              onContinue={() => setStep(3)}
-            />
-          ) : (
-            <Step3
-              artistName={artistName}
-              fullPrice={fullPrice}
-              advance={advance}
-              selectedDateKey={selectedDateKey}
-              hour={hour}
-              period={period}
-              endHour={endHour}
-              endPeriod={endPeriod}
-              venue={venue}
-              eventType={eventType}
-              customerPhone={customerPhone}
-              onPrev={() => setStep(2)}
-              onConfirm={handleConfirm}
-              loading={loading}
-              error={error}
-            />
-          )}
         </div>
       </div>
-    </div>
   )
 }
