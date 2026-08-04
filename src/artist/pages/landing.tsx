@@ -6,10 +6,13 @@ import {
     Search, MapPin, Calendar, DollarSign, Heart, CheckCircle,
     ArrowRight, ChevronRight, ChevronLeft, Star, Users, Zap, Shield, TrendingUp,
     Mic2, Music2, PersonStanding, Radio, Camera, Lightbulb, Globe,
-    Play, RefreshCw, GitCompare, BookOpen, X, Loader2, Menu
+    Play, RefreshCw, GitCompare, BookOpen, X, Loader2, Menu, LogIn
 } from "lucide-react";
 import ArtistProfileLanding from "../../customer/pages/ArtistProfileLanding";
 import Footer from "../../customer/components/Footer.tsx";
+
+import artistLoginImage from "../../../public/person.png";
+import customerLoginImage from "../../../public/Cover1.png";
 
 interface Artist {
     id: string | number;
@@ -290,6 +293,7 @@ export default function HomePage() {
     const popularArtistsRef = useRef<HTMLDivElement>(null);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
 
     const handleCloseProfile = () => {
         setIsClosingProfile(true);
@@ -309,15 +313,15 @@ export default function HomePage() {
         });
     };
 
-    // Prevent body scroll when overlay is open
+    // Prevent body scroll when overlay (profile or login modal) is open
     useEffect(() => {
-        if (selectedArtistId) {
+        if (selectedArtistId || showLoginModal) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
         }
         return () => { document.body.style.overflow = 'unset'; };
-    }, [selectedArtistId]);
+    }, [selectedArtistId, showLoginModal]);
 
     useEffect(() => {
         getStats()
@@ -559,6 +563,124 @@ export default function HomePage() {
             justify-content: flex-end;
             padding: 20px;
         }
+        
+        /* Login modal */
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.94) translateY(14px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.login-modal-pop { animation: modalPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+.login-split { display: flex; }
+.login-panel { position: relative; flex: 1 1 52%; overflow: hidden; }
+.login-panel-left {
+  clip-path: polygon(0 0, 100% 0, 82% 100%, 0 100%);
+  margin-right: -10%;
+  z-index: 1;
+}
+.login-panel-right {
+  clip-path: polygon(18% 0, 100% 0, 100% 100%, 0 100%);
+  z-index: 0;
+}
+.login-panel-img {
+  width: 100%; height: 100%; object-fit: cover; object-position: center;
+  transition: transform 0.6s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease;
+}
+.login-panel:hover .login-panel-img { transform: scale(1.08); }
+.login-panel-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.15) 100%);
+  transition: background 0.3s ease;
+}
+.login-panel:hover .login-panel-overlay {
+  background: linear-gradient(to top, rgba(232,25,75,0.55) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 100%);
+}
+.login-panel-content {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding-bottom: 32px; z-index: 2;
+}
+.login-icon-badge {
+  width: 38px; height: 38px; border-radius: 12px;
+  background: rgba(255,255,255,0.18); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.login-feature-list {
+  display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px;
+}
+.login-feature-list span {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: #eee; font-weight: 500;
+}
+.login-feature-list span svg { color: #E8194B; flex-shrink: 0; }
+.login-cta {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fff; color: #111; font-weight: 700; font-size: 12px;
+  padding: 8px 16px; border-radius: 100px;
+  opacity: 0; transform: translateY(6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.login-panel:hover .login-cta { opacity: 1; transform: translateY(0); }
+
+.login-center-badge {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px; height: 44px; border-radius: 50%;
+  background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: #E8194B;
+  z-index: 10; border: 2px solid #fff;
+}
+
+@media (max-width: 767px) {
+  .login-split {
+    flex-direction: column;
+    height: 560px !important;
+  }
+  .login-panel-left,
+  .login-panel-right {
+    clip-path: none !important;
+    margin-right: 0 !important;
+    flex: 1 1 50%;
+  }
+  .login-panel-left {
+    border-radius: 24px 24px 0 0 !important;
+  }
+  .login-panel-right {
+    border-radius: 0 0 24px 24px !important;
+  }
+  .login-panel-content {
+    align-items: flex-start !important;
+    text-align: left !important;
+    padding: 0 20px 20px 20px !important;
+  }
+  .login-feature-list {
+    align-items: flex-start !important;
+  }
+  .login-panel-content p {
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .login-center-badge {
+    top: 50%;
+  }
+}
+
+.login-panel-left {
+  clip-path: polygon(0 0, 100% 0, 82% 100%, 0 100%);
+  margin-right: -10%;
+  z-index: 1;
+  border-radius: 24px 0 0 24px;
+}
+.login-panel-right {
+  clip-path: polygon(18% 0, 100% 0, 100% 100%, 0 100%);
+  z-index: 0;
+  border-radius: 0 24px 24px 0;
+}
+        
         .search-input { outline: none; }
         .search-input:focus { outline: none; }
         .hero-image-card { border-radius: 16px; overflow: hidden; }
@@ -720,6 +842,100 @@ export default function HomePage() {
                 </div>
             )}
 
+            {/* Login Selection Modal */}
+            {showLoginModal && (
+                <div
+                    className="fixed inset-0 z-[110] flex items-center justify-center p-4"
+                    onClick={() => setShowLoginModal(false)}
+                >
+                    <div
+                        className="fixed inset-0 bg-black/70 backdrop-blur-md"
+                        onClick={() => setShowLoginModal(false)}
+                    />
+
+                    <div
+                        className="login-modal-pop relative rounded-3xl shadow-[0_50px_100px_rgba(0,0,0,0.5)] max-w-4xl w-full mx-4"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Close button — floats directly over the images now */}
+                        <button
+                            onClick={() => setShowLoginModal(false)}
+                            className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-gray-500 hover:text-gray-900 transition-all hover:scale-110"
+                            aria-label="Close"
+                        >
+                            <X size={18} />
+                        </button>
+
+                        {/* Split panels — fills the entire modal, no header */}
+                        <div className="login-split relative h-[460px] md:h-[420px] rounded-3xl overflow-hidden">
+
+                            {/* Artist Side */}
+                            <div
+                                className="login-panel login-panel-left group cursor-pointer"
+                                onClick={() => navigate("/login")}
+                            >
+                                <img
+                                    src={artistLoginImage}
+                                    alt="Artist"
+                                    className="login-panel-img grayscale group-hover:grayscale-0"
+                                />
+                                <div className="login-panel-overlay" />
+                                <div className="login-panel-content items-start text-left pl-6 md:pl-10">
+                                    <div className="login-icon-badge">
+                                        <Mic2 size={18} className="text-white" />
+                                    </div>
+                                    <h3 className="text-white font-900 text-xl mb-1">I'm an Artist</h3>
+                                    <p className="text-gray-300 text-xs mb-3 max-w-[180px]">
+                                        Showcase your talent and get booked for events.
+                                    </p>
+                                    <div className="login-feature-list">
+                                        <span><CheckCircle size={12} /> Verified profile</span>
+                                        <span><CheckCircle size={12} /> Direct bookings</span>
+                                    </div>
+                                    <div className="login-cta">
+                                        Login as Artist <ArrowRight size={14} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Center divider badge */}
+                            <div className="login-center-badge">
+                                <span>OR</span>
+                            </div>
+
+                            {/* Customer Side */}
+                            <div
+                                className="login-panel login-panel-right group cursor-pointer"
+                                onClick={() => navigate("/loginCustomer")}
+                            >
+                                <img
+                                    src={customerLoginImage}
+                                    alt="Customer"
+                                    className="login-panel-img grayscale group-hover:grayscale-0"
+                                />
+                                <div className="login-panel-overlay" />
+                                <div className="login-panel-content items-end text-right pr-6 md:pr-10">
+                                    <div className="login-icon-badge">
+                                        <Search size={18} className="text-white" />
+                                    </div>
+                                    <h3 className="text-white font-900 text-xl mb-1">I'm a Customer</h3>
+                                    <p className="text-gray-300 text-xs mb-3 max-w-[180px] ml-auto">
+                                        Find and book the best local talent.
+                                    </p>
+                                    <div className="login-feature-list items-end">
+                                        <span><CheckCircle size={12} /> Hundreds of artists</span>
+                                        <span><CheckCircle size={12} /> Secure payments</span>
+                                    </div>
+                                    <div className="login-cta">
+                                        Login as Customer <ArrowRight size={14} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Main Content */}
             <div className={`transition-all duration-500 ${selectedArtistId ? 'blur-bg scale-[0.98]' : ''}`}>
 
@@ -750,13 +966,13 @@ export default function HomePage() {
 
                     {/* Action */}
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => scrollToSection('artists-section')}
-                            className="btn-pink text-xs sm:text-sm font-bold px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl shadow-lg shadow-pink-100"
-                        >
-                            <span className="hidden sm:inline">Explore Talent</span>
-                            <span className="sm:hidden">Explore</span>
-                        </button>
+                         <button
+                             onClick={() => setShowLoginModal(true)}
+                             className="btn-pink text-xs sm:text-sm font-bold px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl shadow-lg shadow-pink-100"
+                         >
+                        <span className="hidden sm:inline">Login</span>
+                        <span className="sm:hidden">Login</span>
+                         </button>
                         <button
                             type="button"
                             className="md:hidden p-2 text-gray-600 hover:text-[#E8194B] transition-colors"
