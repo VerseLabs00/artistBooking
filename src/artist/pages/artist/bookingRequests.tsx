@@ -419,52 +419,59 @@ export default function BookingRequests() {
                             </div>
 
                             <div className="flex flex-col md:flex-row gap-8 mb-8">
+                                {/* LEFT COLUMN */}
                                 <div className="flex-1 flex flex-col gap-5">
                                     <div>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Event Type</p>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">
+                                            Event Type
+                                        </p>
                                         <div className="flex items-center gap-2 text-gray-900 font-bold">
                                             <FileText size={16} className="text-pink" />
                                             <span>{selectedBooking.event_type}</span>
                                         </div>
                                     </div>
+
                                     <div>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Venue</p>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">
+                                            Venue
+                                        </p>
                                         <div className="flex items-center gap-2 text-gray-900 font-bold">
                                             <MapPin size={16} className="text-pink" />
                                             <span>{selectedBooking.venue}</span>
                                         </div>
                                     </div>
+                                </div>
+
+                                {/* RIGHT COLUMN */}
+                                <div className="flex-1 flex flex-col gap-5">
                                     <div>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Event Date</p>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">
+                                            Event Date
+                                        </p>
                                         <div className="flex items-center gap-2 text-gray-900 font-bold">
                                             <Calendar size={16} className="text-pink" />
                                             <span>{selectedBooking.event_date}</span>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="flex-1 flex flex-col gap-5">
+
                                     <div>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Start Time</p>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">
+                                            Start Time
+                                        </p>
                                         <div className="flex items-center gap-2 text-gray-900 font-bold">
                                             <Clock size={16} className="text-pink" />
                                             <span>{selectedBooking.event_start_time}</span>
                                         </div>
                                     </div>
+
                                     {selectedBooking.event_end_time && (
                                         <div>
-                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">End Time</p>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">
+                                                End Time
+                                            </p>
                                             <div className="flex items-center gap-2 text-gray-900 font-bold">
                                                 <Clock size={16} className="text-pink" />
                                                 <span>{selectedBooking.event_end_time}</span>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {selectedBooking.event_duration_hours != null && (
-                                        <div>
-                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Duration</p>
-                                            <div className="flex items-center gap-2 text-gray-900 font-bold">
-                                                <Clock size={16} className="text-pink" />
-                                                <span>{selectedBooking.event_duration_hours} hrs</span>
                                             </div>
                                         </div>
                                     )}
@@ -480,23 +487,33 @@ export default function BookingRequests() {
                                 </div>
                             )}
 
-                            <div className="mb-8 p-6 bg-pink/5 rounded-2xl border border-pink/10">
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Customer Contact</p>
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink shadow-sm">
-                                            <Mail size={14} />
+                            {selectedBooking.payment_status?.toLowerCase() === 'paid' ? (
+                                <div className="mb-8 p-6 bg-pink/5 rounded-2xl border border-pink/10">
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Customer Contact</p>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink shadow-sm">
+                                                <Mail size={14} />
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-700">{selectedBooking.customer_email}</p>
                                         </div>
-                                        <p className="text-sm font-bold text-gray-700">{selectedBooking.customer_email}</p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink shadow-sm">
-                                            <Phone size={14} />
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-pink shadow-sm">
+                                                <Phone size={14} />
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-700">{selectedBooking.customer_phone}</p>
                                         </div>
-                                        <p className="text-sm font-bold text-gray-700">{selectedBooking.customer_phone}</p>
                                     </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Customer Contact</p>
+                                    <div className="flex items-center gap-3 text-gray-400">
+                                        <AlertCircle size={16} />
+                                        <p className="text-xs font-medium">Contact details will be visible once the customer finished the advance payment.</p>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="bg-gray-50 rounded-2xl p-6 mb-8 space-y-4">
                                 <div className="flex items-center justify-between">
