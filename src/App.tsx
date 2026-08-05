@@ -24,6 +24,7 @@ import BookingSuccess from "./customer/pages/BookingSuccess.tsx";
 import AboutUs from "./components/AboutUs.tsx";
 import TermsAndConditions from "./components/Terms.tsx";
 import PrivacyPolicy from "./components/PrivacyPolicy.tsx";
+import ReturnPolicy from "./components/ReturnPolicy.tsx";
 
 import AdminRoutes from "./admin/routes/AppRouter.jsx";
 import Category from "./artist/pages/artist/categoryLanding.tsx";
@@ -61,6 +62,7 @@ function App() {
                 <Route path="/about-us" element={<AboutUs />} />
                 <Route path="/terms" element={<TermsAndConditions />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/return" element={<ReturnPolicy />} />
 
                 {/* Admin Routes */}
                 <Route path="/admin/*" element={<AdminRoutes />} />
