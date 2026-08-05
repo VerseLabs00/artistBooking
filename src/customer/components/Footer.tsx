@@ -508,6 +508,7 @@ export default function Footer() {
                   { label: 'About Us', to: legalPagePath('/about-us', legalSource) },
                   { label: 'Terms & Conditions', to: legalPagePath('/terms', legalSource) },
                   { label: 'Privacy Policy', to: legalPagePath('/privacy', legalSource) },
+                  { label: 'Return Policy', to: legalPagePath('/return', legalSource) },
                   { label: 'Contact', href: '#contact-section' },
                 ].map(({ label, to, href }) =>
                     to ? (
