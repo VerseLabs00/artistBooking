@@ -198,20 +198,6 @@ const TermsAndConditions: React.FC = () => {
                                 platform. A platform service fee is shown clearly before you
                                 confirm payment. All prices are in Sri Lankan Rupees (LKR).
                             </p>
-                            <h3>Cancellations & Refunds</h3>
-                            <ul>
-                                <li>
-                                    If a client cancels, a cancellation fee may apply
-                                    depending on how far in advance it is made
-                                </li>
-                                <li>
-                                    If an artist cancels a confirmed booking, the client
-                                    receives a full refund
-                                </li>
-                                <li>
-                                    Refunds are processed within [insert number] business days
-                                </li>
-                            </ul>
                         </div>
 
                         <div className="sec" id="s5">
